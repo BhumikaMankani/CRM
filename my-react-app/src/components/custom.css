@@ -1,0 +1,318 @@
+/* Professional Modal & Form Styling - Unified Design System */
+
+/* Modal Overlay with Blur Effect */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Content Card */
+.modal-content {
+    background: #ffffff;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 16px;
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: auto;
+    min-height: auto;
+    animation: slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 32px;
+    box-sizing: border-box;
+}
+
+@keyframes slideUpModal {
+    from {
+        transform: translateY(20px) scale(0.96);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Close Button */
+button.close_button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+button.close_button img {
+    /* Assuming closeIcon is an svg */
+    width: 14px;
+    height: 14px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+button.close_button:hover {
+    background-color: #f3f4f6;
+    transform: rotate(90deg);
+}
+
+button.close_button:hover img {
+    opacity: 1;
+}
+
+
+/* Modal Title */
+.modal-title {
+    margin-top: 0;
+    margin-bottom: 24px;
+    font-size: 1.5rem;
+    /* 24px */
+    font-weight: 700;
+    color: #111827;
+    /* text-align: center; */
+    letter-spacing: -0.025em;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Form Layout */
+.form-group {
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* Labels */
+.modal-label {
+    display: block;
+    font-size: 0.875rem;
+    /* 14px */
+    font-weight: 600;
+    color: #374151;
+    margin-left: 2px;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Inputs, Selects, Textareas */
+.modal-input,
+.modal-select,
+.modal-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    /* 15px */
+    color: #1f2937;
+    background-color: #f9fafb;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+/* Select Arrow Customization */
+.modal-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlnsXlink='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' strokeLinecap='round' strokeLinejoin='round' strokeWidth='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25em 1.25em;
+}
+
+.modal-input:hover,
+.modal-select:hover,
+.modal-textarea:hover {
+    border-color: #9ca3af;
+    background-color: #ffffff;
+}
+
+.modal-input:focus,
+.modal-select:focus,
+.modal-textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.modal-input::placeholder,
+.modal-textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* Validation Errors */
+.modal-input.error,
+.modal-select.error,
+.modal-textarea.error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.modal-input.error:focus,
+.modal-select.error:focus,
+.modal-textarea.error:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+.error-text {
+    font-size: 0.75rem;
+    color: #ef4444;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+/* Section Dividers */
+.modal-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-top: 32px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.modal-section-title:first-of-type {
+    margin-top: 10px;
+}
+
+/* Scrollable Area Customization */
+.modal-scroll-form {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 12px;
+    margin-right: -12px;
+    padding-left: 4px;
+    /* Space for focus glow */
+    margin-left: -4px;
+}
+
+.modal-scroll-form::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-scroll-form::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-scroll-form::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.modal-scroll-form::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Buttons */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow:
+        0 4px 6px -1px rgba(37, 99, 235, 0.2),
+        0 2px 4px -1px rgba(37, 99, 235, 0.1);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 10px 15px -3px rgba(37, 99, 235, 0.3),
+        0 4px 6px -2px rgba(37, 99, 235, 0.15);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    opacity: 0.95;
+}
+
+.btn-secondary {
+    background-color: white;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+    color: #1f2937;
+}
+
+/* Table Add Button Styles */
+.add-more-button svg path,
+.add-more-columns svg path {
+    fill: currentColor;
+}
+
+.add-more-columns {
+    padding: 5px;
+}
+
+.add-more-columns svg {
+    width: 20px;
+    height: 20px;
+}
