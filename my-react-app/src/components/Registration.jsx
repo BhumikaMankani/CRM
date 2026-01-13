@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import md5 from "md5";
 
 function Registration({ onLoginSuccess }) {
     const [credentials, setCredentials] = useState({
@@ -20,6 +21,8 @@ function Registration({ onLoginSuccess }) {
         setError('');
         setIsLoading(true);
 
+        const hashedPassword = md5(credentials.password);
+
         try {
             const response = await fetch('/api/user', {
                 method: 'POST',
@@ -31,8 +34,8 @@ function Registration({ onLoginSuccess }) {
             });
 
             const data = await response.json();
-
             if (data.exists) {
+                localStorage.setItem('Password', JSON.stringify(data.user.password));
                 localStorage.setItem('user', JSON.stringify(data.user));
                 onLoginSuccess();
             } else {

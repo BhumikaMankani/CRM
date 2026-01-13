@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Marketing from "../pages/marketing";
 import Seo from "../pages/seo";
 import Form from "../components/Form";
+// import Md5Hasher from "../components/Password";
 import Development from "../pages/development";
 
 function Departments() {

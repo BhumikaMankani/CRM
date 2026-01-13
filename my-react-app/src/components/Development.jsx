@@ -214,7 +214,7 @@ function TableColumns() {
                             <div className="d-flex align-items-center gap-2 flex-grow-1">
                                 <input
                                     defaultValue={col.column_heading}
-                                    className="header-edit-input flex-grow-1"
+                                    className="header-edit-input flex-grow-1 text-dark"
                                     onBlur={(e) => handleRename(col.name, e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
                                 />
@@ -236,7 +236,7 @@ function TableColumns() {
                                     onClick={() => handleDeleteClick(col)}
                                     title="Deactivate Column"
                                 >
-                                    <FaTrash size={14} />
+                                    <FaTrash className="delete-icon" size={14} />
                                 </button>
                             )}
                         </div>
@@ -245,7 +245,7 @@ function TableColumns() {
                                 <div className="filter-input-wrapper">
                                     {col.column_type === 'select' ? (
                                         <select
-                                            className="form-control form-control-sm"
+                                            className="form-control form-control-sm text-dark"
                                             value={filters[col.name] || ""}
                                             onChange={(e) => handleFilterChange(col.name, e.target.value)}
                                         >
@@ -257,7 +257,7 @@ function TableColumns() {
                                     ) : (
                                         <input
                                             type={col.column_type === 'date' ? 'date' : col.column_type === 'number' ? 'number' : 'text'}
-                                            className="form-control form-control-sm"
+                                            className="form-control form-control-sm text-dark"
                                             placeholder={`Filter ${col.column_heading}...`}
                                             value={filters[col.name] || ""}
                                             onChange={(e) => handleFilterChange(col.name, e.target.value)}
@@ -289,7 +289,7 @@ function TableColumns() {
                         return (
                             <select
                                 value={value}
-                                className="bg-transparent border-0 w-100"
+                                className="bg-transparent border-0 w-100 text-dark"
                                 onChange={(e) =>
                                     handleChange(rowIndex, col.name, e.target.value)
                                 }
@@ -306,7 +306,7 @@ function TableColumns() {
                         <input
                             type={col.column_type === 'date' ? 'date' : col.column_type === 'number' ? 'number' : 'text'}
                             value={value}
-                            className="bg-transparent border-0 w-100"
+                            className="bg-transparent border-0 w-100 text-dark"
                             onChange={(e) =>
                                 handleChange(rowIndex, col.name, e.target.value)
                             }

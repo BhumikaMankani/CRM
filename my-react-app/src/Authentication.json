@@ -1,34 +1,26 @@
 [
     {
-        "Email": "komal_mandasa@gmail.com",
-        "Password": "Komal@123"
+        "user_name": "Komal",
+        "email": "komal_mandasa@gmail.com",
+        "password": "Komal@123",
+        "status": "admin"
     },
     {
-        "Email": "shubham_mandasa@gmail.com",
-        "Password": "Shubham@123"
+        "user_name": "Nikhil",
+        "email": "nikhil_mandasa@gmail.com",
+        "password": "Nikhil@123",
+        "status": "staff"
     },
     {
-        "Email": "pankaj_mandasa@gmail.com",
-        "Password": "Pankaj@123"
+        "user_name": "Arun",
+        "email": "arun_mandasa@gmail.com",
+        "password": "Arun@123",
+        "status": "staff"
     },
     {
-        "Email": "nikhil_mandasa@gmail.com",
-        "Password": "Nikhil@123"
-    },
-    {
-        "Email": "arun_mandasa@gmail.com",
-        "Password": "Arun@123"
-    },
-    {
-        "Email": "sunil_mandasa@gmail.com",
-        "Password": "Sunil@123"
-    },
-    {
-        "Email": "vibha_mandasa@gmail.com",
-        "Password": "Vibha@123"
-    },
-    {
-        "Email": "aditya_mandasa@gmail.com",
-        "Password": "Aditya@123"
+        "user_name": "Aditya",
+        "email": "aditya_mandasa@gmail.com",
+        "password": "Aditya@123",
+        "status": "staff"
     }
 ]

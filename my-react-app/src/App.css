@@ -82,6 +82,12 @@ input#email {
   width: auto;
 }
 
+table.custom-table {
+  overflow: auto;
+  width: max-content;
+}
+
+
 .heading_info {
   display: flex;
   justify-content: space-between;
@@ -306,4 +312,16 @@ button.filter_button svg {
 
 .filter-input-wrapper .form-control {
   padding-right: 24px;
+}
+
+button.btn svg.delete-icon {
+  width: 14px;
+  height: 14px;
+}
+
+@media screen and (max-width: 768px) {
+  button.btn {
+    font-size: 14px;
+    padding: 8px;
+  }
 }
