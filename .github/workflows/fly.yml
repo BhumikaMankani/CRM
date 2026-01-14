@@ -1,6 +1,5 @@
 name: Deploy to Fly Machine
 
-# Trigger on pushes to main branch
 on:
   push:
     branches:
@@ -9,26 +8,15 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Checkout your code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Fly CLI
-      - name: Set up Flyctl
+      - name: Setup Fly CLI
         uses: superfly/flyctl-actions/setup-flyctl@v1
 
-      # Step 3: Login to Fly
-      - name: Fly auth
-        run: flyctl auth token FlyV1 fm2_lJPECAAAAAAAAGXdxBC1LSL2ep7qgWrDDmdRnaJwwrVodHRwczovL2FwaS5mbHkuaW8vdjGWAJLOAAEnHR8Lk7lodHRwczovL2FwaS5mbHkuaW8vYWFhL3YxxDxsDw/t3W/Ys8fRuMxcqCI986FOW9UxSd8gVnKXX/0S6EhrYkrcfxroum9yT7Ta2CTHHYxatGLJTo5+tMXETtiVaZXQZ/qt59fOlIS7G7lDT7MnzYx0xLJlaBAbTXXIWNwThp57AttqQJ1aMT305JWmAogftWTTaJsWzlHWeR15hZMilZobQSChrHLZRg2SlAORgc4Aw/10HwWRgqdidWlsZGVyH6J3Zx8BxCDoGX6aZ3KQgm18ap6RjgmtNJn4eP/zKzNtH7EjSoMLJQ==,fm2_lJPETtiVaZXQZ/qt59fOlIS7G7lDT7MnzYx0xLJlaBAbTXXIWNwThp57AttqQJ1aMT305JWmAogftWTTaJsWzlHWeR15hZMilZobQSChrHLZRsQQ16heqkWWbZv/spt2o6ZUksO5aHR0cHM6Ly9hcGkuZmx5LmlvL2FhYS92MZgEks5pZ2KVzwAAAAElX4CzF84AAQpACpHOAAEKQAzEEPfZtPuDDpteEt5qxKnIt5/EIGKTy5WAbEiMRq+UJ0M0s2h/nqIRwEc5Dl6bXiJgzGRQ
-
-      # Step 4: Deploy Docker image to your machine
       - name: Deploy to Fly Machine
         env:
-          FLY_API_TOKEN: FlyV1 fm2_lJPECAAAAAAAAGXdxBC1LSL2ep7qgWrDDmdRnaJwwrVodHRwczovL2FwaS5mbHkuaW8vdjGWAJLOAAEnHR8Lk7lodHRwczovL2FwaS5mbHkuaW8vYWFhL3YxxDxsDw/t3W/Ys8fRuMxcqCI986FOW9UxSd8gVnKXX/0S6EhrYkrcfxroum9yT7Ta2CTHHYxatGLJTo5+tMXETtiVaZXQZ/qt59fOlIS7G7lDT7MnzYx0xLJlaBAbTXXIWNwThp57AttqQJ1aMT305JWmAogftWTTaJsWzlHWeR15hZMilZobQSChrHLZRg2SlAORgc4Aw/10HwWRgqdidWlsZGVyH6J3Zx8BxCDoGX6aZ3KQgm18ap6RjgmtNJn4eP/zKzNtH7EjSoMLJQ==,fm2_lJPETtiVaZXQZ/qt59fOlIS7G7lDT7MnzYx0xLJlaBAbTXXIWNwThp57AttqQJ1aMT305JWmAogftWTTaJsWzlHWeR15hZMilZobQSChrHLZRsQQ16heqkWWbZv/spt2o6ZUksO5aHR0cHM6Ly9hcGkuZmx5LmlvL2FhYS92MZgEks5pZ2KVzwAAAAElX4CzF84AAQpACpHOAAEKQAzEEPfZtPuDDpteEt5qxKnIt5/EIGKTy5WAbEiMRq+UJ0M0s2h/nqIRwEc5Dl6bXiJgzGRQ
+          FLY_API_TOKEN: fm2_lJPECAAAAAAAAGXdxBDbXzTgTohyuvYBuQUOb0CwwrVodHRwczovL2FwaS5mbHkuaW8vdjGUAJLOAAEnHR8Lk7lodHRwczovL2FwaS5mbHkuaW8vYWFhL3YxxDxjfX6H4vyBq6WN+RFQ0bZinUTIbc4OTI95RIpNJ0MdwZRRUlkj5Z8/hqaVmOyF9KsUx1e+rHcoaB4Eu8TETowLEi9mwP+6v2I098Ndpeovtrz6wRWxN7H9axL4gb936LoAm/T8COoi8Q2/iyOK220VPclC20eHyus/SX1RTlHbjUgoZ9quIlv/rZnmasQgpN/VeihsG6e/CuoKOURLPn0SEIuHSD2YD0KuQaoAnj8=,fm2_lJPETowLEi9mwP+6v2I098Ndpeovtrz6wRWxN7H9axL4gb936LoAm/T8COoi8Q2/iyOK220VPclC20eHyus/SX1RTlHbjUgoZ9quIlv/rZnmasQQuJ3cPLea2I5xAF+MnBfIiMO5aHR0cHM6Ly9hcGkuZmx5LmlvL2FhYS92MZYEks5pZ2PNzmlnZkMXzgABCkAKkc4AAQpAxCC5eJuBIHPDoTWf+YHTRZSQfZ/iXeor9wgdwhfy6imzcQ==,fo1_A9P_oV3caQVHK6o5DVl4jJAs5q2TvalXrTxs80D3rqg
         run: |
-          flyctl deploy \
-            --remote-only \
-            --image nginx:alpine \
-            --app crm-machine-001
+          flyctl deploy --remote-only --image nginx:alpine --app crm-machine-001
