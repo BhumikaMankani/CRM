@@ -1,0 +1,24 @@
+# fly.toml app configuration file
+app = "crm-machine-001"
+primary_region = "sjc"
+
+[[machines]]
+  id = "80e473b6652098"
+  name = "crm-machine-1"
+  region = "sjc"
+  image = "docker-hub-mirror.fly.io/library/nginx:alpine@sha256:c6d6e0ed84a9f9276a9248fe43c126227188366137af4dd89b3a644f1d281cec"
+  cpus = 1
+  memory_mb = 256
+
+  [[machines.services]]
+    internal_port = 80
+    protocol = "tcp"
+
+    [[machines.services.ports]]
+      port = 80
+      handlers = ["http"]
+      force_https = true
+
+    [[machines.services.ports]]
+      port = 443
+      handlers = ["tls", "http"]
