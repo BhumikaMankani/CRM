@@ -1,6 +1,6 @@
 # fly.toml app configuration
 app = "crm-machine-001"
-primary_region = "sjc"
+primary_region = "bom"
 
 [build]
   dockerfile = "Dockerfile"
