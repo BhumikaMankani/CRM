@@ -1,5 +1,5 @@
 import React from 'react';
-import './Table.css';
+import './table.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Table = ({ columns, data, onAddClick, onAddColumnClick }) => {

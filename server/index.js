@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 // const projectRoutes = require('./routes/project');
 // const FormRoutes = require('./routes/formData');
 // const ColumnConfigRoutes = require('./routes/columnConfig');
@@ -10,13 +11,13 @@ const Development = require('./routes/development');
 const User = require('./routes/user');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
 const connectDB = async (retryCount = 5) => {
-    const mongoURI = "mongodb://localhost:27017/ProjectTracker"; // specify DB name
+    const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/ProjectTracker"; // specify DB name
     try {
         await mongoose.connect(mongoURI, {
             serverSelectionTimeoutMS: 5000,
@@ -43,6 +44,14 @@ app.use("/api/development", Development);
 // app.use("/api/Department", Department);
 app.use("/api/user", User);
 
-app.listen(PORT, '127.0.0.1', () => {
-    console.log(`Backend is working on http://127.0.0.1:${PORT}`);
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, '../my-react-app/dist')));
+
+// Catch all handler: send back React's index.html file for client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../my-react-app/dist/index.html'));
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Backend is working on http://0.0.0.0:${PORT}`);
 });
