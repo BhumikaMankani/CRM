@@ -29,13 +29,25 @@ function Registration({ onLoginSuccess }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email: credentials.email,
-                    password: credentials.password
+                    password: hashedPassword
                 })
             });
 
+            if (!response.ok) {
+                let errorMsg = 'Invalid email or password';
+                try {
+                    const errorData = await response.json();
+                    errorMsg = errorData.error || errorData.message || errorMsg;
+                } catch (e) {
+                    console.error('Failed to parse error response:', e);
+                }
+                setError(errorMsg);
+                return;
+            }
+
             const data = await response.json();
             if (data.exists) {
-                localStorage.setItem('Password', JSON.stringify(data.user.password));
+                localStorage.setItem('Password', JSON.stringify(hashedPassword));
                 localStorage.setItem('user', JSON.stringify(data.user));
                 onLoginSuccess();
             } else {

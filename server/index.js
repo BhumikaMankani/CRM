@@ -1,12 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const projectRoutes = require('./routes/project');
-const FormRoutes = require('./routes/formData');
-const ColumnConfigRoutes = require('./routes/columnConfig');
+// const projectRoutes = require('./routes/project');
+// const FormRoutes = require('./routes/formData');
+// const ColumnConfigRoutes = require('./routes/columnConfig');
 const Columns = require('./routes/columns');
 const Development = require('./routes/development');
-const Department = require('./routes/department');
+// const Department = require('./routes/department');
 const User = require('./routes/user');
 
 const app = express();
@@ -34,11 +34,13 @@ const connectDB = async (retryCount = 5) => {
 };
 connectDB();
 
-app.use('/api/projects', projectRoutes);
-app.use('/api/submit', FormRoutes)
+// User.syncIndexes();
+
+// app.use('/api/projects', projectRoutes);
+// app.use('/api/submit', FormRoutes)
 app.use("/api/columns", Columns);
 app.use("/api/development", Development);
-app.use("/api/Department", Department);
+// app.use("/api/Department", Department);
 app.use("/api/user", User);
 
 app.listen(PORT, '127.0.0.1', () => {

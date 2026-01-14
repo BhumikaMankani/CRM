@@ -51,18 +51,6 @@ function Departments() {
         <section className="ftco-section">
             <div className="row">
                 <div className="col-md-12">
-                    {/* <button
-                        className="btn btn-outline-dark"
-                        onClick={() => addRow()}
-                    >
-                        Add Row
-                    </button>
-                    <button
-                        className="btn btn-outline-dark"
-                        onClick={() => setIsColumnModalOpen(true)}
-                    >
-                        Add Column
-                    </button> */}
                     <table className="table">
                         <thead className="thead-primary">
                             <tr>

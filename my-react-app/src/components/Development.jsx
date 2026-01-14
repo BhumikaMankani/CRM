@@ -24,9 +24,65 @@ function TableColumns() {
     const [activeSuggestionField, setActiveSuggestionField] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+    // hover delete row icon
+    const [hoveredRowIndex, setHoveredRowIndex] = useState(null);
+
+    // Get data user
+    const [status, setStatus] = useState(() => {
+        // Get the item from localStorage
+        const savedData = localStorage.getItem('user');
+
+        // Parse it or return null if it doesn't exist
+        return savedData ? JSON.parse(savedData) : null;
+    });
     // Handle column delete
     const handleColumnEditClick = () => {
         setIsDelete(!isDelete);
+    };
+
+    // Helper for overdue calculation
+    const calculateOverdue = (dateStr) => {
+        if (!dateStr) return { text: "No Date", className: "overdue-block deadline-green" };
+
+        let year, month, day;
+        if (dateStr.includes('-')) {
+            // Assume YYYY-MM-DD (standard date input)
+            [year, month, day] = dateStr.split('-');
+        } else if (dateStr.includes('/')) {
+            // Assume DD/MM/YYYY
+            [day, month, year] = dateStr.split('/');
+        } else {
+            return { text: dateStr, className: "overdue-block deadline-green" };
+        }
+
+        if (!day || !month || !year) {
+            return { text: dateStr, className: "overdue-block deadline-green" };
+        }
+
+        const targetDate = new Date(`${year}-${month}-${day}`);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        targetDate.setHours(0, 0, 0, 0);
+
+        const diffTime = targetDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+            return {
+                text: `Overdue by ${Math.abs(diffDays)} days`,
+                className: "overdue-block bg-danger p-1 rounded text-white text-center"
+            };
+        } else if (diffDays === 0) {
+            return {
+                text: `Deadline Today`,
+                className: "overdue-block bg-warning p-1 rounded text-dark text-center"
+            };
+        } else {
+            return {
+                text: `Deadline in ${diffDays} days`,
+                className: "overdue-block bg-success p-1 rounded text-white text-center"
+            };
+        }
     };
 
     // Handle filter
@@ -101,16 +157,19 @@ function TableColumns() {
     }, []);
 
     /* ---------------- UPDATE CELL ---------------- */
-    const handleChange = (rowIndex, field, value) => {
-        const updated = [...data];
-        updated[rowIndex][field] = value;
-        setData(updated);
+    const handleChange = (rowId, field, value) => {
+        setData(prev => prev.map(row =>
+            row._id === rowId ? { ...row, [field]: value } : row
+        ));
 
-        fetch(`/api/development/${updated[rowIndex]._id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updated[rowIndex])
-        });
+        const rowToUpdate = data.find(r => r._id === rowId);
+        if (rowToUpdate) {
+            fetch(`/api/development/${rowId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...rowToUpdate, [field]: value })
+            });
+        }
     };
 
     const handleDeleteClick = (col) => {
@@ -121,6 +180,28 @@ function TableColumns() {
             isDynamic: true
         });
     };
+
+    const deleteRow = async (rowId) => {
+        const itemToDelete = data.find(row => row._id === rowId);
+
+        if (!itemToDelete) return;
+
+        setData(prev => prev.filter(row => row._id !== rowId));
+
+        try {
+            const response = await fetch(`/api/development/${rowId}`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                console.error("Failed to delete from database");
+                setData(data);
+            }
+        } catch (error) {
+            console.error("Network error:", error);
+            setData(data);
+        }
+    }
 
     const confirmDelete = async () => {
         const { accessor } = deleteConfirmation;
@@ -144,11 +225,17 @@ function TableColumns() {
     };
 
     /* ---------------- ADD ROW ---------------- */
-    const addRow = async () => {
+    const addRow = async (newRowData) => {
+        // Clear sorting and filters to ensure new row is visible at bottom
+        setSortConfig({ key: null, direction: 'asc' });
+        setFilters({});
+
         try {
-            const newRow = {};
+            const newRow = { ...newRowData };
             columnsDef.forEach(col => {
-                newRow[col.name] = "";
+                if (!newRow.hasOwnProperty(col.name)) {
+                    newRow[col.name] = "";
+                }
             });
 
             const res = await fetch("/api/development", {
@@ -164,11 +251,37 @@ function TableColumns() {
 
             const saved = await res.json();
             setData(prev => [...prev, saved]);
+            setIsModalOpen(false); // Close modal after saving
+
+            // Scroll to bottom
+            setTimeout(() => {
+                const tableWrap = document.querySelector('.table-wrap');
+                if (tableWrap) {
+                    tableWrap.scrollTop = tableWrap.scrollHeight;
+                }
+            }, 100);
         } catch (err) {
             console.error("Error adding row:", err);
             alert("Error adding row: " + err.message);
         }
     };
+
+    // Define allowed columns for staff
+    const valuesToMatch = useMemo(() => {
+        if (!status?.column_access) return [];
+        return status.column_access.split(',').map(item => item.trim().toLowerCase());
+    }, [status]);
+
+    // Check if user can edit this column
+    const canEdit = (columnName) => {
+        if (!status) return false;
+        if (status.status === 'admin') return true;
+        if (status.status === 'staff') {
+            return valuesToMatch.includes(columnName.toLowerCase());
+        }
+        return false;
+    };
+
 
     /* ---------------- RENAME COLUMN ---------------- */
     const handleRename = async (oldName, newName) => {
@@ -205,7 +318,17 @@ function TableColumns() {
                     </div>
                 ),
                 accessor: "index",
-                render: (_, rowIndex) => <span>{rowIndex + 1}</span>
+                render: (row, rowIndex) => (
+                    <div className="row_index" onMouseEnter={() => setHoveredRowIndex(rowIndex)}
+                        onMouseLeave={() => setHoveredRowIndex(null)}>
+                        {hoveredRowIndex === rowIndex ?
+
+                            (<button onClick={() => deleteRow(row._id)} className="delete_row btn btn-link text-danger p-0" type="button"> <FaTrash className="delete-icon" size={14} /></button>
+                            ) :
+                            (<span>{rowIndex + 1}</span>)
+                        }
+                    </div>
+                )
             },
             ...columnsDef.map(col => ({
                 header: (
@@ -215,8 +338,10 @@ function TableColumns() {
                                 <input
                                     defaultValue={col.column_heading}
                                     className="header-edit-input flex-grow-1 text-dark"
-                                    onBlur={(e) => handleRename(col.name, e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
+                                    {...(status.status === 'admin' ? {
+                                        onBlur: (e) => handleRename(col.name, e.target.value),
+                                        onKeyDown: (e) => e.key === "Enter" && e.target.blur()
+                                    } : { readOnly: true })}
                                 />
                                 {col.sorting && (
                                     <button
@@ -247,7 +372,8 @@ function TableColumns() {
                                         <select
                                             className="form-control form-control-sm text-dark"
                                             value={filters[col.name] || ""}
-                                            onChange={(e) => handleFilterChange(col.name, e.target.value)}
+                                            onChange={canEdit(col.name) ? (e) => handleFilterChange(col.name, e.target.value) : undefined}
+                                            disabled={!canEdit(col.name)}
                                         >
                                             <option value="">All</option>
                                             {(col.multipleValue || []).map(opt => (
@@ -261,6 +387,7 @@ function TableColumns() {
                                             placeholder={`Filter ${col.column_heading}...`}
                                             value={filters[col.name] || ""}
                                             onChange={(e) => handleFilterChange(col.name, e.target.value)}
+                                            disabled={!canEdit(col.name)}
                                         />
                                     )}
                                     {filters[col.name] && (
@@ -278,12 +405,21 @@ function TableColumns() {
                                     )}
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        )
+                        }
+                    </div >
                 ),
                 accessor: col.name,
-                render: (row, rowIndex) => {
+                render: (row) => {
                     const value = row[col.name] || "";
+
+                    // Special handling for Overdue column
+
+                    if (col.name === 'overdue' || col.column_heading.toLowerCase() === 'overdue') {
+                        const endDateValue = row['end_date'] || row['endDate'] || "";
+                        const overdueInfo = calculateOverdue(endDateValue);
+                        return <div className={overdueInfo.className}>{overdueInfo.text}</div>;
+                    }
 
                     if (col.column_type === "select") {
                         return (
@@ -291,8 +427,9 @@ function TableColumns() {
                                 value={value}
                                 className="bg-transparent border-0 w-100 text-dark"
                                 onChange={(e) =>
-                                    handleChange(rowIndex, col.name, e.target.value)
+                                    handleChange(row._id, col.name, e.target.value)
                                 }
+                                disabled={!canEdit(col.name)}
                             >
                                 <option value="">Select</option>
                                 {(col.multipleValue || []).map(opt => (
@@ -308,33 +445,39 @@ function TableColumns() {
                             value={value}
                             className="bg-transparent border-0 w-100 text-dark"
                             onChange={(e) =>
-                                handleChange(rowIndex, col.name, e.target.value)
+                                handleChange(row._id, col.name, e.target.value)
                             }
+                            disabled={!canEdit(col.name)}
                         />
                     );
                 }
             }))
         ];
         return baseColumns;
-    }, [columnsDef, data, isDelete, isFilterOpen, filters, sortConfig, activeSuggestionField, clearFilters]);
+    }, [columnsDef, data, isDelete, isFilterOpen, filters, sortConfig, activeSuggestionField, clearFilters, hoveredRowIndex, status, valuesToMatch]);
 
     return (
         <section className="ftco-section">
             <div className='heading_info'>
                 <h1>Projects List</h1>
                 <div className='d-flex align-items-center gap-2'>
-                    <button
-                        className="btn btn-outline-dark"
-                        onClick={() => addRow()}
-                    >
-                        Add Row
-                    </button>
-                    <button
-                        className="btn btn-outline-dark"
-                        onClick={() => setIsColumnModalOpen(true)}
-                    >
-                        Add Column
-                    </button>
+                    {status.status === 'admin' ? (
+                        <button
+                            className="btn btn-outline-dark"
+                            onClick={() => addRow()}
+                        >
+                            Add Row
+                        </button>
+
+                    ) : null}
+
+                    {status.status === 'admin' ? (
+                        <button
+                            className="btn btn-outline-dark"
+                            onClick={() => setIsColumnModalOpen(true)}
+                        >
+                            Add Column
+                        </button>) : null}
                     {isDelete && (
                         <button
                             onClick={() => setIsDelete(false)}
@@ -345,9 +488,11 @@ function TableColumns() {
                             <FaTimes size={16} />
                         </button>
                     )}
-                    <button onClick={handleColumnEditClick} className={`btn ${isDelete ? 'btn-dark' : 'btn-outline-dark'}`} title="Toggle Edit Mode">
-                        <svg fill="currentColor" width="16" height="16" viewBox="0 0 528.899 528.899"><path d="M328.883,89.125l107.59,107.589l-272.34,272.34L56.604,361.465L328.883,89.125z M518.113,63.177l-47.981-47.981 c-18.543-18.543-48.653-18.543-67.259,0l-45.961,45.961l107.59,107.59l53.611-53.611 C532.495,100.753,532.495,77.559,518.113,63.177z M0.3,512.69c-1.958,8.812,5.998,16.708,14.811,14.565l119.891-29.069 L27.473,390.597L0.3,512.69z"></path></svg>
-                    </button>
+                    {status.status === 'admin' ? (
+                        <button onClick={handleColumnEditClick} className={`btn ${isDelete ? 'btn-dark' : 'btn-outline-dark'}`} title="Toggle Edit Mode">
+                            <svg fill="currentColor" width="16" height="16" viewBox="0 0 528.899 528.899"><path d="M328.883,89.125l107.59,107.589l-272.34,272.34L56.604,361.465L328.883,89.125z M518.113,63.177l-47.981-47.981 c-18.543-18.543-48.653-18.543-67.259,0l-45.961,45.961l107.59,107.59l53.611-53.611 C532.495,100.753,532.495,77.559,518.113,63.177z M0.3,512.69c-1.958,8.812,5.998,16.708,14.811,14.565l119.891-29.069 L27.473,390.597L0.3,512.69z"></path></svg>
+                        </button>
+                    ) : null}
                     <button onClick={handleFilterClick} className={`btn ${isFilterOpen ? 'btn-dark' : 'btn-outline-dark'}`} title="Toggle Filters">
                         <svg viewBox="0 0 24 24" fill="none" xmlnsXlink="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"><path fillRule="evenodd" clipRule="evenodd" d="M15 10.5A3.502 3.502 0 0 0 18.355 8H21a1 1 0 1 0 0-2h-2.645a3.502 3.502 0 0 0-6.71 0H3a1 1 0 0 0 0 2h8.645A3.502 3.502 0 0 0 15 10.5zM3 16a1 1 0 1 0 0 2h2.145a3.502 3.502 0 0 0 6.71 0H21a1 1 0 1 0 0-2h-9.145a3.502 3.502 0 0 0-6.71 0H3z" fill="#000000"></path></g></svg>
                     </button>
