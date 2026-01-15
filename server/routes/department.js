@@ -11,11 +11,12 @@ router.get("/", async (req, res) => {
 // Add new row
 router.post("/", async (req, res) => {
     const department = new Department(req.body);
+    const name = department.department.toLowerCase().replace(/\s+/g, '_') + (new Date()).getTime();
+    department.name = name;
     await department.save();
     res.json(department);
 });
 
-// Update row
 router.put("/:id", async (req, res) => {
     try {
         const updated = await Department.findByIdAndUpdate(

@@ -2,13 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-// const projectRoutes = require('./routes/project');
-// const FormRoutes = require('./routes/formData');
-// const ColumnConfigRoutes = require('./routes/columnConfig');
 const Columns = require('./routes/columns');
 const Development = require('./routes/development');
 // const Department = require('./routes/department');
 const User = require('./routes/user');
+
+// require('dotenv').config();
+require('dotenv').config();
+console.log('MONGO_URI =', process.env.MONGO_URI);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 const connectDB = async (retryCount = 5) => {
-    const mongoURI = "mongodb+srv://info_db_user:kK3BQM03vlyACBrc@cluster0.xlzltty.mongodb.net/"; // specify DB name
+    const mongoURI = process.env.MONGO_URI; // specify DB name
     try {
         await mongoose.connect(mongoURI, {
             serverSelectionTimeoutMS: 5000,
@@ -35,13 +36,9 @@ const connectDB = async (retryCount = 5) => {
 };
 connectDB();
 
-// User.syncIndexes();
 
-// app.use('/api/projects', projectRoutes);
-// app.use('/api/submit', FormRoutes)
 app.use("/api/columns", Columns);
 app.use("/api/development", Development);
-// app.use("/api/Department", Department);
 app.use("/api/user", User);
 
 // Serve static files from the React app build directory
@@ -49,7 +46,7 @@ app.use(express.static(path.join(__dirname, '../my-react-app/dist')));
 
 // Catch all handler: send back React's index.html file for client-side routing
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../my-react-app/dist/index.html'));
+    res.sendFile(path.join(__dirname, '../my-react-app/dist/index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {

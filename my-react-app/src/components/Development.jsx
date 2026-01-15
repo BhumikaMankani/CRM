@@ -372,8 +372,7 @@ function TableColumns() {
                                         <select
                                             className="form-control form-control-sm text-dark"
                                             value={filters[col.name] || ""}
-                                            onChange={canEdit(col.name) ? (e) => handleFilterChange(col.name, e.target.value) : undefined}
-                                            disabled={!canEdit(col.name)}
+                                            onChange={(e) => handleFilterChange(col.name, e.target.value)}
                                         >
                                             <option value="">All</option>
                                             {(col.multipleValue || []).map(opt => (
@@ -387,7 +386,6 @@ function TableColumns() {
                                             placeholder={`Filter ${col.column_heading}...`}
                                             value={filters[col.name] || ""}
                                             onChange={(e) => handleFilterChange(col.name, e.target.value)}
-                                            disabled={!canEdit(col.name)}
                                         />
                                     )}
                                     {filters[col.name] && (
