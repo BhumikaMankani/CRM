@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 const connectDB = async (retryCount = 5) => {
-    const mongoURI = "mongodb+srv://info_db_user:info_db_user@cluster0.xlzltty.mongodb.net/?appName=Cluster0"; // specify DB name
+    const mongoURI = "mongodb+srv://info_db_user:kK3BQM03vlyACBrc@cluster0.xlzltty.mongodb.net/"; // specify DB name
     try {
         await mongoose.connect(mongoURI, {
             serverSelectionTimeoutMS: 5000,
