@@ -42,12 +42,12 @@ app.use("/api/columns", Columns);
 app.use("/api/user", User);
 
 // Serve static files from the React app build directory
-// app.use(express.static(path.join(__dirname, '../my-react-app/dist')));
+app.use(express.static(path.join(__dirname, '../my-react-app/dist')));
 
 // Catch all handler: send back React's index.html file for client-side routing
-// app.use((req, res) => {
-//     res.sendFile(path.join(__dirname, '../my-react-app/dist/index.html'));
-// });
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, '../my-react-app/dist/index.html'));
+});
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Backend is working on http://0.0.0.0:${PORT}`);

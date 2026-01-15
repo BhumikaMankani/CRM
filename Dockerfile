@@ -1,33 +1,24 @@
-# Use the official Node.js 20 Alpine image
-FROM node:20-alpine
+# Build stage
+FROM node:20-slim AS build
 
-# Set the working directory
-WORKDIR /app
-
-# Copy package.json files and install dependencies
-COPY package.json ./
+WORKDIR /app/frontend
+COPY my-react-app/package*.json ./
 RUN npm install
-
-COPY server/package.json ./server/
-WORKDIR /app/server
-RUN npm install
-
-WORKDIR /app
-COPY my-react-app/package.json ./my-react-app/
-WORKDIR /app/my-react-app
-RUN npm install
-
-# Copy the source code
-WORKDIR /app
-COPY . .
-
-# Build the React app
-WORKDIR /app/my-react-app
+COPY my-react-app/ ./
 RUN npm run build
 
-# Expose the port the app runs on
+# Final stage
+FROM node:20-slim
+
+WORKDIR /app
+COPY server/package*.json ./server/
+RUN cd server && npm install --production
+
+COPY server/ ./server/
+COPY --from=build /app/frontend/dist ./my-react-app/dist
+
 EXPOSE 5000
 
-# Start the server
-WORKDIR /app/server
-CMD ["npm", "start"]
+ENV NODE_ENV=production
+
+CMD ["node", "server/index.js"]

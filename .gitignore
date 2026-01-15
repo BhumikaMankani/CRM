@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Build Directories
+dist/
+dist-ssr/
+*.local
+
+# Fly.io
+.fly/
+
+# IDE
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Project-specific ignores
+server/node_modules/
+my-react-app/node_modules/
+my-react-app/dist/
