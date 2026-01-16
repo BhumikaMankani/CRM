@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const projectRoutes = require('./routes/project');
+// const projectRoutes = require('./routes/project');
 const Columns = require('./routes/columns');
 const Development = require('./routes/development');
 // const Department = require('./routes/department');
@@ -37,8 +37,9 @@ connectDB();
 
 // User.syncIndexes();
 
-app.use('/api/projects', projectRoutes);
+// app.use('/api/projects', projectRoutes);
 app.use("/api/columns", Columns);
+app.use("/api/development", Development);
 app.use("/api/user", User);
 
 // Serve static files from the React app build directory
