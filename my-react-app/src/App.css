@@ -25,6 +25,7 @@ td:has(.deadline-green) {
 
 input::-webkit-calendar-picker-indicator {
   filter: invert(1);
+  color: black;
 }
 
 
