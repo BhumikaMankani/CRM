@@ -41,6 +41,7 @@ function Form({ isPopupOpen, onPopupClose, onPopupSave, showColumnHeading, showD
             multipleValue: formData.type === 'select' ? formData.options.filter(opt => opt.trim() !== '') : []
         };
 
+        console.log("payload", payload);
         if (onPopupSave) {
             onPopupSave(payload);
         }
@@ -114,7 +115,7 @@ function Form({ isPopupOpen, onPopupClose, onPopupSave, showColumnHeading, showD
                                     <div key={index} className="option-row">
                                         <input
                                             type="text"
-                                            className="option-input"
+                                            className="option-input text-black"
                                             placeholder={`Option ${index + 1}`}
                                             value={option}
                                             onChange={(e) => handleOptionChange(index, e.target.value)}

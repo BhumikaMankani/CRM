@@ -7,6 +7,7 @@ router.post("/", async (req, res) => {
     try {
         const { email, password } = req.body || {};
         console.log("Login attempt for email:", email);
+        console.log("Received password hash:", password);
 
         if (!email || !password) {
             console.warn("Missing email or password in request body");
@@ -15,8 +16,10 @@ router.post("/", async (req, res) => {
 
         // Searching with lowercase keys to match the actual User model fields
         const user = await User.findOne({ email: email.toLowerCase() });
+        console.log("User found in DB:", user ? "Yes" : "No");
 
         if (user) {
+            console.log("DB password hash:", user.password);
             // NOTE: In a real app, use bcrypt to compare hashed passwords.
             // Client side MD5 is used here as per existing logic.
             if (user.password === password) {

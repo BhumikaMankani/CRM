@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const Column = require('./models/Column');
 
-const mongoURI = "mongodb://localhost:27017/ProjectTracker";
+const mongoURI = process.env.MONGO_URI;
+// const mongoURI = "mongodb://localhost:27017/ProjectTracker";
 
 const seedColumns = async () => {
     try {
@@ -19,6 +20,7 @@ const seedColumns = async () => {
 
         for (const col of columns) {
             const existing = await Column.findOne({ column_heading: col.column_heading });
+
             if (!existing) {
                 await new Column({ ...col, status: 'active' }).save();
                 console.log(`Added column: ${col.column_heading}`);

@@ -3,7 +3,6 @@
   margin: 0;
   padding: 0;
   width: 100%;
-  background: #f8f9fd;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -16,6 +15,11 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .modal-content input.form-input {
   color: black;
+}
+
+body {
+  min-height: 100vh;
+  background: #f8f9fd;
 }
 
 td:has(.deadline-green) {

@@ -367,16 +367,22 @@ function TableColumns() {
                 ),
                 accessor: "index",
                 render: (row, rowIndex) => (
-                    <div className="row_index" onMouseEnter={() => setHoveredRowIndex(rowIndex)}
-                        onMouseLeave={() => setHoveredRowIndex(null)}>
-
-                        {status.status === 'admin' ? (
-                            hoveredRowIndex === rowIndex ?
-                                (<button onClick={() => deleteRow(row._id)} className=" btn btn-link text-danger p-0" type="button"> <FaTrash className="delete-icon" size={14} /></button>
-                                ) :
-                                (<span>{rowIndex + 1}</span>)
-                        ) : (<span>{rowIndex + 1}</span>)}
-                    </div>
+                    columnsDef.length > 1 ? (
+                        <div className="row_index" onMouseEnter={() => setHoveredRowIndex(rowIndex)}
+                            onMouseLeave={() => setHoveredRowIndex(null)}>
+                            {status.status === 'admin' ? (
+                                hoveredRowIndex === rowIndex ? (
+                                    <button onClick={(e) => deleteRow(row._id, e)} className=" btn btn-link text-danger p-0" type="button">
+                                        <FaTrash className="delete-icon" size={14} />
+                                    </button>
+                                ) : (
+                                    <span>{rowIndex + 1}</span>
+                                )
+                            ) : (
+                                <span>{rowIndex + 1}</span>
+                            )}
+                        </div>
+                    ) : null
                 )
             },
             ...columnsDef.map(col => ({
@@ -581,6 +587,8 @@ function TableColumns() {
 
                         const saved = await res.json();
                         setColumnsDef(prev => [...prev, saved]);
+                        console.log("saved", saved);
+                        console.log("columnsDef", columnsDef);
                     } catch (err) {
                         console.error("Error saving column:", err);
                         alert("Error saving column: " + err.message);

@@ -17,21 +17,25 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick }) => {
                 >
                     <table className="custom-table mb-0 table table-striped table-bordered dataTable">
                         <thead className='thead-light'>
-                            <tr>
-                                {columns.map((column, index) => (
-                                    <th className='' key={column.accessor || `col-${index}`}>{column.header}</th>
-                                ))}
-                            </tr>
+                            {columns.length > 1 ? (
+                                <tr>
+                                    {columns.map((column, index) => (
+                                        <th className='' key={column.accessor || `col-${index}`}>{column.header}</th>
+                                    ))}
+                                </tr>
+                            ) : null}
                         </thead>
                         <tbody>
                             {data.map((row, rowIndex) => (
-                                <tr key={row._id || rowIndex}>
-                                    {columns.map((column, colIndex) => (
-                                        <td key={column.accessor || `cell-${colIndex}`}>
-                                            {column.render ? column.render(row, rowIndex) : row[column.accessor]}
-                                        </td>
-                                    ))}
-                                </tr>
+                                columns.length > 1 ? (
+                                    <tr key={row._id || rowIndex}>
+                                        {columns.map((column, colIndex) => (
+                                            <td key={column.accessor || `cell-${colIndex}`}>
+                                                {column.render ? column.render(row, rowIndex) : row[column.accessor]}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ) : null
                             ))}
                         </tbody>
                     </table>
