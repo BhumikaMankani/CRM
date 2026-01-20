@@ -3,6 +3,7 @@ import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
 import ToggleButtonIcon from "./toggle";
+import { API_URL } from "../../proxy";
 import { FaTrash, FaTimes } from "react-icons/fa";
 
 function TableColumns() {
@@ -140,7 +141,7 @@ function TableColumns() {
         return processedData;
     }, [data, filters, sortConfig]);
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/columns`)
+        fetch(`${API_URL}/api/columns`)
             .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch columns");
                 return res.json();
@@ -148,7 +149,7 @@ function TableColumns() {
             .then(setColumnsDef)
             .catch(err => console.error("Error loading columns:", err));
 
-        fetch(`${import.meta.env.VITE_API_URL}/api/development`)
+        fetch(`${API_URL}/api/development`)
             .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch development data");
                 return res.json();
@@ -165,7 +166,7 @@ function TableColumns() {
 
         const rowToUpdate = data.find(r => r._id === rowId);
         if (rowToUpdate) {
-            fetch(`${import.meta.env.VITE_API_URL}/api/development/${rowId}`, {
+            fetch(`${API_URL}/api/development/${rowId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...rowToUpdate, [field]: value })
@@ -197,7 +198,7 @@ function TableColumns() {
         console.log(data);
         console.log(rowId);
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/development/deactivate/${rowId}`, {
+            const response = await fetch(`${API_URL}/api/development/deactivate/${rowId}`, {
                 method: "PATCH"
             });
 
@@ -214,7 +215,7 @@ function TableColumns() {
     const confirmDelete = async () => {
         const { accessor } = deleteConfirmation;
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/columns/deactivate/${accessor}`, {
+            const res = await fetch(`${API_URL}/api/columns/deactivate/${accessor}`, {
                 method: "PATCH"
             });
 
@@ -246,7 +247,7 @@ function TableColumns() {
                 }
             });
 
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/development`, {
+            const res = await fetch(`${API_URL}/api/development`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newRow)
@@ -279,7 +280,7 @@ function TableColumns() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user`);
+                const response = await fetch(`${API_URL}/api/user`);
                 const data = await response.json();
                 setUserData(data);
             } catch (err) {
@@ -295,7 +296,7 @@ function TableColumns() {
 
     const handleColumnAccess = async (columnName) => {
         // try {
-        //     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/column-access`, {
+        //     const response = await fetch(`${aPI_URL}/api/user/column-access`, {
         //         method: "PATCH",
         //         headers: {
         //             "Content-Type": "application/json",
@@ -339,7 +340,7 @@ function TableColumns() {
         if (!trimmedNewName || oldName === trimmedNewName) return;
 
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/columns/${oldName}`, {
+            const res = await fetch(`${API_URL}/api/columns/${oldName}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ newHeading: trimmedNewName })
@@ -569,7 +570,7 @@ function TableColumns() {
                 onPopupClose={() => setIsColumnModalOpen(false)}
                 onPopupSave={async (newColumn) => {
                     try {
-                        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/columns`, {
+                        const res = await fetch(`${API_URL}/api/columns`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(newColumn)

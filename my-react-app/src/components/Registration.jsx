@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import md5 from "md5";
 import { Link, useNavigate } from 'react-router-dom'
+import { API_URL } from "../../proxy";
 import Departments from "../pages/dapartment";
 
 function Registration({ onLoginSuccess }) {
@@ -27,7 +28,7 @@ function Registration({ onLoginSuccess }) {
         const hashedPassword = md5(credentials.password);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user`, {
+            const response = await fetch(`${API_URL}/api/user`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

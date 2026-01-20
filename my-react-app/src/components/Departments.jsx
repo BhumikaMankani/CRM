@@ -6,6 +6,7 @@ import Form from "../components/Form";
 import { IoIosLock } from "react-icons/io";
 // import Md5Hasher from "../components/Password";
 import Development from "../pages/development";
+import { API_URL } from "../../proxy";
 
 function Departments({ setIsLoggedIn }) {
 
@@ -31,7 +32,7 @@ function Departments({ setIsLoggedIn }) {
 
     const fetchDepartments = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/department`);
+            const response = await fetch(`${API_URL}/api/department`);
             const data = await response.json();
             setDepartments(data);
         } catch (err) {
@@ -44,7 +45,7 @@ function Departments({ setIsLoggedIn }) {
         if (!newDepartmentName.trim()) return;
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/department`, {
+            const response = await fetch(`${API_URL}/api/department`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -74,7 +75,7 @@ function Departments({ setIsLoggedIn }) {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user`);
+                const response = await fetch(`${API_URL}/api/user`);
                 const data = await response.json();
                 setUserData(data);
             } catch (err) {
@@ -105,7 +106,7 @@ function Departments({ setIsLoggedIn }) {
         }
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/${user._id}`, {
+            const response = await fetch(`${API_URL}/api/user/${user._id}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
