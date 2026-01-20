@@ -44,7 +44,7 @@ function TableColumns() {
 
     // Helper for overdue calculation
     const calculateOverdue = (dateStr) => {
-        if (!dateStr) return { text: "No Date", className: "overdue-block deadline-green" };
+        if (!dateStr) return { text: "No Date", className: "overdue-block deadline-green text-center" };
 
         let year, month, day;
         if (dateStr.includes('-')) {
@@ -54,11 +54,11 @@ function TableColumns() {
             // Assume DD/MM/YYYY
             [day, month, year] = dateStr.split('/');
         } else {
-            return { text: dateStr, className: "overdue-block deadline-green" };
+            return { text: dateStr, className: "overdue-block deadline-green text-center" };
         }
 
         if (!day || !month || !year) {
-            return { text: dateStr, className: "overdue-block deadline-green" };
+            return { text: dateStr, className: "overdue-block deadline-green text-center" };
         }
 
         const targetDate = new Date(`${year}-${month}-${day}`);

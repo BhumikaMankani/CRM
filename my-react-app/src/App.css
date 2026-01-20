@@ -18,6 +18,11 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   color: black;
 }
 
+td:has(.deadline-green) {
+  background-color: #ccffcc !important;
+  color: #006600;
+}
+
 input::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
