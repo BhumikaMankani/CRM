@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import Registration from './components/Registration';
-import authUsers from './Authentication.json';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Departments from "./components/Departments";
+import Departments from "./pages/dapartment";
 import Development from "./pages/development";
 import Marketing from "./pages/marketing";
 import Seo from "./pages/seo";
@@ -25,7 +24,7 @@ function App() {
       <BrowserRouter>
         {isLoggedIn ? (
           <Routes>
-            <Route path="/" element={<Departments />} />
+            <Route path="/department" element={<Departments setIsLoggedIn={setIsLoggedIn} />} />
             <Route path="/development" element={<Development />} />
             <Route path="/marketing" element={<Marketing />} />
             <Route path="/seo" element={<Seo />} />

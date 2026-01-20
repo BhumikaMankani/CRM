@@ -17,6 +17,27 @@ router.post("/", async (req, res) => {
     res.json(department);
 });
 
+router.put("/:name", async (req, res) => {
+    try {
+        const { newName } = req.body;
+        if (!newName) {
+            return res.status(400).json({ error: "New heading is required" });
+        }
+
+        await Department.updateOne(
+            { name: req.params.oldname },
+            { department: newName }
+        );
+
+        // await Department.updateMany({}, { $rename: { [oldName]: newName } });
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Column rename error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.put("/:id", async (req, res) => {
     try {
         const updated = await Department.findByIdAndUpdate(

@@ -46,4 +46,81 @@ router.get("/", async (req, res) => {
     }
 });
 
+router.put("/columnAccess", async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        user.column_access = access;
+        await user.save();
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update user department
+router.patch("/:id", async (req, res) => {
+    console.log(`Patching user ${req.params.id} with department:`, req.body.department);
+    try {
+        const { department } = req.body;
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            { department },
+            { new: true }
+        );
+        if (!updatedUser) {
+            console.warn(`User ${req.params.id} not found for update`);
+            return res.status(404).json({ error: "User not found" });
+        }
+        console.log(`Successfully updated user ${req.params.id}`);
+        res.json(updatedUser);
+    } catch (err) {
+        console.error(`Error updating user ${req.params.id}:`, err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// router.patch("/column-access", async (req, res) => {
+//     const { columnName } = req.body;
+
+//     if (!columnName) {
+//         return res.status(400).json({ error: "columnName is required" });
+//     }
+
+//     try {
+//         const users = await User.find();
+
+//         const bulkOps = users.map(user => {
+//             let existing = user.column_access
+//                 ? user.column_access.split(',').map(c => c.trim())
+//                 : [];
+
+//             if (!existing.includes(columnName)) {
+//                 existing.push(columnName);
+//             }
+
+//             return {
+//                 updateOne: {
+//                     filter: { _id: user._id },
+//                     update: { column_access: existing.join(',') }
+//                 }
+//             };
+//         });
+
+//         if (bulkOps.length > 0) {
+//             await User.bulkWrite(bulkOps);
+//         }
+
+//         res.json({ message: "Column access updated for all staff" });
+
+//     } catch (err) {
+//         console.error("Error updating column access:", err.message);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+
+
 module.exports = router;

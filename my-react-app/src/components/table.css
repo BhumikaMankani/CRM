@@ -8,6 +8,17 @@
     scroll-behavior: smooth;
 }
 
+span.rounded-circle {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: black;
+    color: white;
+    font-weight: 600;
+}
+
 .custom-table thead th {
     vertical-align: top;
 }

@@ -5,7 +5,7 @@ const path = require('path');
 // const projectRoutes = require('./routes/project');
 const Columns = require('./routes/columns');
 const Development = require('./routes/development');
-// const Department = require('./routes/department');
+const Department = require('./routes/department');
 const User = require('./routes/user');
 
 require('dotenv').config();
@@ -41,6 +41,7 @@ connectDB();
 app.use("/api/columns", Columns);
 app.use("/api/development", Development);
 app.use("/api/user", User);
+app.use("/api/department", Department);
 
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, '../my-react-app/dist')));
@@ -51,5 +52,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Backend is working on http://0.0.0.0:${PORT}`);
+    console.log(`Backend is working on ${PORT}`);
 });

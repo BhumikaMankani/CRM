@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
+import ToggleButtonIcon from "./toggle";
 import { FaTrash, FaTimes } from "react-icons/fa";
 
 function TableColumns() {
@@ -139,7 +140,7 @@ function TableColumns() {
         return processedData;
     }, [data, filters, sortConfig]);
     useEffect(() => {
-        fetch("/api/columns")
+        fetch(`${import.meta.env.VITE_API_URL}/api/columns`)
             .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch columns");
                 return res.json();
@@ -147,7 +148,7 @@ function TableColumns() {
             .then(setColumnsDef)
             .catch(err => console.error("Error loading columns:", err));
 
-        fetch("/api/development")
+        fetch(`${import.meta.env.VITE_API_URL}/api/development`)
             .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch development data");
                 return res.json();
@@ -164,7 +165,7 @@ function TableColumns() {
 
         const rowToUpdate = data.find(r => r._id === rowId);
         if (rowToUpdate) {
-            fetch(`/api/development/${rowId}`, {
+            fetch(`${import.meta.env.VITE_API_URL}/api/development/${rowId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...rowToUpdate, [field]: value })
@@ -181,20 +182,27 @@ function TableColumns() {
         });
     };
 
-    const deleteRow = async (rowId) => {
-        const itemToDelete = data.find(row => row._id === rowId);
+    const deleteRow = async (rowId, e) => {
+        if (e) e.stopPropagation();
+
+        const rowIdStr = String(rowId);
+        const itemToDelete = data.find(row => String(row._id) === rowIdStr);
 
         if (!itemToDelete) return;
 
-        setData(prev => prev.filter(row => row._id !== rowId));
+        // Optimistic update
+        const previousData = [...data];
+        setData(prev => prev.filter(row => String(row._id) !== rowIdStr));
 
+        console.log(data);
+        console.log(rowId);
         try {
-            const response = await fetch(`/api/development/${rowId}`, {
-                method: "DELETE"
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/development/deactivate/${rowId}`, {
+                method: "PATCH"
             });
 
             if (!response.ok) {
-                console.error("Failed to delete from database");
+                console.error("Failed to deactivate row in database");
                 setData(data);
             }
         } catch (error) {
@@ -206,7 +214,7 @@ function TableColumns() {
     const confirmDelete = async () => {
         const { accessor } = deleteConfirmation;
         try {
-            const res = await fetch(`/api/columns/deactivate/${accessor}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/columns/deactivate/${accessor}`, {
                 method: "PATCH"
             });
 
@@ -238,7 +246,7 @@ function TableColumns() {
                 }
             });
 
-            const res = await fetch("/api/development", {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/development`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newRow)
@@ -266,6 +274,47 @@ function TableColumns() {
         }
     };
 
+    const [userData, setUserData] = useState([]);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user`);
+                const data = await response.json();
+                setUserData(data);
+            } catch (err) {
+                console.error("Failed to fetch users:", err);
+            }
+        };
+        fetchUsers();
+    }, []);
+
+    const [columnAccess, setColumnAccess] = useState([]);
+
+
+
+    const handleColumnAccess = async (columnName) => {
+        // try {
+        //     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/column-access`, {
+        //         method: "PATCH",
+        //         headers: {
+        //             "Content-Type": "application/json",
+        //         },
+        //         body: JSON.stringify({ columnName }),
+        //     });
+
+        //     if (response.ok) {
+        //         const data = await response.json();
+        //         console.log(data.message);
+        //         alert(`Access for "${columnName}" granted to all staff`);
+        //     } else {
+        //         console.error("Failed to update column access");
+        //     }
+        // } catch (err) {
+        //     console.error("Error updating column access:", err);
+        // }
+    }
+
     // Define allowed columns for staff
     const valuesToMatch = useMemo(() => {
         if (!status?.column_access) return [];
@@ -290,7 +339,7 @@ function TableColumns() {
         if (!trimmedNewName || oldName === trimmedNewName) return;
 
         try {
-            const res = await fetch(`/api/columns/${oldName}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/columns/${oldName}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ newHeading: trimmedNewName })
@@ -321,12 +370,13 @@ function TableColumns() {
                 render: (row, rowIndex) => (
                     <div className="row_index" onMouseEnter={() => setHoveredRowIndex(rowIndex)}
                         onMouseLeave={() => setHoveredRowIndex(null)}>
-                        {hoveredRowIndex === rowIndex ?
 
-                            (<button onClick={() => deleteRow(row._id)} className="delete_row btn btn-link text-danger p-0" type="button"> <FaTrash className="delete-icon" size={14} /></button>
-                            ) :
-                            (<span>{rowIndex + 1}</span>)
-                        }
+                        {status.status === 'admin' ? (
+                            hoveredRowIndex === rowIndex ?
+                                (<button onClick={() => deleteRow(row._id)} className=" btn btn-link text-danger p-0" type="button"> <FaTrash className="delete-icon" size={14} /></button>
+                                ) :
+                                (<span>{rowIndex + 1}</span>)
+                        ) : (<span>{rowIndex + 1}</span>)}
                     </div>
                 )
             },
@@ -343,6 +393,11 @@ function TableColumns() {
                                         onKeyDown: (e) => e.key === "Enter" && e.target.blur()
                                     } : { readOnly: true })}
                                 />
+                                {/* {status.status === 'admin' && (
+                                    // <button type="button" onClick={() => handleColumnAccess(col.name)}>
+                                    //     Toggle
+                                    // </button>
+                                )} */}
                                 {col.sorting && (
                                     <button
                                         className="btn btn-link p-0 text-dark"
@@ -514,7 +569,7 @@ function TableColumns() {
                 onPopupClose={() => setIsColumnModalOpen(false)}
                 onPopupSave={async (newColumn) => {
                     try {
-                        const res = await fetch("/api/columns", {
+                        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/columns`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(newColumn)

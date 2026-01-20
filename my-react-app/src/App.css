@@ -7,6 +7,33 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #000000;
+}
+
+.modal-content input.form-input {
+  color: black;
+}
+
+input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+
+input[type="date"] {
+  color: #000000;
+  /* Default text color when a valid date is entered */
+}
+
+input[type="date"]:invalid {
+  color: #000000;
+  /* Color for the "placeholder" text when field is empty */
+}
+
+
 td:has(.bg-danger) {
   --bs-bg-opacity: 1;
   background-color: rgba(var(--bs-danger-rgb), var(--bs-bg-opacity)) !important;

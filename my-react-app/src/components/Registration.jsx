@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import md5 from "md5";
+import { Link, useNavigate } from 'react-router-dom'
+import Departments from "../pages/dapartment";
 
 function Registration({ onLoginSuccess }) {
+    const navigate = useNavigate();
     const [credentials, setCredentials] = useState({
         email: '',
         password: ''
@@ -24,7 +27,7 @@ function Registration({ onLoginSuccess }) {
         const hashedPassword = md5(credentials.password);
 
         try {
-            const response = await fetch('/api/user', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -50,6 +53,7 @@ function Registration({ onLoginSuccess }) {
                 localStorage.setItem('Password', JSON.stringify(hashedPassword));
                 localStorage.setItem('user', JSON.stringify(data.user));
                 onLoginSuccess();
+                navigate('/department');
             } else {
                 setError(data.error || 'Invalid email or password');
             }
