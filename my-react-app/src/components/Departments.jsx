@@ -117,7 +117,7 @@ function Departments({ setIsLoggedIn }) {
             if (response.ok) {
                 const updatedUser = await response.json();
                 setUserData(prevData => prevData.map(u => u._id === user._id ? updatedUser : u));
-                localStorage.setItem('user', JSON.stringify(updatedUser));
+                // localStorage.setItem('user', JSON.stringify(updatedUser));
             } else {
                 console.error("Failed to update department");
             }
