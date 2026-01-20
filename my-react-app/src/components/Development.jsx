@@ -263,12 +263,10 @@ function TableColumns() {
             setIsModalOpen(false); // Close modal after saving
 
             // Scroll to bottom
-            setTimeout(() => {
-                const tableWrap = document.querySelector('.table-wrap');
-                if (tableWrap) {
-                    tableWrap.scrollTop = tableWrap.scrollHeight;
-                }
-            }, 100);
+            const tableWrap = document.querySelector('.table-wrap');
+            if (tableWrap) {
+                tableWrap.scrollTop = tableWrap.scrollHeight;
+            }
         } catch (err) {
             console.error("Error adding row:", err);
             alert("Error adding row: " + err.message);
