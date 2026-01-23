@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Marketing from "../pages/marketing";
 import Seo from "../pages/seo";
 import Form from "../components/Form";
-import { IoIosLock } from "react-icons/io";
+import Header from "./header";
 // import Md5Hasher from "../components/Password";
 import Development from "../pages/development";
 import { API_URL } from "../../proxy";
@@ -21,14 +21,6 @@ function Departments({ setIsLoggedIn }) {
         return savedData ? JSON.parse(savedData) : null;
     });
     const navigate = useNavigate();
-
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        sessionStorage.removeItem("isLoggedIn");
-        localStorage.removeItem("user");
-        localStorage.removeItem("Password");
-        navigate("/");
-    }
 
     const fetchDepartments = async () => {
         try {
@@ -117,7 +109,7 @@ function Departments({ setIsLoggedIn }) {
             if (response.ok) {
                 const updatedUser = await response.json();
                 setUserData(prevData => prevData.map(u => u._id === user._id ? updatedUser : u));
-                // localStorage.setItem('user', JSON.stringify(updatedUser));
+                localStorage.setItem('user', JSON.stringify(updatedUser));
             } else {
                 console.error("Failed to update department");
             }
@@ -135,116 +127,115 @@ function Departments({ setIsLoggedIn }) {
             accessor: 'department',
             render: (row) => (
                 <div className="cell-input-wrapper">
-                    <Link to={row.link || `/${row.department.toLowerCase()}`}>{row.department}</Link>
+                    <Link to={row.link || `/${row.department.toLowerCase()}`} className="text-dark">{row.department}</Link>
                 </div>
             )
         },
     ];
 
     return (
-        <section className="ftco-section">
-            <div className="d-flex justify-content-end gap-2 mb-2">
-                <button className="btn btn-primary mb-1 d-inline-flex align-items-center gap-2" onClick={handleLogout}>
-                    <IoIosLock />
-                    Logout</button>
-                {status?.status === 'admin' ? (
-                    <button
-                        className="btn btn-primary mb-1 d-inline-flex align-items-center"
-                        onClick={() => setIsDepartmentModalOpen(true)}
-                    >
-                        Add Department
-                    </button>) : null}
-            </div>
-            <div className="row">
-                <div className="col-md-12">
-                    <table className="table">
-                        <thead className="thead-primary">
-                            <tr>
-                                {columns.map((column, index) => (
-                                    <th key={index}>{column.header}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {departments.map((row, rowIndex) => (
-                                (status?.status === 'admin' || status?.department?.includes(row.department)) && (
-                                    <tr className="w-100" key={rowIndex}>
-                                        {columns.map((column, colIndex) => (
-                                            <td className="p-2 w-100 d-flex justify-content-between align-items-center" key={colIndex}>
-                                                {column.render
-                                                    ? column.render(row, rowIndex)
-                                                    : row[column.accessor]}
-                                                {status?.status === 'admin' && column.accessor === 'department' && (
-                                                    <div className="d-flex gap-2">
-                                                        {userData
-                                                            .filter(user => user.status === 'staff')
-                                                            .map((user, index) => (
-                                                                <div key={user._id || index} className="form-check">
-                                                                    <input
-                                                                        className="form-check-input"
-                                                                        type="checkbox"
-                                                                        value={user.user_name}
-                                                                        id={`${user._id}-${row.department}`}
-                                                                        checked={user.department?.includes(row.department)}
-                                                                        onChange={(e) => handleCheckboxChange(e, user, row.department)}
-                                                                    />
-                                                                    <label
-                                                                        htmlFor={`${user._id}-${row.department}`}
-                                                                        className="form-check-label"
-                                                                    >
-                                                                        {user.user_name}
-                                                                    </label>
-                                                                </div>
-                                                            ))
-                                                        }
-                                                    </div>
-                                                )}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                )
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <>
+            <section className="">
+                <div className="row">
+                    <div className="col-md-12">
+                        <table className="table">
+                            <thead className="thead-primary">
+                                <tr>
+                                    {columns.map((column, index) => (
+                                        <th className="p-2 w-100 d-flex justify-content-between align-items-center" key={index}>{column.header}
+                                            {status?.status === 'admin' ? (
+                                                <button
+                                                    className="btn btn-secondary d-inline-flex align-items-center"
+                                                    onClick={() => setIsDepartmentModalOpen(true)}
+                                                >
+                                                    Create
+                                                </button>
+                                            ) : null}</th>
+                                    ))}
 
-            {isDepartmentModalOpen && (
-                <div className="modal-overlay" style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-                    justifyContent: 'center', alignItems: 'center', zIndex: 1000
-                }}>
-                    <div className="modal-content" style={{
-                        backgroundColor: 'white', padding: '20px', borderRadius: '8px',
-                        width: '400px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-                    }}>
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h4 className="m-0">Add New Department</h4>
-                            <button type="button" className="btn-close" onClick={() => setIsDepartmentModalOpen(false)} aria-label="Close"></button>
-                        </div>
-                        <form onSubmit={handleSaveDepartment}>
-                            <div className="mb-3">
-                                <label htmlFor="deptName" className="form-label">Department Name</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    id="deptName"
-                                    value={newDepartmentName}
-                                    onChange={(e) => setNewDepartmentName(e.target.value)}
-                                    placeholder="e.g. Design"
-                                    required
-                                />
-                            </div>
-                            <div className="d-flex justify-content-end gap-2">
-                                <button type="button" className="btn btn-secondary" onClick={() => setIsDepartmentModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary">Save Department</button>
-                            </div>
-                        </form>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {departments.map((row, rowIndex) => (
+                                    (status?.status === 'admin' || status?.department?.includes(row.department)) && (
+                                        <tr className="w-100" key={rowIndex}>
+                                            {columns.map((column, colIndex) => (
+                                                <td className="p-2 w-100 d-flex justify-content-between align-items-center" key={colIndex}>
+                                                    {column.render
+                                                        ? column.render(row, rowIndex)
+                                                        : row[column.accessor]}
+                                                    {status?.status === 'admin' && column.accessor === 'department' && (
+                                                        <div className="d-flex gap-2">
+                                                            {userData
+                                                                .filter(user => user.status === 'staff')
+                                                                .map((user, index) => (
+                                                                    <div key={user._id || index} className="form-check">
+                                                                        <input
+                                                                            className="form-check-input"
+                                                                            type="checkbox"
+                                                                            value={user.user_name}
+                                                                            id={`${user._id}-${row.department}`}
+                                                                            checked={user.department?.includes(row.department)}
+                                                                            onChange={(e) => handleCheckboxChange(e, user, row.department)}
+                                                                        />
+                                                                        <label
+                                                                            htmlFor={`${user._id}-${row.department}`}
+                                                                            className="form-check-label"
+                                                                        >
+                                                                            {user.user_name}
+                                                                        </label>
+                                                                    </div>
+                                                                ))
+                                                            }
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    )
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            )}
-        </section >
+
+                {isDepartmentModalOpen && (
+                    <div className="modal-overlay" style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+                        justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                    }}>
+                        <div className="modal-content" style={{
+                            backgroundColor: 'white', padding: '20px', borderRadius: '8px',
+                            width: '400px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                        }}>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h4 className="m-0">Add New Department</h4>
+                                <button type="button" className="btn-close" onClick={() => setIsDepartmentModalOpen(false)} aria-label="Close"></button>
+                            </div>
+                            <form onSubmit={handleSaveDepartment}>
+                                <div className="mb-3">
+                                    <label htmlFor="deptName" className="form-label">Department Name</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        id="deptName"
+                                        value={newDepartmentName}
+                                        onChange={(e) => setNewDepartmentName(e.target.value)}
+                                        placeholder="e.g. Design"
+                                        required
+                                    />
+                                </div>
+                                <div className="d-flex justify-content-end gap-2">
+                                    <button type="button" className="btn btn-secondary" onClick={() => setIsDepartmentModalOpen(false)}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary">Save Department</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </section >
+        </>
     );
 }
 

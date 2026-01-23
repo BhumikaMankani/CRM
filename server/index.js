@@ -7,7 +7,7 @@ const Columns = require('./routes/columns');
 const Development = require('./routes/development');
 const Department = require('./routes/department');
 const User = require('./routes/user');
-
+const Filters = require('./routes/filters');
 require('dotenv').config();
 
 const app = express();
@@ -37,11 +37,21 @@ connectDB();
 
 // User.syncIndexes();
 
+// Log all incoming API requests for debugging
+app.use("/api", (req, res, next) => {
+    console.log(`[API Request] ${req.method} ${req.originalUrl}`);
+    next();
+});
+
 // app.use('/api/projects', projectRoutes);
 app.use("/api/columns", Columns);
 app.use("/api/development", Development);
 app.use("/api/user", User);
 app.use("/api/department", Department);
+app.use("/api/filters", Filters);
+
+// Diagnostic route
+app.get("/api/ping", (req, res) => res.json({ message: "pong" }));
 
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, '../my-react-app/dist')));

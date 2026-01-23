@@ -6,66 +6,66 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* CSS Variables from index.css */
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  margin: 0;
+  padding: 0;
+}
+
 input[type="date"]::-webkit-datetime-edit-text,
 input[type="date"]::-webkit-datetime-edit-month-field,
 input[type="date"]::-webkit-datetime-edit-day-field,
 input[type="date"]::-webkit-datetime-edit-year-field {
-  color: #000000;
+  color: #1e293b;
 }
 
 .modal-content input.form-input {
-  color: black;
-}
-
-body {
-  min-height: 100vh;
-  background: #f8f9fd;
+  color: #1e293b;
 }
 
 td:has(.deadline-green) {
-  background-color: #ccffcc !important;
-  color: #006600;
+  background-color: #dcfce7 !important;
+  color: #15803d;
 }
 
 input::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  color: black;
+  filter: invert(0.8) sepia(0.2);
+  color: #2563eb;
 }
 
-
 input[type="date"] {
-  color: #000000;
-  /* Default text color when a valid date is entered */
+  color: #1e293b;
 }
 
 input[type="date"]:invalid {
-  color: #000000;
-  /* Color for the "placeholder" text when field is empty */
+  color: #1e293b;
 }
 
-
 td:has(.bg-danger) {
-  --bs-bg-opacity: 1;
-  background-color: rgba(var(--bs-danger-rgb), var(--bs-bg-opacity)) !important;
+  background-color: #fee2e2 !important;
+  color: #991b1b;
 }
 
 td:has(.bg-success) {
-  --bs-bg-opacity: 1;
-  background-color: rgba(var(--bs-success-rgb), var(--bs-bg-opacity)) !important;
+  background-color: #dcfce7 !important;
+  color: #15803d;
 }
 
 td:has(.bg-warning) {
-  --bs-bg-opacity: 1;
-  background-color: rgba(var(--bs-warning-rgb), var(--bs-bg-opacity)) !important;
+  background-color: #fef3c7 !important;
+  color: #92400e;
 }
 
 .overdue-block.bg-danger {
-  background: transparent !important;
+  background: #fee2e2 !important;
+  color: #991b1b !important;
 }
 
-body {
-  min-height: 100vh;
-  background: #f8f9fd;
+.overdue-block.bg-warning {
+  background: #fef3c7 !important;
+  color: #92400e !important;
 }
 
 input:focus-visible,
@@ -89,29 +89,29 @@ button.btn svg * {
 }
 
 .table>tbody a {
-  color: currentColor;
+  color: #2563eb;
   text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.table>tbody a:hover {
+  color: #1e40af;
+  text-decoration: underline;
 }
 
 section.ftco-section {
   padding: 7rem 0;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-}
-
 .app-container {
   width: 100%;
-  /* padding: 2rem; */
   box-sizing: border-box;
 }
 
 h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: #1e293b;
   margin-bottom: 1.5rem;
 }
 
@@ -124,7 +124,6 @@ table.custom-table {
   width: max-content;
 }
 
-
 .heading_info {
   display: flex;
   justify-content: space-between;
@@ -135,7 +134,7 @@ table.custom-table {
 
 button.filter_button {
   background: transparent;
-  color: black;
+  color: #1e293b;
   padding: 5px;
   width: 100%;
   min-width: 40px;
@@ -143,6 +142,15 @@ button.filter_button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+button.filter_button:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #2563eb;
 }
 
 button.filter_button svg {
@@ -160,28 +168,25 @@ button.filter_button svg {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  padding: 20px;
 }
 
 .registration-container {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.98);
   padding: 48px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   width: 100%;
   max-width: 440px;
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes fadeIn {
+@keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -193,12 +198,11 @@ button.filter_button svg {
   margin-bottom: 8px;
   font-size: 2rem;
   font-weight: 800;
-  letter-spacing: -0.025em;
 }
 
 .registration-subtitle {
   text-align: center;
-  color: #94a3b8;
+  color: #64748b;
   margin-bottom: 32px;
   font-size: 0.875rem;
 }
@@ -207,13 +211,9 @@ button.filter_button svg {
   margin-bottom: 24px;
 }
 
-.overdue-block.bg-warning {
-  background: transparent !important;
-}
-
 .registration-container label {
-  color: #cbd5e1;
-  font-weight: 500;
+  color: #1e293b;
+  font-weight: 600;
   margin-bottom: 8px;
   font-size: 0.875rem;
   display: block;
@@ -222,68 +222,55 @@ button.filter_button svg {
 .registration-container input {
   width: 100%;
   padding: 12px 16px;
-  background: transparent;
-  color: currentColor;
-  border: 1px solid rgba(9, 9, 9, 0.1);
-  border-radius: 12px;
+  background: #f8fafc;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 1rem;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
 }
 
 .registration-container input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.registration-container input::placeholder {
+  color: #94a3b8;
 }
 
 .login-error {
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  background: #fee2e2;
+  color: #991b1b;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 8px;
   margin-bottom: 24px;
-  font-size: 0.813rem;
+  font-size: 0.875rem;
   text-align: center;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+  border: 1px solid #fecaca;
+  animation: shake 0.4s ease-in-out;
 }
 
 @keyframes shake {
-
-  10%,
-  90% {
-    transform: translate3d(-1px, 0, 0);
-  }
-
-  20%,
-  80% {
-    transform: translate3d(2px, 0, 0);
-  }
-
-  30%,
-  50%,
-  70% {
-    transform: translate3d(-4px, 0, 0);
-  }
-
-  40%,
-  60% {
-    transform: translate3d(4px, 0, 0);
-  }
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
 .registration-container button[type="submit"] {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   margin-top: 8px;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
@@ -291,7 +278,7 @@ button.filter_button svg {
 .registration-container button[type="submit"]:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
 }
 
 .registration-container button[type="submit"]:active {
@@ -309,7 +296,7 @@ button.filter_button svg {
   right: 12px;
   background: transparent;
   border: none;
-  color: #3b82f6;
+  color: #2563eb;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -322,8 +309,8 @@ button.filter_button svg {
 }
 
 .password-toggle:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
+  background: rgba(37, 99, 235, 0.1);
+  color: #1e40af;
 }
 
 /* Filter Clear Styling */
@@ -339,17 +326,18 @@ button.filter_button svg {
   right: 5px;
   background: transparent;
   border: none;
-  color: #999;
+  color: #94a3b8;
   cursor: pointer;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
+  transition: color 0.2s ease;
 }
 
 .filter-clear-btn:hover {
-  color: #333;
+  color: #ef4444;
 }
 
 .filter-input-wrapper .form-control {
@@ -373,4 +361,29 @@ button.btn svg.delete-icon {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Saved Filters Sidebar Styles */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.list-group-item-action:hover {
+  background-color: #f1f5f9 !important;
+  border-left: 3px solid #2563eb !important;
+  color: #2563eb;
+}
+
+.border-start {
+  border-left: 1px solid #e2e8f0 !important;
+  min-height: 500px;
+}
+
+h5.fw-bold {
+  color: #1e293b;
+  letter-spacing: 0.5px;
+}
+
+.list-group-item {
+  transition: all 0.2s ease;
 }

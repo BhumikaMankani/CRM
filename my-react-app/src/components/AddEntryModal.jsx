@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import './custom.css';
-import initialData from '../data.json';
 import { IoCloseSharp } from "react-icons/io5";
 
 const AddEntryModal = ({ isOpen, onClose, onSave }) => {

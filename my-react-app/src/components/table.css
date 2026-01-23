@@ -4,8 +4,10 @@
 
 .table-wrap.smooth-scroll-container {
     overflow: auto;
-    scrollbar-width: none;
+    scrollbar-width: thin;
     scroll-behavior: smooth;
+    border: 1px solid #e2e8f0;
+    scrollbar-width: none;
 }
 
 span.rounded-circle {
@@ -14,21 +16,47 @@ span.rounded-circle {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    background: black;
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
     color: white;
     font-weight: 600;
+    border-radius: 50%;
+    font-size: 0.85rem;
+}
+
+.custom-table {
+    background: white;
+    border-collapse: collapse;
 }
 
 .custom-table thead th {
     vertical-align: top;
+    /* background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 2px solid #e2e8f0; */
+    font-weight: 700;
+    color: #1e293b;
+    padding: 14px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.custom-table tbody tr {
+    border-bottom: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
 }
 
 .custom-table tbody tr:hover {
-    background-color: #f1f3f5;
+    background-color: #f8fafc;
+    box-shadow: inset 0 0 8px rgba(37, 99, 235, 0.05);
 }
 
 .custom-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+.custom-table tbody td {
+    padding: 12px 14px;
+    color: #1e293b;
+    font-size: 0.9rem;
 }
 
 table.custom-table th:first-child {
@@ -41,37 +69,47 @@ table.custom-table tbody td:first-child {
     text-align: center;
 }
 
-/* Specific cell decorations */
+/* Cell Status Badges */
 .overdue-red {
-    background-color: #ffcccc;
-    color: #cc0000;
-    padding: 2px 5px;
-    border-radius: 4px;
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-block;
 }
 
 .deadline-green {
-    background-color: #ccffcc;
-    color: #006600;
-    padding: 2px 5px;
-    border-radius: 4px;
+    background-color: #dcfce7;
+    color: #15803d;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-block;
 }
 
 .group-block {
     display: inline-block;
-    background-color: #e2e3e5;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+    color: #3730a3;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #c7d2fe;
 }
 
 .category-cell {
     font-style: italic;
-    color: #666;
+    color: #64748b;
+    font-weight: 500;
 }
 
 .status-text {
-    font-weight: bold;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 /* Column Header Content */
@@ -85,15 +123,18 @@ table.custom-table tbody td:first-child {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    color: #1e293b;
 }
 
 /* Sorting Styles */
 .header-top.sortable {
     cursor: pointer;
+    user-select: none;
 }
 
 .header-top.sortable:hover {
-    color: #007bff;
+    color: #2563eb;
+    transition: color 0.2s ease;
 }
 
 .sort-icon {

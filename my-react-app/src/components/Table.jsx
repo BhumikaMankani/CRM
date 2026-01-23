@@ -11,12 +11,12 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick }) => {
 
     return (
         <div className='row'>
-            <div className="col-md-12">
+            <div className="col-md-12 table-responsive_ct">
                 <div
                     className="table-wrap smooth-scroll-container"
                 >
-                    <table className="custom-table mb-0 table table-striped table-bordered dataTable">
-                        <thead className='thead-light'>
+                    <table className="custom-table mb-0 table table-striped table-bordered dataTable table table-hover align-middle mb-0">
+                        <thead className='table-light'>
                             {columns.length > 1 ? (
                                 <tr>
                                     {columns.map((column, index) => (

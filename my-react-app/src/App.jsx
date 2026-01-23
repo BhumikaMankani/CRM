@@ -7,6 +7,8 @@ import Departments from "./pages/dapartment";
 import Development from "./pages/development";
 import Marketing from "./pages/marketing";
 import Seo from "./pages/seo";
+import Footer from "./components/Footer"
+import Header from "./components/header";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -19,16 +21,30 @@ function App() {
     sessionStorage.setItem('isLoggedIn', 'true');
   };
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    sessionStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");
+    localStorage.removeItem("Password");
+    navigate("/");
+  }
+
   return (
-    <div className="app-container container">
+    <div className="app-container container pt-5">
       <BrowserRouter>
         {isLoggedIn ? (
-          <Routes>
-            <Route path="/department" element={<Departments setIsLoggedIn={setIsLoggedIn} />} />
-            <Route path="/development" element={<Development />} />
-            <Route path="/marketing" element={<Marketing />} />
-            <Route path="/seo" element={<Seo />} />
-          </Routes>
+          <>
+            <Header handleLogout={handleLogout} />
+            <main>
+              <Routes>
+                <Route path="/department" element={<Departments setIsLoggedIn={setIsLoggedIn} />} />
+                <Route path="/development" element={<Development />} />
+                <Route path="/marketing" element={<Marketing />} />
+                <Route path="/seo" element={<Seo />} />
+              </Routes>
+            </main>
+            <Footer />
+          </>
         ) : (
           <Registration onLoginSuccess={handleLoginSuccess} />
         )}
