@@ -192,6 +192,9 @@ button.filter_button svg {
     transform: translateY(0);
   }
 }
+.app-container.container.pt-5 {
+    max-width: 1400px;
+}
 
 .registration-container h1 {
   text-align: center;

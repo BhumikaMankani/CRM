@@ -24,6 +24,7 @@ const seedColumns = async () => {
             if (!existing) {
                 await new Column({ ...col, status: 'active' }).save();
                 console.log(`Added column: ${col.column_heading}`);
+                // columns.name.new.date(col.name);
             } else {
                 console.log(`Column already exists: ${col.column_heading}`);
                 // Update to ensure status is active

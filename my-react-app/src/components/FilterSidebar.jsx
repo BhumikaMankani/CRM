@@ -65,7 +65,7 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
             </button> */}
 
             {/* Sidebar */}
-            <div className={`filter-sidebar ${isOpen ? 'open' : 'closed'} col-md-3 col-sm-4 pt-3 pb-3`}>
+            <div className={`filter-sidebar ${isOpen ? 'open' : 'closed'} col-md-2 col-sm-4 pt-3 pb-3`}>
                 <div className={`sidebar-header ${status.status !== 'admin' ? 'd-flex justify-content-between align-items-center' : ''}`}>
                     <div className='d-flex align-items-center justify-content-between'>
                         <h5>

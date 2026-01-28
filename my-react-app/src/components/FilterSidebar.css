@@ -41,7 +41,7 @@
 }
 
 .sidebar-header {
-    padding: 16px;
+    padding: 10px;
     border-bottom: 1px solid #e0e0e0;
 }
 
@@ -74,7 +74,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px;
+    padding: 6px 10px;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -102,9 +102,13 @@
 .filter-name {
     font-weight: 500;
     color: #333;
-    font-size: 0.95rem;
+    font-size: 0.80rem;
     word-break: break-word;
-    margin-bottom: 2px;
+}
+
+button.delete-filter-btn svg {
+    width: 12px;
+    height: 12px;
 }
 
 .filter-meta {
