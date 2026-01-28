@@ -3,7 +3,11 @@
   margin: 0;
   padding: 0;
   width: 100%;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 /* CSS Variables from index.css */
@@ -88,13 +92,13 @@ button.btn svg * {
   overflow: hidden;
 }
 
-.table>tbody a {
+.table > tbody a {
   color: #2563eb;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.table>tbody a:hover {
+.table > tbody a:hover {
   color: #1e40af;
   text-decoration: underline;
 }
@@ -168,7 +172,10 @@ button.filter_button svg {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-family:
+    "Segoe UI",
+    -apple-system,
+    sans-serif;
   padding: 20px;
 }
 
@@ -193,7 +200,7 @@ button.filter_button svg {
   }
 }
 .app-container.container.pt-5 {
-    max-width: 1400px;
+  max-width: 1400px;
 }
 
 .registration-container h1 {
@@ -257,10 +264,23 @@ button.filter_button svg {
 }
 
 @keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
 }
 
 .registration-container button[type="submit"] {
@@ -389,4 +409,19 @@ h5.fw-bold {
 
 .list-group-item {
   transition: all 0.2s ease;
+}
+
+.custom-table td:has(.days-positive) {
+  background-color: green;
+  color: #ffffff;
+}
+
+.custom-table td:has(.days-negative) {
+  background-color: red;
+  color: #ffffff;
+}
+
+.custom-table td:has(.days-zero) {
+  background-color: gray;
+  color: #ffffff;
 }

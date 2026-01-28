@@ -385,8 +385,6 @@
 
 //     const [columnAccess, setColumnAccess] = useState([]);
 
-
-
 //     const handleColumnAccess = async (columnName) => {
 //         // try {
 //         //     const response = await fetch(`${aPI_URL}/api/user/column-access`, {
@@ -424,7 +422,6 @@
 //         }
 //         return false;
 //     };
-
 
 //     /* ---------------- RENAME COLUMN ---------------- */
 //     const handleRename = async (oldName, newName) => {
@@ -1381,25 +1378,37 @@ function TableColumns() {
 
           // Special handling for Condition columns (date difference calculation)
           if (col.column_type === "condition") {
-            const startDate = row[col.conditionColumn1];
             const endDate = row[col.conditionColumn2];
 
-            if (!startDate || !endDate) {
+            if (!endDate) {
               return <span className="text-muted">-</span>;
             }
 
             try {
-              const start = new Date(startDate);
+              const today = new Date();
               const end = new Date(endDate);
 
-              if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                return <span className="text-muted">Invalid dates</span>;
+              // remove time part for accurate day diff
+              today.setHours(0, 0, 0, 0);
+              end.setHours(0, 0, 0, 0);
+
+              if (isNaN(end.getTime())) {
+                return <span className="text-muted">Invalid date</span>;
               }
 
-              const diffTime = end - start;
+              const diffTime = end - today;
               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-              return <span>{Math.abs(diffDays)} days</span>;
+              const dayClass =
+                diffDays > 0
+                  ? "days-positive" // future
+                  : diffDays < 0
+                    ? "days-negative" // overdue
+                    : "days-zero"; // today
+
+              return (
+                <span className={dayClass}>{Math.abs(diffDays)} days</span>
+              );
             } catch (err) {
               return <span className="text-muted">Error</span>;
             }
