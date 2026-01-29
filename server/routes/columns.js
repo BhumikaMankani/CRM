@@ -92,7 +92,7 @@ router.get("/", async (req, res) => {
 // Add new column
 router.post("/", async (req, res) => {
     try {
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2 } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, hasDefaultValue, defaultValue } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -106,6 +106,8 @@ router.post("/", async (req, res) => {
             multipleValue: multipleValue || [],
             conditionColumn1: conditionColumn1 || undefined,
             conditionColumn2: conditionColumn2 || undefined,
+            hasDefaultValue: hasDefaultValue || false,
+            defaultValue: defaultValue || undefined,
             status: 'active'
         });
         await column.save();

@@ -997,24 +997,47 @@ function TableColumns() {
     return processedData;
   }, [data, filters, sortConfig]);
   useEffect(() => {
-    setLoading(true);
-    fetch(`${API_URL}/api/columns`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch columns");
-        return res.json();
-      })
-      .then(setColumnsDef)
-      .finally(() => setLoading(false))
-      .catch((err) => console.error("Error loading columns:", err));
+    let isMounted = true;
 
-    fetch(`${API_URL}/api/development`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch development data");
-        return res.json();
-      })
-      .then(setData)
-      .finally(() => setLoading(false))
-      .catch((err) => console.error("Error loading data:", err));
+    const fetchAll = async ({ showSpinner } = { showSpinner: true }) => {
+      try {
+        if (showSpinner && isMounted) setLoading(true);
+
+        const [columnsRes, devRes] = await Promise.all([
+          fetch(`${API_URL}/api/columns`),
+          fetch(`${API_URL}/api/development`),
+        ]);
+
+        if (!columnsRes.ok) throw new Error("Failed to fetch columns");
+        if (!devRes.ok) throw new Error("Failed to fetch development data");
+
+        const [cols, dev] = await Promise.all([
+          columnsRes.json(),
+          devRes.json(),
+        ]);
+
+        if (!isMounted) return;
+        setColumnsDef(cols);
+        setData(dev);
+      } catch (err) {
+        console.error("Error loading data:", err);
+      } finally {
+        if (showSpinner && isMounted) setLoading(false);
+      }
+    };
+
+    // initial load
+    fetchAll({ showSpinner: true });
+
+    // auto-refresh so 24h backend changes appear without manual refresh
+    const refreshInterval = setInterval(() => {
+      fetchAll({ showSpinner: false });
+    }, 24 * 60 * 60 * 1000); // 24 hours
+
+    return () => {
+      isMounted = false;
+      clearInterval(refreshInterval);
+    };
   }, []);
 
   /* ---------------- UPDATE CELL ---------------- */

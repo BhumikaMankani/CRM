@@ -8,6 +8,7 @@ const Development = require('./routes/development');
 const Department = require('./routes/department');
 const User = require('./routes/user');
 const Filters = require('./routes/filters');
+const { startDefaultValueUpdater } = require('./services/defaultValueUpdater');
 require('dotenv').config();
 
 const app = express();
@@ -34,6 +35,12 @@ const connectDB = async (retryCount = 5) => {
     }
 };
 connectDB();
+
+// Start the default value updater service
+// Wait for DB connection before starting
+mongoose.connection.once('open', () => {
+  startDefaultValueUpdater();
+});
 
 // User.syncIndexes();
 

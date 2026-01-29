@@ -170,16 +170,28 @@ function Form({
     options: [""],
     conditionColumn1: "",
     conditionColumn2: "",
+    hasDefaultValue: false,
+    defaultValue: "",
   });
 
   const handleChange = (e) => {
     const value =
       e.target.type === "checkbox" ? e.target.checked : e.target.value;
 
-    setFormData({
-      ...formData,
-      [e.target.name]: value,
-    });
+    // If type changes from select to something else, reset default value fields
+    if (e.target.name === "type" && value !== "select") {
+      setFormData({
+        ...formData,
+        [e.target.name]: value,
+        hasDefaultValue: false,
+        defaultValue: "",
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: value,
+      });
+    }
   };
 
   const handleOptionChange = (index, value) => {
@@ -233,6 +245,12 @@ function Form({
         formData.type === "condition" ? formData.moreColor : undefined,
       lessColor:
         formData.type === "condition" ? formData.lessColor : undefined,
+      hasDefaultValue:
+        formData.type === "select" ? !!formData.hasDefaultValue : false,
+      defaultValue:
+        formData.type === "select" && formData.hasDefaultValue
+          ? formData.defaultValue
+          : undefined,
     };
 
     console.log("payload", payload);
@@ -252,6 +270,8 @@ function Form({
       sorting: false,
       conditionColumn1: "",
       conditionColumn2: "",
+      hasDefaultValue: false,
+      defaultValue: "",
     });
   };
 
@@ -361,6 +381,45 @@ function Form({
                 >
                   <FaPlus size={12} /> Add Another Option
                 </button>
+
+                <div className="form-check form-check-inline" style={{ marginTop: "15px" }}>
+                  <input
+                    className="form-check-input"
+                    onChange={handleChange}
+                    type="checkbox"
+                    id="hasDefaultValue"
+                    name="hasDefaultValue"
+                    checked={formData.hasDefaultValue}
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor="hasDefaultValue"
+                  >
+                    Set default value
+                  </label>
+                </div>
+
+                {formData.hasDefaultValue && (
+                  <div className="form-group" style={{ marginTop: "10px" }}>
+                    <label>Default Value</label>
+                    <select
+                      name="defaultValue"
+                      className="form-select"
+                      value={formData.defaultValue}
+                      onChange={handleChange}
+                      required={formData.hasDefaultValue}
+                    >
+                      <option value="">Select default value</option>
+                      {formData.options
+                        .filter((opt) => opt.trim() !== "")
+                        .map((option, index) => (
+                          <option key={index} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                )}
               </div>
             )}
 

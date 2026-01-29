@@ -18,6 +18,8 @@ const ColumnSchema = new mongoose.Schema({ column_heading: { type: String, requi
     multipleValue: { type: [String], default: [] }, // for select
     conditionColumn1: { type: String }, // for condition type
     conditionColumn2: { type: String }, // for condition type
+    hasDefaultValue: { type: Boolean, default: false }, // for select dropdown default value
+    defaultValue: { type: String }, // default value for select dropdown
     status: { type: String, default: "active" }, // active, inactive
   },
   { timestamps: true },);
