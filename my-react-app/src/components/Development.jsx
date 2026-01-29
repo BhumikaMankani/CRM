@@ -749,6 +749,8 @@ import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
 import { API_URL } from "../../proxy";
 import { FaTrash, FaTimes } from "react-icons/fa";
+import { BsInfoCircleFill } from "react-icons/bs";
+
 
 function TableColumns() {
   // Create a ref for FilterSidebar
@@ -778,6 +780,14 @@ function TableColumns() {
   const [activeSuggestionField, setActiveSuggestionField] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSaveFilterModalOpen, setIsSaveFilterModalOpen] = useState(false);
+  
+  // Audit modal state
+  const [auditModal, setAuditModal] = useState({
+    isOpen: false,
+    columnName: "",
+    auditData: [],
+    loading: false,
+  });
 
   // hover delete row icon
   const [hoveredRowIndex, setHoveredRowIndex] = useState(null);
@@ -1042,16 +1052,39 @@ function TableColumns() {
 
   /* ---------------- UPDATE CELL ---------------- */
   const handleChange = (rowId, field, value) => {
+    // Update local UI state immediately
     setData((prev) =>
       prev.map((row) => (row._id === rowId ? { ...row, [field]: value } : row)),
     );
 
+    // Find the row we are going to send to backend
     const rowToUpdate = data.find((r) => r._id === rowId);
     if (rowToUpdate) {
+      // Read currently logged-in user from localStorage (same as used for `status`)
+      let changedByUserName = "Unknown";
+      let changedByUserId = null; // we will store email here, per requirement
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          // Display name
+          changedByUserName = parsed.user_name || parsed.email || "Unknown";
+          // Store email as the identifier (not ObjectId)
+          changedByUserId = parsed.email || null;
+        }
+      } catch (e) {
+        // ignore JSON parse errors and fall back to "Unknown"
+      }
+
       fetch(`${API_URL}/api/development/${rowId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...rowToUpdate, [field]: value }),
+        body: JSON.stringify({
+          ...rowToUpdate,
+          [field]: value,
+          changedByUserName,
+          changedByUserId,
+        }),
       });
     }
   };
@@ -1439,21 +1472,62 @@ function TableColumns() {
 
           if (col.column_type === "select") {
             return (
-              <select
-                value={value}
-                className="bg-transparent border-0 w-100 text-dark"
-                onChange={(e) =>
-                  handleChange(row._id, col.name, e.target.value)
-                }
-                disabled={!canEdit(col.name)}
-              >
-                <option value="">Select</option>
-                {(col.multipleValue || []).map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
+              <div className="d-flex align-items-center gap-1">
+                <select
+                  value={value}
+                  className="bg-transparent border-0 w-100 text-dark"
+                  onChange={(e) =>
+                    handleChange(row._id, col.name, e.target.value)
+                  }
+                  disabled={!canEdit(col.name)}
+                >
+                  <option value="">Select</option>
+                  {(col.multipleValue || []).map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                {col.hasDefaultValue && status?.status === "admin" && (
+                  <button
+                    type="button"
+                    className="btn btn-link p-0 small"
+                    title="View change history"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setAuditModal({
+                        isOpen: true,
+                        columnName: col.column_heading,
+                        auditData: [],
+                        loading: true,
+                      });
+                      try {
+                        const res = await fetch(
+                          `${API_URL}/api/development/${row._id}/audit/${col.name}`,
+                        );
+                        const history = await res.json();
+                        setAuditModal({
+                          isOpen: true,
+                          columnName: col.column_heading,
+                          auditData: history,
+                          loading: false,
+                        });
+                      } catch (err) {
+                        console.error("Failed to load audit history", err);
+                        setAuditModal({
+                          isOpen: true,
+                          columnName: col.column_heading,
+                          auditData: [],
+                          loading: false,
+                        });
+                      }
+                    }}
+                  >
+                    <BsInfoCircleFill />
+
+                  </button>
+                )}
+              </div>
             );
           }
 
@@ -1658,6 +1732,111 @@ function TableColumns() {
                 No
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audit History Modal */}
+      {auditModal.isOpen && (
+        <div
+          className="delete-confirmation-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={() =>
+            setAuditModal({ isOpen: false, columnName: "", auditData: [], loading: false })
+          }
+        >
+          <div
+            className="delete-confirmation-modal"
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              maxWidth: "600px",
+              width: "90%",
+              maxHeight: "80vh",
+              overflow: "auto",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h4>Change History - {auditModal.columnName}</h4>
+              <button
+                className="btn btn-link p-0"
+                onClick={() =>
+                  setAuditModal({
+                    isOpen: false,
+                    columnName: "",
+                    auditData: [],
+                    loading: false,
+                  })
+                }
+              >
+                <FaTimes size={20} />
+              </button>
+            </div>
+            {auditModal.loading ? (
+              <div className="text-center py-4">
+                <div className="spinner-border" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            ) : auditModal.auditData.length === 0 ? (
+              <p className="text-muted text-center py-4">
+                No changes recorded for this field.
+              </p>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-sm table-bordered">
+                  <thead>
+                    <tr>
+                      <th>User Name</th>
+                      <th>Time</th>
+                      <th>Old Value</th>
+                      <th>New Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditModal.auditData.map((audit, idx) => (
+                      <tr key={idx}>
+                        <td>{audit.changedByUserName || "Unknown"}</td>
+                        <td>
+                          {new Date(audit.changedAt).toLocaleString()}
+                        </td>
+                        <td>{audit.oldValue ?? "-"}</td>
+                        <td>{audit.newValue ?? "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {/* <div className="d-flex justify-content-end mt-3">
+              <button
+                className="btn btn-secondary"
+                onClick={() =>
+                  setAuditModal({
+                    isOpen: false,
+                    columnName: "",
+                    auditData: [],
+                    loading: false,
+                  })
+                }
+              >
+                Close
+              </button>
+            </div> */}
           </div>
         </div>
       )}
