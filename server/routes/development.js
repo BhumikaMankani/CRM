@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Project = require("../models/Development");
+const Audit = require("../models/Audit");
 
 // Get all rows
 router.get("/", async (req, res) => {
@@ -70,15 +71,87 @@ router.put("/columnAccess/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
     console.log("📝 UPDATE ROW REQUEST:", req.params.id, req.body);
     try {
+        const { changedByUserId, changedByUserName, ...updateBody } = req.body;
+
+        // 1) Load the existing document so we can compare old vs new values
+        const existing = await Project.findById(req.params.id);
+        if (!existing) {
+            return res.status(404).json({ error: "Row not found" });
+        }
+
+        // 2) Apply update and get the new doc
         const updated = await Project.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            { $set: updateBody },
             { new: true }
         );
+
+        // 3) For select/default-value columns, write audit entries for any changed fields
+        try {
+            // Load column definitions so we know metadata (hasDefaultValue, etc.)
+            const Column = require("../models/Column");
+            const columns = await Column.find({ status: { $ne: "deactive" } });
+
+            const auditOps = [];
+
+            for (const col of columns) {
+                // We only care about select columns that are configured with default value tracking
+                if (col.column_type !== "select" || !col.hasDefaultValue) continue;
+
+                const field = col.name; // e.g. test1769667448522
+
+                const oldValue = existing[field];
+                const newValue = updated[field];
+
+                // Skip if value didn't actually change (including both undefined/empty)
+                if (oldValue === newValue) continue;
+
+                auditOps.push(
+                    Audit.create({
+                        recordId: existing._id,
+                        columnId: col._id,
+                        columnName: col.column_heading,
+                        columnFieldName: field,
+                        oldValue: oldValue ?? null,
+                        newValue: newValue ?? null,
+                        changedByUserId: changedByUserId || null,
+                        changedByUserName: changedByUserName || null,
+                    })
+                );
+            }
+
+            if (auditOps.length) {
+                await Promise.all(auditOps);
+                console.log(`🧾 Audit entries written: ${auditOps.length}`);
+            }
+        } catch (auditErr) {
+            console.error("⚠️ Failed to write audit log:", auditErr.message);
+            // Do not fail the main update if audit logging fails
+        }
+
         console.log("✅ Row updated successfully:", updated);
         res.json(updated);
     } catch (err) {
         console.error("❌ Error updating row:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get audit history for a specific record + column
+// URL shape must match frontend: /api/development/:id/audit/:field
+router.get("/:id/audit/:field", async (req, res) => {
+    const { id, field } = req.params;
+    try {
+        // Find all audit entries that belong to this record + column field key
+        const history = await Audit.find({
+            recordId: id,
+            columnFieldName: field,
+        }).sort({ changedAt: -1 });
+
+        // Always return JSON (even if empty array) so frontend .json() succeeds
+        res.json(history);
+    } catch (err) {
+        console.error("❌ Error fetching audit history:", err.message);
         res.status(500).json({ error: err.message });
     }
 });
