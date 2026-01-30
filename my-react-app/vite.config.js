@@ -7,8 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "http://localhost:5000",
-        target: "https://crm-app-mandasatechnologies.fly.dev",
+        target: "http://localhost:5000",
+        // target: "https://crm-app-mandasatechnologies.fly.dev",
         changeOrigin: true,
         secure: false,
       },

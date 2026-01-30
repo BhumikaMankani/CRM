@@ -73,7 +73,7 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                         Filters
                     </h5>
                     </div>
-                {Object.values(filters).some(v => v) && (
+                {Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v) && (
                     <div className={`d-flex gap-2 ${status.status === 'staff' ? '' : 'mt-2'}`}>
                     {status.status === 'admin' &&
                         <button

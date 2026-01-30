@@ -779,6 +779,7 @@ function TableColumns() {
   const [filters, setFilters] = useState({});
   const [activeSuggestionField, setActiveSuggestionField] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
   const [isSaveFilterModalOpen, setIsSaveFilterModalOpen] = useState(false);
   
   // Audit modal state
@@ -925,7 +926,7 @@ function TableColumns() {
       }
 
       setIsSaveFilterModalOpen(false);
-      alert("Filter saved successfully!");
+      // alert("Filter saved successfully!");
     } catch (err) {
       console.error("Error saving filter:", err);
       alert(`Failed to save filter: ${err.message}`);
@@ -963,7 +964,7 @@ function TableColumns() {
         filterSidebarRef.current.removeFilterFromList(filterId);
       }
 
-      alert("Filter deleted successfully!");
+      // alert("Filter deleted successfully!");
     } catch (err) {
       console.error("Error deleting filter:", err);
       alert(`Failed to delete filter: ${err.message}`);
@@ -983,11 +984,23 @@ function TableColumns() {
 
     // Apply filters
     Object.keys(filters).forEach((key) => {
-      const filterValue = filters[key]?.toLowerCase();
-      if (filterValue) {
+      const filterValue = filters[key];
+      if (filterValue === undefined || filterValue === null) return;
+      // Multi-select (array): row matches if its value is in the selected list
+      if (Array.isArray(filterValue)) {
+        if (filterValue.length === 0) return;
+        processedData = processedData.filter((row) => {
+          const cellValue = String(row[key] ?? "").trim();
+          return filterValue.some(
+            (fv) => String(fv ?? "").trim().toLowerCase() === cellValue.toLowerCase()
+          );
+        });
+      } else {
+        const filterStr = String(filterValue).toLowerCase();
+        if (!filterStr) return;
         processedData = processedData.filter((row) => {
           const cellValue = String(row[key] || "").toLowerCase();
-          return cellValue.includes(filterValue);
+          return cellValue.includes(filterStr);
         });
       }
     });
@@ -1006,6 +1019,19 @@ function TableColumns() {
 
     return processedData;
   }, [data, filters, sortConfig]);
+
+  // Close multi-select dropdown when clicking outside
+  useEffect(() => {
+    if (!openFilterDropdown) return;
+    const close = (e) => {
+      if (!e.target.closest(".filter-input-wrapper-multiselect")) {
+        setOpenFilterDropdown(null);
+      }
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [openFilterDropdown]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -1364,22 +1390,78 @@ function TableColumns() {
             </div>
             {isFilterOpen && col.sorting && (
               <div className="filter-row-input">
-                <div className="filter-input-wrapper">
+                <div className="filter-input-wrapper filter-input-wrapper-multiselect">
                   {col.column_type === "select" ? (
-                    <select
-                      className="form-control form-control-sm text-dark"
-                      value={filters[col.name] || ""}
-                      onChange={(e) =>
-                        handleFilterChange(col.name, e.target.value)
-                      }
-                    >
-                      <option value="">All</option>
-                      {(col.multipleValue || []).map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                    <>
+                      <button
+                        type="button"
+                        className="form-control form-control-sm text-dark text-start d-flex align-items-center justify-content-between filter-multiselect-trigger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenFilterDropdown((prev) =>
+                            prev === col.name ? null : col.name
+                          );
+                        }}
+                        aria-expanded={openFilterDropdown === col.name}
+                        aria-haspopup="listbox"
+                      >
+                        <span className="text-truncate">
+                          {Array.isArray(filters[col.name]) &&
+                          filters[col.name].length > 0
+                            ? `${filters[col.name].length} selected`
+                            : "All"}
+                        </span>
+                        <span
+                          className="dropdown-arrow"
+                          style={{
+                            transform:
+                              openFilterDropdown === col.name
+                                ? "rotate(180deg)"
+                                : "none",
+                          }}
+                        >
+                          ▼
+                        </span>
+                      </button>
+                      {openFilterDropdown === col.name && (
+                        <div
+                          className="filter-multiselect-dropdown"
+                          role="listbox"
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          {(col.multipleValue || []).map((opt) => {
+                            const selected = (
+                              Array.isArray(filters[col.name])
+                                ? filters[col.name]
+                                : []
+                            ).includes(opt);
+                            return (
+                              <label
+                                key={opt}
+                                className="filter-multiselect-option d-flex align-items-center gap-2 py-1 px-2 small"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selected}
+                                  onChange={() => {
+                                    const current = Array.isArray(
+                                      filters[col.name]
+                                    )
+                                      ? filters[col.name]
+                                      : [];
+                                    const next = current.includes(opt)
+                                      ? current.filter((v) => v !== opt)
+                                      : [...current, opt];
+                                    handleFilterChange(col.name, next);
+                                  }}
+                                />
+                                <span>{opt}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <input
                       type={
@@ -1397,13 +1479,19 @@ function TableColumns() {
                       }
                     />
                   )}
-                  {filters[col.name] && (
+                  {((col.column_type === "select" &&
+                    Array.isArray(filters[col.name]) &&
+                    filters[col.name].length > 0) ||
+                    (col.column_type !== "select" && filters[col.name])) && (
                     <button
                       type="button"
                       className="filter-clear-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleFilterChange(col.name, "");
+                        handleFilterChange(
+                          col.name,
+                          col.column_type === "select" ? [] : ""
+                        );
                       }}
                       title="Clear filter"
                     >
@@ -1555,6 +1643,7 @@ function TableColumns() {
     data,
     isDelete,
     isFilterOpen,
+    openFilterDropdown,
     filters,
     sortConfig,
     activeSuggestionField,
@@ -1651,7 +1740,7 @@ function TableColumns() {
           handleDeleteFilter={handleDeleteFilter}
         />
 
-        <div className="col-md-10 col-sm-8">
+        <div className="col-md-10 col-sm-8 main-tb">
           {loading ? (
             <div className="loading-spinner">
               <div className="spinner"></div>

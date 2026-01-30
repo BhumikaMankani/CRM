@@ -7,7 +7,9 @@
     scrollbar-width: thin;
     scroll-behavior: smooth;
     border: 1px solid #e2e8f0;
-    scrollbar-width: none;
+    /* scrollbar-width: none; */
+    height: calc(100vh - 300px);
+
 }
 
 span.rounded-circle {
@@ -291,6 +293,53 @@ input {
     background: #fff;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     border-color: #80bdff;
+}
+
+/* Multi-select filter dropdown */
+.filter-input-wrapper-multiselect {
+    position: relative;
+}
+
+.filter-multiselect-trigger {
+    cursor: pointer;
+    min-height: 24px;
+}
+
+.filter-multiselect-trigger .dropdown-arrow {
+    font-size: 0.6rem;
+    opacity: 0.7;
+    transition: transform 0.15s ease;
+}
+
+.filter-multiselect-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 2px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1050;
+    scrollbar-width: none;
+}
+
+.filter-multiselect-option {
+    cursor: pointer;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.filter-multiselect-option:hover {
+    background: #f1f5f9;
+}
+
+.filter-multiselect-option input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
 }
 
 .btn-link.text-dark {

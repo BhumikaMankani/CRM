@@ -273,7 +273,7 @@ button.close_button:hover img {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    background: #e87c00;
     color: white;
     box-shadow:
         0 4px 6px -1px rgba(37, 99, 235, 0.2),

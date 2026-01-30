@@ -77,7 +77,8 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters }) => {
                             {Object.keys(filters).length > 0 ? (
                                 Object.entries(filters).map(([key, value]) => (
                                     <div key={key} className="filter-tag">
-                                        <strong>{key}:</strong> {value}
+                                        <strong>{key}:</strong>{' '}
+                                        {Array.isArray(value) ? value.join(', ') : value}
                                     </div>
                                 ))
                             ) : (

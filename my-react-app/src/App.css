@@ -425,3 +425,9 @@ h5.fw-bold {
   background-color: gray;
   color: #ffffff;
 }
+
+/* .main-tb{
+  max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+} */
