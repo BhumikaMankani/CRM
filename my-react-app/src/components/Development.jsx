@@ -1381,7 +1381,8 @@ function TableColumns() {
       const newRow = { ...newRowData };
       columnsDef.forEach((col) => {
         if (!newRow.hasOwnProperty(col.name)) {
-          newRow[col.name] = "";
+          // Use the column's default value if it has one set, otherwise empty string
+          newRow[col.name] = (col.hasDefaultValue && col.defaultValue) ? col.defaultValue : "";
         }
       });
 
@@ -1902,7 +1903,7 @@ function TableColumns() {
                     );
                   })}
                 </select>
-                {col.hasDefaultValue && status?.status === "admin" && (
+                {(col.hasDefaultValue && status?.status === "admin") && (
                   <button
                     type="button"
                     className="btn btn-link p-0 small"
@@ -1919,6 +1920,7 @@ function TableColumns() {
                         const res = await fetch(
                           `${API_URL}/api/development/${row._id}/audit/${col.name}`,
                         );
+                        if (!res.ok) throw new Error("Failed to fetch history");
                         const history = await res.json();
                         setAuditModal({
                           isOpen: true,
@@ -1937,8 +1939,7 @@ function TableColumns() {
                       }
                     }}
                   >
-                    <BsInfoCircleFill />
-
+                    <BsInfoCircleFill style={{ color: "#2563eb" }} />
                   </button>
                 )}
               </div>
@@ -2292,8 +2293,20 @@ function TableColumns() {
                         <td>
                           {new Date(audit.changedAt).toLocaleString()}
                         </td>
-                        <td>{audit.oldValue ?? "-"}</td>
-                        <td>{audit.newValue ?? "-"}</td>
+                        <td>
+                          {audit.oldValue === "" ? (
+                            <em className="text-muted">Empty</em>
+                          ) : (
+                            audit.oldValue ?? "-"
+                          )}
+                        </td>
+                        <td>
+                          {audit.newValue === "" ? (
+                            <em className="text-muted">Empty</em>
+                          ) : (
+                            audit.newValue ?? "-"
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
