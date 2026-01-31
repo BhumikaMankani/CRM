@@ -162,6 +162,7 @@ function Form({
   showDataType,
   showSortable,
   availableColumns = [],
+  availableUsers = [],
 }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -170,8 +171,12 @@ function Form({
     options: [""],
     conditionColumn1: "",
     conditionColumn2: "",
+    equalPrefix: "",
+    morePrefix: "",
+    lessPrefix: "",
     hasDefaultValue: false,
     defaultValue: "",
+    access: [],
   });
 
   const handleChange = (e) => {
@@ -201,6 +206,16 @@ function Form({
     setFormData({
       ...formData,
       options: newOptions,
+    });
+  };
+
+  const handleAccessToggle = (userId) => {
+    setFormData((prev) => {
+      const current = prev.access || [];
+      if (current.includes(userId)) {
+        return { ...prev, access: current.filter((id) => id !== userId) };
+      }
+      return { ...prev, access: [...current, userId] };
     });
   };
 
@@ -239,6 +254,12 @@ function Form({
         formData.type === "condition"
           ? formData.conditionColumn2
           : undefined,
+      equalPrefix:
+        formData.type === "condition" ? formData.equalPrefix : undefined,
+      morePrefix:
+        formData.type === "condition" ? formData.morePrefix : undefined,
+      lessPrefix:
+        formData.type === "condition" ? formData.lessPrefix : undefined,
       equalColor:
         formData.type === "condition" ? formData.equalColor : undefined,
       moreColor:
@@ -251,6 +272,7 @@ function Form({
         formData.type === "select" && formData.hasDefaultValue
           ? formData.defaultValue
           : undefined,
+      access: Array.isArray(formData.access) ? formData.access : [],
     };
 
     console.log("payload", payload);
@@ -270,8 +292,12 @@ function Form({
       sorting: false,
       conditionColumn1: "",
       conditionColumn2: "",
+      equalPrefix: "",
+      morePrefix: "",
+      lessPrefix: "",
       hasDefaultValue: false,
       defaultValue: "",
+      access: [],
     });
   };
 
@@ -341,6 +367,50 @@ function Form({
                 </label>
               </div>
             )}
+
+            <div className="form-group">
+              <label>Access</label>
+              <p className="small text-muted mb-2">
+                Users who can edit or delete this column (Admin always has access)
+              </p>
+              <div
+                className="access-users-list"
+                style={{
+                  maxHeight: "120px",
+                  overflowY: "auto",
+                  border: "1px solid #dee2e6",
+                  borderRadius: "6px",
+                  padding: "10px",
+                }}
+              >
+                {availableUsers.length === 0 ? (
+                  <span className="text-muted small">No users available</span>
+                ) : (
+                  availableUsers.map((user) => (
+                    <div
+                      key={user._id}
+                      className="form-check"
+                      style={{ marginBottom: "6px" }}
+                    >
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id={`access-${user._id}`}
+                        checked={(formData.access || []).includes(user._id)}
+                        onChange={() => handleAccessToggle(user._id)}
+                      />
+                      <label
+                        className="form-check-label text-dark"
+                        htmlFor={`access-${user._id}`}
+                        style={{ fontSize: "14px" }}
+                      >
+                        {user.user_name || user.email} {user.status === "admin" && "(Admin)"}
+                      </label>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
             {formData.type === "select" && (
               <div className="options-container">
@@ -477,6 +547,45 @@ function Form({
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Prefix (if days equal 0)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Deadline Today"
+                    value={formData.equalPrefix}
+                    onChange={(e) =>
+                      setFormData({ ...formData, equalPrefix: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Prefix (if days &gt; 0)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Due in"
+                    value={formData.morePrefix}
+                    onChange={(e) =>
+                      setFormData({ ...formData, morePrefix: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Prefix (if days &lt; 0)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Overdue by"
+                    value={formData.lessPrefix}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lessPrefix: e.target.value })
+                    }
+                  />
                 </div>
               </div>
             )}

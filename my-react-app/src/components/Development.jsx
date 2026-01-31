@@ -579,7 +579,7 @@
 //                                 onChange={(e) =>
 //                                     handleChange(row._id, col.name, e.target.value)
 //                                 }
-//                                 disabled={!canEdit(col.name)}
+//                                 disabled={!canEdit(col.name, col)}
 //                             >
 //                                 <option value="">Select</option>
 //                                 {(col.multipleValue || []).map(opt => (
@@ -597,7 +597,7 @@
 //                             onChange={(e) =>
 //                                 handleChange(row._id, col.name, e.target.value)
 //                             }
-//                             disabled={!canEdit(col.name)}
+//                             disabled={!canEdit(col.name, col)}
 //                         />
 //                     );
 //                 }
@@ -747,8 +747,9 @@ import Form from "./Form";
 import ToggleButtonIcon from "./toggle";
 import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
+import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
-import { FaTrash, FaTimes } from "react-icons/fa";
+import { FaTrash, FaTimes, FaUserCog } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
 
 
@@ -774,6 +775,17 @@ function TableColumns() {
     isDynamic: false,
   });
 
+  const [deleteRowConfirmation, setDeleteRowConfirmation] = useState({
+    isOpen: false,
+    rowId: null,
+    label: "",
+  });
+
+  const [editAccessModal, setEditAccessModal] = useState({
+    isOpen: false,
+    column: null,
+  });
+
   // Sorting and filtering states
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [filters, setFilters] = useState({});
@@ -781,7 +793,7 @@ function TableColumns() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
   const [isSaveFilterModalOpen, setIsSaveFilterModalOpen] = useState(false);
-  
+
   // Audit modal state
   const [auditModal, setAuditModal] = useState({
     isOpen: false,
@@ -986,13 +998,61 @@ function TableColumns() {
     Object.keys(filters).forEach((key) => {
       const filterValue = filters[key];
       if (filterValue === undefined || filterValue === null) return;
+
+      // Handle Date Range (object with start/end)
+      if (typeof filterValue === "object" && !Array.isArray(filterValue)) {
+        const { start, end } = filterValue;
+        if (!start && !end) return;
+
+        processedData = processedData.filter((row) => {
+          const cellValue = row[key];
+          if (!cellValue) return false;
+
+          // Row date parsing (handle YYYY-MM-DD and DD/MM/YYYY)
+          let rowDate;
+          if (String(cellValue).includes("-")) {
+            rowDate = new Date(cellValue);
+          } else if (String(cellValue).includes("/")) {
+            const [d, m, y] = String(cellValue).split("/");
+            rowDate = new Date(`${y}-${m}-${d}`);
+          } else {
+            rowDate = new Date(cellValue);
+          }
+
+          if (isNaN(rowDate.getTime())) return false;
+
+          rowDate.setHours(0, 0, 0, 0);
+
+          if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            return rowDate >= startDate && rowDate <= endDate;
+          } else if (start) {
+            const startDate = new Date(start);
+            startDate.setHours(0, 0, 0, 0);
+            return rowDate >= startDate;
+          } else if (end) {
+            const endDate = new Date(end);
+            endDate.setHours(0, 0, 0, 0);
+            return rowDate <= endDate;
+          }
+          return true;
+        });
+        return;
+      }
+
       // Multi-select (array): row matches if its value is in the selected list
       if (Array.isArray(filterValue)) {
         if (filterValue.length === 0) return;
         processedData = processedData.filter((row) => {
           const cellValue = String(row[key] ?? "").trim();
           return filterValue.some(
-            (fv) => String(fv ?? "").trim().toLowerCase() === cellValue.toLowerCase()
+            (fv) =>
+              String(fv ?? "")
+                .trim()
+                .toLowerCase() === cellValue.toLowerCase()
           );
         });
       } else {
@@ -1136,8 +1196,6 @@ function TableColumns() {
     const previousData = [...data];
     setData((prev) => prev.filter((row) => String(row._id) !== rowIdStr));
 
-    console.log(data);
-    console.log(rowId);
     try {
       const response = await fetch(
         `${API_URL}/api/development/deactivate/${rowId}`,
@@ -1153,6 +1211,57 @@ function TableColumns() {
     } catch (error) {
       console.error("Network error:", error);
       setData(data);
+    }
+  };
+
+  const confirmDeleteRow = async () => {
+    const { rowId } = deleteRowConfirmation;
+    if (rowId) {
+      await deleteRow(rowId);
+      setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
+    }
+  };
+
+  const cancelDeleteRow = () => {
+    setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
+  };
+
+  const handleSaveColumnAccess = async (columnName, { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix }) => {
+    try {
+      const body = { access, sorting, equalPrefix, morePrefix, lessPrefix };
+      if (column_heading !== undefined) body.column_heading = column_heading;
+      const res = await fetch(
+        `${API_URL}/api/columns/${columnName}/access`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update column");
+      }
+      const updated = await res.json();
+      setColumnsDef((prev) =>
+        prev.map((col) =>
+          col.name === columnName
+            ? {
+              ...col,
+              access: updated.access,
+              sorting: updated.sorting,
+              equalPrefix: updated.equalPrefix,
+              morePrefix: updated.morePrefix,
+              lessPrefix: updated.lessPrefix,
+              ...(updated.column_heading && { column_heading: updated.column_heading }),
+            }
+            : col
+        )
+      );
+      setEditAccessModal({ isOpen: false, column: null });
+    } catch (err) {
+      console.error("Error updating column:", err);
+      alert("Error: " + err.message);
     }
   };
 
@@ -1274,10 +1383,17 @@ function TableColumns() {
   }, [status]);
 
   // Check if user can edit this column
-  const canEdit = (columnName) => {
+  const canEdit = (columnName, column) => {
     if (!status) return false;
     if (status.status === "admin") return true;
     if (status.status === "staff") {
+      // If column has explicit access list, check if user is in it
+      const col = column || columnsDef.find((c) => c.name === columnName);
+      if (col?.access && Array.isArray(col.access) && col.access.length > 0) {
+        const userIdStr = String(status._id);
+        return col.access.some((id) => String(id) === userIdStr);
+      }
+      // Fallback: legacy column_access on user (comma-separated column names)
       return valuesToMatch.includes(columnName.toLowerCase());
     }
     return false;
@@ -1329,7 +1445,14 @@ function TableColumns() {
               {status.status === "admin" ? (
                 hoveredRowIndex === rowIndex ? (
                   <button
-                    onClick={(e) => deleteRow(row._id, e)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteRowConfirmation({
+                        isOpen: true,
+                        rowId: row._id,
+                        label: row.project || row.client || "this row",
+                      });
+                    }}
                     className=" btn btn-link text-danger p-0"
                     type="button"
                   >
@@ -1350,13 +1473,14 @@ function TableColumns() {
             <div className="d-flex align-items-center justify-content-between gap-2">
               <div className="d-flex align-items-center gap-2 flex-grow-1">
                 <input
+                  key={`col-header-${col.name}-${col.column_heading}`}
                   defaultValue={col.column_heading}
                   className="header-edit-input flex-grow-1 text-dark"
                   {...(status.status === "admin"
                     ? {
-                        onBlur: (e) => handleRename(col.name, e.target.value),
-                        onKeyDown: (e) => e.key === "Enter" && e.target.blur(),
-                      }
+                      onBlur: (e) => handleRename(col.name, e.target.value),
+                      onKeyDown: (e) => e.key === "Enter" && e.target.blur(),
+                    }
                     : { readOnly: true })}
                 />
                 {/* {status.status === 'admin' && (
@@ -1375,6 +1499,18 @@ function TableColumns() {
                         ? "↑"
                         : "↓"
                       : "↕"}
+                  </button>
+                )}
+                {status.status === "admin" && (
+                  <button
+                    className="btn btn-link p-0 text-dark"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditAccessModal({ isOpen: true, column: col });
+                    }}
+                    title="Edit column access"
+                  >
+                    <FaUserCog size={14} />
                   </button>
                 )}
               </div>
@@ -1407,7 +1543,7 @@ function TableColumns() {
                       >
                         <span className="text-truncate">
                           {Array.isArray(filters[col.name]) &&
-                          filters[col.name].length > 0
+                            filters[col.name].length > 0
                             ? `${filters[col.name].length} selected`
                             : "All"}
                         </span>
@@ -1462,15 +1598,42 @@ function TableColumns() {
                         </div>
                       )}
                     </>
+                  ) : col.column_type === "date" ? (
+                    <div className="d-flex flex-row gap-1">
+                      <div className="d-flex flex-column">
+                        <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#666' }}>From:</span>
+                        <input
+                          type="date"
+                          className="form-control form-control-sm text-dark p-1"
+                          style={{ fontSize: '10px' }}
+                          value={filters[col.name]?.start || ""}
+                          onChange={(e) =>
+                            handleFilterChange(col.name, {
+                              ...filters[col.name],
+                              start: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="d-flex flex-column">
+                        <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#666' }}>To:</span>
+                        <input
+                          type="date"
+                          className="form-control form-control-sm text-dark p-1"
+                          style={{ fontSize: '10px' }}
+                          value={filters[col.name]?.end || ""}
+                          onChange={(e) =>
+                            handleFilterChange(col.name, {
+                              ...filters[col.name],
+                              end: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
                   ) : (
                     <input
-                      type={
-                        col.column_type === "date"
-                          ? "date"
-                          : col.column_type === "number"
-                            ? "number"
-                            : "text"
-                      }
+                      type={col.column_type === "number" ? "number" : "text"}
                       className="form-control form-control-sm text-dark"
                       placeholder={`Filter ${col.column_heading}...`}
                       value={filters[col.name] || ""}
@@ -1482,22 +1645,23 @@ function TableColumns() {
                   {((col.column_type === "select" &&
                     Array.isArray(filters[col.name]) &&
                     filters[col.name].length > 0) ||
-                    (col.column_type !== "select" && filters[col.name])) && (
-                    <button
-                      type="button"
-                      className="filter-clear-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFilterChange(
-                          col.name,
-                          col.column_type === "select" ? [] : ""
-                        );
-                      }}
-                      title="Clear filter"
-                    >
-                      <FaTimes size={12} />
-                    </button>
-                  )}
+                    (col.column_type === "date" && (filters[col.name]?.start || filters[col.name]?.end)) ||
+                    (col.column_type !== "select" && col.column_type !== "date" && filters[col.name])) && (
+                      <button
+                        type="button"
+                        className="filter-clear-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFilterChange(
+                            col.name,
+                            col.column_type === "select" ? [] : col.column_type === "date" ? {} : ""
+                          );
+                        }}
+                        title="Clear filter"
+                      >
+                        <FaTimes size={12} />
+                      </button>
+                    )}
                 </div>
               </div>
             )}
@@ -1550,9 +1714,18 @@ function TableColumns() {
                     ? "days-negative" // overdue
                     : "days-zero"; // today
 
-              return (
-                <span className={dayClass}>{Math.abs(diffDays)} days</span>
-              );
+              let displayText = "";
+              if (diffDays === 0) {
+                displayText = col.equalPrefix || "Deadline Today";
+              } else if (diffDays > 0) {
+                const prefix = col.morePrefix || "Deadline in";
+                displayText = `${prefix} ${Math.abs(diffDays)} days`;
+              } else {
+                const prefix = col.lessPrefix || "Overdue by";
+                displayText = `${prefix} ${Math.abs(diffDays)} days`;
+              }
+
+              return <span className={dayClass}>{displayText}</span>;
             } catch (err) {
               return <span className="text-muted">Error</span>;
             }
@@ -1567,7 +1740,7 @@ function TableColumns() {
                   onChange={(e) =>
                     handleChange(row._id, col.name, e.target.value)
                   }
-                  disabled={!canEdit(col.name)}
+                  disabled={!canEdit(col.name, col)}
                 >
                   <option value="">Select</option>
                   {(col.multipleValue || []).map((opt) => (
@@ -1631,7 +1804,7 @@ function TableColumns() {
               value={value}
               className="bg-transparent border-0 w-100 text-dark"
               onChange={(e) => handleChange(row._id, col.name, e.target.value)}
-              disabled={!canEdit(col.name)}
+              disabled={!canEdit(col.name, col)}
             />
           );
         },
@@ -1751,6 +1924,15 @@ function TableColumns() {
           )}
         </div>
       </div>
+      <EditColumnAccessModal
+        isOpen={editAccessModal.isOpen}
+        onClose={() => setEditAccessModal({ isOpen: false, column: null })}
+        column={editAccessModal.column}
+        showSortable={true}
+        availableUsers={userData}
+        onSave={handleSaveColumnAccess}
+      />
+
       <Form
         showColumnHeading={true}
         showDataType={true}
@@ -1758,6 +1940,7 @@ function TableColumns() {
         isPopupOpen={isColumnModalOpen}
         onPopupClose={() => setIsColumnModalOpen(false)}
         availableColumns={columnsDef}
+        availableUsers={userData}
         onPopupSave={async (newColumn) => {
           try {
             const res = await fetch(`${API_URL}/api/columns`, {
@@ -1818,6 +2001,55 @@ function TableColumns() {
                 Yes
               </button>
               <button className="btn btn-secondary" onClick={cancelDelete}>
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteRowConfirmation.isOpen && (
+        <div
+          className="delete-confirmation-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="delete-confirmation-modal"
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            }}
+          >
+            <h4>Delete Row</h4>
+            <p>
+              Are you sure you want to delete{" "}
+              {deleteRowConfirmation.label ? (
+                <>
+                  "<strong>{deleteRowConfirmation.label}</strong>"?
+                </>
+              ) : (
+                "this row?"
+              )}
+            </p>
+            <div className="d-flex justify-content-center gap-2 mt-3">
+              <button className="btn btn-danger me-2" onClick={confirmDeleteRow}>
+                Yes
+              </button>
+              <button className="btn btn-secondary" onClick={cancelDeleteRow}>
                 No
               </button>
             </div>

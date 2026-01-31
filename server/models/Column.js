@@ -20,6 +20,7 @@ const ColumnSchema = new mongoose.Schema({ column_heading: { type: String, requi
     conditionColumn2: { type: String }, // for condition type
     hasDefaultValue: { type: Boolean, default: false }, // for select dropdown default value
     defaultValue: { type: String }, // default value for select dropdown
+    access: { type: [String], default: [] }, // user IDs who can edit/delete this column
     status: { type: String, default: "active" }, // active, inactive
   },
   { timestamps: true },);
