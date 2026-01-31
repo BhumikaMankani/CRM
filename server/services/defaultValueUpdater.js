@@ -59,11 +59,19 @@ const updateDefaultValues = async () => {
               columnFieldName: fieldName,
             }).sort({ changedAt: -1 });
 
+            const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
             if (lastAudit) {
-              const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
               const age = Date.now() - new Date(lastAudit.changedAt).getTime();
               // If the last change is less than 24 hours old, skip resetting now
               if (age < TWENTY_FOUR_HOURS_MS) {
+                continue;
+              }
+            } else {
+              // If no audit entry exists, it hasn't been changed since creation.
+              // Check if the record itself is older than 24 hours.
+              const recordAge = Date.now() - new Date(project.createdAt).getTime();
+              if (recordAge < TWENTY_FOUR_HOURS_MS) {
                 continue;
               }
             }
@@ -133,22 +141,21 @@ const updateDefaultValues = async () => {
  * Start the interval to update default values every 24 hours
  */
 const startDefaultValueUpdater = () => {
-  const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+  const ONE_HOUR_MS = 60 * 60 * 1000;
 
   console.log(
-    "⏰ Default value updater started. First run in 24 hours, then every 24 hours."
+    "⏰ Default value updater service initialized. Running first check..."
   );
 
-  const firstTimeout = setTimeout(() => {
+  // Run immediately on startup
+  updateDefaultValues();
+
+  // Then run every hour to catch items as they hit their 24h mark
+  const intervalId = setInterval(() => {
     updateDefaultValues();
+  }, ONE_HOUR_MS);
 
-    // After the first run, switch to interval
-    setInterval(() => {
-      updateDefaultValues();
-    }, TWENTY_FOUR_HOURS_MS);
-  }, TWENTY_FOUR_HOURS_MS);
-
-  return firstTimeout;
+  return intervalId;
 };
 
 module.exports = {
