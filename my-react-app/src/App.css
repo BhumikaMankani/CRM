@@ -78,8 +78,8 @@ select:focus-visible {
 }
 
 button.btn svg {
-  width: 22px;
-  height: 22px;
+  width: 16px;
+  height: 16px;
 }
 
 button.btn svg,
@@ -92,13 +92,13 @@ button.btn svg * {
   overflow: hidden;
 }
 
-.table > tbody a {
+.table>tbody a {
   color: #2563eb;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.table > tbody a:hover {
+.table>tbody a:hover {
   color: #1e40af;
   text-decoration: underline;
 }
@@ -194,11 +194,13 @@ button.filter_button svg {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 .app-container.container.pt-5 {
   max-width: 1400px;
 }
@@ -264,19 +266,23 @@ button.filter_button svg {
 }
 
 @keyframes shake {
+
   10%,
   90% {
     transform: translate3d(-1px, 0, 0);
   }
+
   20%,
   80% {
     transform: translate3d(2px, 0, 0);
   }
+
   30%,
   50%,
   70% {
     transform: translate3d(-4px, 0, 0);
   }
+
   40%,
   60% {
     transform: translate3d(4px, 0, 0);
@@ -368,6 +374,11 @@ button.filter_button svg {
 }
 
 button.btn svg.delete-icon {
+  width: 12px;
+  height: 12px;
+}
+
+button.btn[title="Edit Option Colors"] svg.color-icon {
   width: 14px;
   height: 14px;
 }

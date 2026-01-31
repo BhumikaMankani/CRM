@@ -9,17 +9,18 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-
     useEffect(() => {
-        fetchSavedFilters();
-    }, [refreshTrigger]);
+        if (userId) {
+            fetchSavedFilters();
+        }
+    }, [refreshTrigger, userId]);
 
     const fetchSavedFilters = async () => {
 
         setLoading(true);
         setError('');
         try {
-            const response = await fetch(`${API_URL}/api/filters`, {
+            const response = await fetch(`${API_URL}/api/filters?userId=${userId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -55,47 +56,54 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
 
     return (
         <>
-            {/* Toggle Button */}
-            {/* <button
-                className="sidebar-toggle-btn"
-                onClick={() => setIsOpen(!isOpen)}
-                title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-            >
-                {isOpen ? <FaChevronLeft /> : <FaChevronRight />}
-            </button> */}
-
             {/* Sidebar */}
             <div className={`filter-sidebar ${isOpen ? 'open' : 'closed'} col-md-2 col-sm-4 pt-3 pb-3`}>
-                <div className={`sidebar-header ${status.status !== 'admin' ? 'd-flex justify-content-between align-items-center' : ''}`}>
-                    <div className='d-flex align-items-center justify-content-between'>
-                        <h5>
-                        <FaFilter className="me-2" />
-                        Filters
-                    </h5>
-                    </div>
-                {Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v) && (
-                    <div className={`d-flex gap-2 ${status.status === 'staff' ? '' : 'mt-2'}`}>
-                    {status.status === 'admin' &&
-                        <button
-                            onClick={() => setIsSaveFilterModalOpen(true)}
-                            className="btn btn-success"
-                            title="Save Current Filters"
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Save as</span>
-                        </button>
-                    }
+                <div className={`sidebar-header ${status.status === 'staff' ? 'd-flex align-items-center justify-content-between mb-2' : ''}`}>
+                    <div className={`d-flex align-items-center justify-content-between mb-2 ${status.status === 'staff' ? 'w-100' : ''}`}>
+                        <h5 className="m-0">
+                            <FaFilter className="me-2" />
+                            Filters
+                        </h5>
 
-                        <button
-                            onClick={clearFilters}
-                            className="btn btn-outline-secondary"
-                            title="Clear All Filters"
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Clear All</span>
-                        </button>
+                        {!isFilterOpen &&
+                            Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v) && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="btn btn-outline-secondary btn-sm w-max-content"
+                                    title="Clear All Filters"
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Clear All</span>
+                                </button>
+                            )
+                        }
                     </div>
-                )}
+
+                    {isFilterOpen &&
+                        Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v) && (
+                            <div className={`gap-2 d-flex ${status.status === 'staff' ? '' : 'mt-2 mb-2'}`}>
+                                {status.status === 'admin' &&
+                                    <button
+                                        onClick={() => setIsSaveFilterModalOpen(true)}
+                                        className="btn btn-success btn-sm"
+                                        title="Save Current Filters"
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Save as</span>
+                                    </button>
+                                }
+
+                                <button
+                                    onClick={clearFilters}
+                                    className="btn btn-outline-secondary btn-sm w-max-content"
+                                    title="Clear All Filters"
+                                    style={{ width: 'max-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Clear All</span>
+                                </button>
+                            </div>
+                        )}
+
                 </div>
 
                 <div className="sidebar-content">
@@ -115,11 +123,10 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                             {savedFilters.map(filter => (
                                 <div
                                     key={filter._id}
-                                    className={`filter-item ${
-                                        JSON.stringify(currentFilters) === JSON.stringify(filter.filterData)
-                                            ? 'active'
-                                            : ''
-                                    }`}
+                                    className={`filter-item ${JSON.stringify(currentFilters) === JSON.stringify(filter.filterData)
+                                        ? 'active'
+                                        : ''
+                                        }`}
                                     onClick={() => onFilterSelect(filter.filterData)}
                                 >
                                     <div className="filter-item-content">
@@ -130,13 +137,13 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                         </div> */}
                                     </div>
                                     {status.status === 'admin' && (
-                                    <button
-                                        className="delete-filter-btn"
-                                        onClick={(e) => handleDeleteFilter(filter._id, e)}
-                                        title="Delete filter"
-                                    >
-                                        <FaTrash />
-                                    </button>
+                                        <button
+                                            className="delete-filter-btn"
+                                            onClick={(e) => handleDeleteFilter(filter._id, e)}
+                                            title="Delete filter"
+                                        >
+                                            <FaTrash />
+                                        </button>
                                     )}
                                 </div>
                             ))}
@@ -149,7 +156,7 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                         </div>
                     )}
                 </div>
-            </div>
+            </div >
         </>
     );
 });
