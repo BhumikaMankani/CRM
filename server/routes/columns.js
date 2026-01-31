@@ -92,7 +92,7 @@ router.get("/", async (req, res) => {
 // Add new column
 router.post("/", async (req, res) => {
     try {
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, hasDefaultValue, defaultValue, access } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -106,6 +106,9 @@ router.post("/", async (req, res) => {
             multipleValue: multipleValue || [],
             conditionColumn1: conditionColumn1 || undefined,
             conditionColumn2: conditionColumn2 || undefined,
+            equalPrefix: equalPrefix || undefined,
+            morePrefix: morePrefix || undefined,
+            lessPrefix: lessPrefix || undefined,
             hasDefaultValue: hasDefaultValue || false,
             defaultValue: defaultValue || undefined,
             access: Array.isArray(access) ? access : [],
@@ -151,7 +154,7 @@ router.patch("/deactivate/:name", async (req, res) => {
 // Update column access and/or heading
 router.patch("/:name/access", async (req, res) => {
     try {
-        const { access, column_heading, sorting } = req.body;
+        const { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix } = req.body;
         const updateData = {};
         if (Array.isArray(access)) updateData.access = access;
         if (column_heading && typeof column_heading === "string" && column_heading.trim()) {
@@ -160,6 +163,9 @@ router.patch("/:name/access", async (req, res) => {
         if (typeof sorting === "boolean") {
             updateData.sorting = sorting;
         }
+        if (equalPrefix !== undefined) updateData.equalPrefix = equalPrefix;
+        if (morePrefix !== undefined) updateData.morePrefix = morePrefix;
+        if (lessPrefix !== undefined) updateData.lessPrefix = lessPrefix;
         const updated = await Column.findOneAndUpdate(
             { name: req.params.name },
             updateData,
