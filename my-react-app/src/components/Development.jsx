@@ -579,7 +579,7 @@
 //                                 onChange={(e) =>
 //                                     handleChange(row._id, col.name, e.target.value)
 //                                 }
-//                                 disabled={!canEdit(col.name)}
+//                                 disabled={!canEdit(col.name, col)}
 //                             >
 //                                 <option value="">Select</option>
 //                                 {(col.multipleValue || []).map(opt => (
@@ -597,7 +597,7 @@
 //                             onChange={(e) =>
 //                                 handleChange(row._id, col.name, e.target.value)
 //                             }
-//                             disabled={!canEdit(col.name)}
+//                             disabled={!canEdit(col.name, col)}
 //                         />
 //                     );
 //                 }
@@ -747,8 +747,9 @@ import Form from "./Form";
 import ToggleButtonIcon from "./toggle";
 import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
+import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
-import { FaTrash, FaTimes } from "react-icons/fa";
+import { FaTrash, FaTimes, FaUserCog } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
 
 
@@ -772,6 +773,17 @@ function TableColumns() {
     accessor: "",
     label: "",
     isDynamic: false,
+  });
+
+  const [deleteRowConfirmation, setDeleteRowConfirmation] = useState({
+    isOpen: false,
+    rowId: null,
+    label: "",
+  });
+
+  const [editAccessModal, setEditAccessModal] = useState({
+    isOpen: false,
+    column: null,
   });
 
   // Sorting and filtering states
@@ -1136,8 +1148,6 @@ function TableColumns() {
     const previousData = [...data];
     setData((prev) => prev.filter((row) => String(row._id) !== rowIdStr));
 
-    console.log(data);
-    console.log(rowId);
     try {
       const response = await fetch(
         `${API_URL}/api/development/deactivate/${rowId}`,
@@ -1153,6 +1163,53 @@ function TableColumns() {
     } catch (error) {
       console.error("Network error:", error);
       setData(data);
+    }
+  };
+
+  const confirmDeleteRow = async () => {
+    const { rowId } = deleteRowConfirmation;
+    if (rowId) {
+      await deleteRow(rowId);
+      setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
+    }
+  };
+
+  const cancelDeleteRow = () => {
+    setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
+  };
+
+  const handleSaveColumnAccess = async (columnName, { access, column_heading }) => {
+    try {
+      const body = { access };
+      if (column_heading !== undefined) body.column_heading = column_heading;
+      const res = await fetch(
+        `${API_URL}/api/columns/${columnName}/access`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update column");
+      }
+      const updated = await res.json();
+      setColumnsDef((prev) =>
+        prev.map((col) =>
+          col.name === columnName
+            ? {
+                ...col,
+                access: updated.access,
+                ...(updated.column_heading && { column_heading: updated.column_heading }),
+              }
+            : col
+        )
+      );
+      setEditAccessModal({ isOpen: false, column: null });
+    } catch (err) {
+      console.error("Error updating column:", err);
+      alert("Error: " + err.message);
     }
   };
 
@@ -1274,10 +1331,17 @@ function TableColumns() {
   }, [status]);
 
   // Check if user can edit this column
-  const canEdit = (columnName) => {
+  const canEdit = (columnName, column) => {
     if (!status) return false;
     if (status.status === "admin") return true;
     if (status.status === "staff") {
+      // If column has explicit access list, check if user is in it
+      const col = column || columnsDef.find((c) => c.name === columnName);
+      if (col?.access && Array.isArray(col.access) && col.access.length > 0) {
+        const userIdStr = String(status._id);
+        return col.access.some((id) => String(id) === userIdStr);
+      }
+      // Fallback: legacy column_access on user (comma-separated column names)
       return valuesToMatch.includes(columnName.toLowerCase());
     }
     return false;
@@ -1329,7 +1393,14 @@ function TableColumns() {
               {status.status === "admin" ? (
                 hoveredRowIndex === rowIndex ? (
                   <button
-                    onClick={(e) => deleteRow(row._id, e)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteRowConfirmation({
+                        isOpen: true,
+                        rowId: row._id,
+                        label: row.project || row.client || "this row",
+                      });
+                    }}
                     className=" btn btn-link text-danger p-0"
                     type="button"
                   >
@@ -1350,6 +1421,7 @@ function TableColumns() {
             <div className="d-flex align-items-center justify-content-between gap-2">
               <div className="d-flex align-items-center gap-2 flex-grow-1">
                 <input
+                  key={`col-header-${col.name}-${col.column_heading}`}
                   defaultValue={col.column_heading}
                   className="header-edit-input flex-grow-1 text-dark"
                   {...(status.status === "admin"
@@ -1375,6 +1447,18 @@ function TableColumns() {
                         ? "↑"
                         : "↓"
                       : "↕"}
+                  </button>
+                )}
+                {status.status === "admin" && (
+                  <button
+                    className="btn btn-link p-0 text-dark"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditAccessModal({ isOpen: true, column: col });
+                    }}
+                    title="Edit column access"
+                  >
+                    <FaUserCog size={14} />
                   </button>
                 )}
               </div>
@@ -1567,7 +1651,7 @@ function TableColumns() {
                   onChange={(e) =>
                     handleChange(row._id, col.name, e.target.value)
                   }
-                  disabled={!canEdit(col.name)}
+                  disabled={!canEdit(col.name, col)}
                 >
                   <option value="">Select</option>
                   {(col.multipleValue || []).map((opt) => (
@@ -1631,7 +1715,7 @@ function TableColumns() {
               value={value}
               className="bg-transparent border-0 w-100 text-dark"
               onChange={(e) => handleChange(row._id, col.name, e.target.value)}
-              disabled={!canEdit(col.name)}
+              disabled={!canEdit(col.name, col)}
             />
           );
         },
@@ -1751,6 +1835,15 @@ function TableColumns() {
           )}
         </div>
       </div>
+      <EditColumnAccessModal
+        isOpen={editAccessModal.isOpen}
+        onClose={() => setEditAccessModal({ isOpen: false, column: null })}
+        column={editAccessModal.column}
+        showSortable={true}
+        availableUsers={userData}
+        onSave={handleSaveColumnAccess}
+      />
+
       <Form
         showColumnHeading={true}
         showDataType={true}
@@ -1758,6 +1851,7 @@ function TableColumns() {
         isPopupOpen={isColumnModalOpen}
         onPopupClose={() => setIsColumnModalOpen(false)}
         availableColumns={columnsDef}
+        availableUsers={userData}
         onPopupSave={async (newColumn) => {
           try {
             const res = await fetch(`${API_URL}/api/columns`, {
@@ -1818,6 +1912,55 @@ function TableColumns() {
                 Yes
               </button>
               <button className="btn btn-secondary" onClick={cancelDelete}>
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteRowConfirmation.isOpen && (
+        <div
+          className="delete-confirmation-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="delete-confirmation-modal"
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            }}
+          >
+            <h4>Delete Row</h4>
+            <p>
+              Are you sure you want to delete{" "}
+              {deleteRowConfirmation.label ? (
+                <>
+                  "<strong>{deleteRowConfirmation.label}</strong>"?
+                </>
+              ) : (
+                "this row?"
+              )}
+            </p>
+            <div className="d-flex justify-content-center gap-2 mt-3">
+              <button className="btn btn-danger me-2" onClick={confirmDeleteRow}>
+                Yes
+              </button>
+              <button className="btn btn-secondary" onClick={cancelDeleteRow}>
                 No
               </button>
             </div>

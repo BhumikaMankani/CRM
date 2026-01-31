@@ -8,6 +8,7 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
     const [isOpen, setIsOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, filterId: null, filterName: '' });
 
 
     useEffect(() => {
@@ -132,7 +133,10 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                     {status.status === 'admin' && (
                                     <button
                                         className="delete-filter-btn"
-                                        onClick={(e) => handleDeleteFilter(filter._id, e)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeleteConfirm({ isOpen: true, filterId: filter._id, filterName: filter.filterName });
+                                        }}
                                         title="Delete filter"
                                     >
                                         <FaTrash />
@@ -150,6 +154,60 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                     )}
                 </div>
             </div>
+
+            {deleteConfirm.isOpen && (
+                <div
+                    className="delete-confirmation-overlay"
+                    style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(0,0,0,0.5)",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        zIndex: 1000,
+                    }}
+                >
+                    <div
+                        className="delete-confirmation-modal"
+                        style={{
+                            backgroundColor: "white",
+                            padding: "20px",
+                            borderRadius: "8px",
+                            textAlign: "center",
+                            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                        }}
+                    >
+                        <h4>Delete Filter</h4>
+                        <p>
+                            Are you sure you want to delete this filter?
+                            {deleteConfirm.filterName && (
+                                <> "<strong>{deleteConfirm.filterName}</strong>"</>
+                            )}
+                        </p>
+                        <div className="d-flex justify-content-center gap-2 mt-3">
+                            <button
+                                className="btn btn-danger me-2"
+                                onClick={() => {
+                                    handleDeleteFilter(deleteConfirm.filterId);
+                                    setDeleteConfirm({ isOpen: false, filterId: null, filterName: '' });
+                                }}
+                            >
+                                Yes
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setDeleteConfirm({ isOpen: false, filterId: null, filterName: '' })}
+                            >
+                                No
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 });
