@@ -793,7 +793,7 @@ function TableColumns() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
   const [isSaveFilterModalOpen, setIsSaveFilterModalOpen] = useState(false);
-  
+
   // Audit modal state
   const [auditModal, setAuditModal] = useState({
     isOpen: false,
@@ -998,13 +998,61 @@ function TableColumns() {
     Object.keys(filters).forEach((key) => {
       const filterValue = filters[key];
       if (filterValue === undefined || filterValue === null) return;
+
+      // Handle Date Range (object with start/end)
+      if (typeof filterValue === "object" && !Array.isArray(filterValue)) {
+        const { start, end } = filterValue;
+        if (!start && !end) return;
+
+        processedData = processedData.filter((row) => {
+          const cellValue = row[key];
+          if (!cellValue) return false;
+
+          // Row date parsing (handle YYYY-MM-DD and DD/MM/YYYY)
+          let rowDate;
+          if (String(cellValue).includes("-")) {
+            rowDate = new Date(cellValue);
+          } else if (String(cellValue).includes("/")) {
+            const [d, m, y] = String(cellValue).split("/");
+            rowDate = new Date(`${y}-${m}-${d}`);
+          } else {
+            rowDate = new Date(cellValue);
+          }
+
+          if (isNaN(rowDate.getTime())) return false;
+
+          rowDate.setHours(0, 0, 0, 0);
+
+          if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            return rowDate >= startDate && rowDate <= endDate;
+          } else if (start) {
+            const startDate = new Date(start);
+            startDate.setHours(0, 0, 0, 0);
+            return rowDate >= startDate;
+          } else if (end) {
+            const endDate = new Date(end);
+            endDate.setHours(0, 0, 0, 0);
+            return rowDate <= endDate;
+          }
+          return true;
+        });
+        return;
+      }
+
       // Multi-select (array): row matches if its value is in the selected list
       if (Array.isArray(filterValue)) {
         if (filterValue.length === 0) return;
         processedData = processedData.filter((row) => {
           const cellValue = String(row[key] ?? "").trim();
           return filterValue.some(
-            (fv) => String(fv ?? "").trim().toLowerCase() === cellValue.toLowerCase()
+            (fv) =>
+              String(fv ?? "")
+                .trim()
+                .toLowerCase() === cellValue.toLowerCase()
           );
         });
       } else {
@@ -1178,9 +1226,9 @@ function TableColumns() {
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, column_heading }) => {
+  const handleSaveColumnAccess = async (columnName, { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix }) => {
     try {
-      const body = { access };
+      const body = { access, sorting, equalPrefix, morePrefix, lessPrefix };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}/api/columns/${columnName}/access`,
@@ -1199,10 +1247,14 @@ function TableColumns() {
         prev.map((col) =>
           col.name === columnName
             ? {
-                ...col,
-                access: updated.access,
-                ...(updated.column_heading && { column_heading: updated.column_heading }),
-              }
+              ...col,
+              access: updated.access,
+              sorting: updated.sorting,
+              equalPrefix: updated.equalPrefix,
+              morePrefix: updated.morePrefix,
+              lessPrefix: updated.lessPrefix,
+              ...(updated.column_heading && { column_heading: updated.column_heading }),
+            }
             : col
         )
       );
@@ -1426,9 +1478,9 @@ function TableColumns() {
                   className="header-edit-input flex-grow-1 text-dark"
                   {...(status.status === "admin"
                     ? {
-                        onBlur: (e) => handleRename(col.name, e.target.value),
-                        onKeyDown: (e) => e.key === "Enter" && e.target.blur(),
-                      }
+                      onBlur: (e) => handleRename(col.name, e.target.value),
+                      onKeyDown: (e) => e.key === "Enter" && e.target.blur(),
+                    }
                     : { readOnly: true })}
                 />
                 {/* {status.status === 'admin' && (
@@ -1491,7 +1543,7 @@ function TableColumns() {
                       >
                         <span className="text-truncate">
                           {Array.isArray(filters[col.name]) &&
-                          filters[col.name].length > 0
+                            filters[col.name].length > 0
                             ? `${filters[col.name].length} selected`
                             : "All"}
                         </span>
@@ -1546,15 +1598,42 @@ function TableColumns() {
                         </div>
                       )}
                     </>
+                  ) : col.column_type === "date" ? (
+                    <div className="d-flex flex-row gap-1">
+                      <div className="d-flex flex-column">
+                        <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#666' }}>From:</span>
+                        <input
+                          type="date"
+                          className="form-control form-control-sm text-dark p-1"
+                          style={{ fontSize: '10px' }}
+                          value={filters[col.name]?.start || ""}
+                          onChange={(e) =>
+                            handleFilterChange(col.name, {
+                              ...filters[col.name],
+                              start: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="d-flex flex-column">
+                        <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#666' }}>To:</span>
+                        <input
+                          type="date"
+                          className="form-control form-control-sm text-dark p-1"
+                          style={{ fontSize: '10px' }}
+                          value={filters[col.name]?.end || ""}
+                          onChange={(e) =>
+                            handleFilterChange(col.name, {
+                              ...filters[col.name],
+                              end: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
                   ) : (
                     <input
-                      type={
-                        col.column_type === "date"
-                          ? "date"
-                          : col.column_type === "number"
-                            ? "number"
-                            : "text"
-                      }
+                      type={col.column_type === "number" ? "number" : "text"}
                       className="form-control form-control-sm text-dark"
                       placeholder={`Filter ${col.column_heading}...`}
                       value={filters[col.name] || ""}
@@ -1566,22 +1645,23 @@ function TableColumns() {
                   {((col.column_type === "select" &&
                     Array.isArray(filters[col.name]) &&
                     filters[col.name].length > 0) ||
-                    (col.column_type !== "select" && filters[col.name])) && (
-                    <button
-                      type="button"
-                      className="filter-clear-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFilterChange(
-                          col.name,
-                          col.column_type === "select" ? [] : ""
-                        );
-                      }}
-                      title="Clear filter"
-                    >
-                      <FaTimes size={12} />
-                    </button>
-                  )}
+                    (col.column_type === "date" && (filters[col.name]?.start || filters[col.name]?.end)) ||
+                    (col.column_type !== "select" && col.column_type !== "date" && filters[col.name])) && (
+                      <button
+                        type="button"
+                        className="filter-clear-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFilterChange(
+                            col.name,
+                            col.column_type === "select" ? [] : col.column_type === "date" ? {} : ""
+                          );
+                        }}
+                        title="Clear filter"
+                      >
+                        <FaTimes size={12} />
+                      </button>
+                    )}
                 </div>
               </div>
             )}
@@ -1634,9 +1714,18 @@ function TableColumns() {
                     ? "days-negative" // overdue
                     : "days-zero"; // today
 
-              return (
-                <span className={dayClass}>{Math.abs(diffDays)} days</span>
-              );
+              let displayText = "";
+              if (diffDays === 0) {
+                displayText = col.equalPrefix || "Deadline Today";
+              } else if (diffDays > 0) {
+                const prefix = col.morePrefix || "Deadline in";
+                displayText = `${prefix} ${Math.abs(diffDays)} days`;
+              } else {
+                const prefix = col.lessPrefix || "Overdue by";
+                displayText = `${prefix} ${Math.abs(diffDays)} days`;
+              }
+
+              return <span className={dayClass}>{displayText}</span>;
             } catch (err) {
               return <span className="text-muted">Error</span>;
             }

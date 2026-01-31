@@ -171,6 +171,9 @@ function Form({
     options: [""],
     conditionColumn1: "",
     conditionColumn2: "",
+    equalPrefix: "",
+    morePrefix: "",
+    lessPrefix: "",
     hasDefaultValue: false,
     defaultValue: "",
     access: [],
@@ -251,6 +254,12 @@ function Form({
         formData.type === "condition"
           ? formData.conditionColumn2
           : undefined,
+      equalPrefix:
+        formData.type === "condition" ? formData.equalPrefix : undefined,
+      morePrefix:
+        formData.type === "condition" ? formData.morePrefix : undefined,
+      lessPrefix:
+        formData.type === "condition" ? formData.lessPrefix : undefined,
       equalColor:
         formData.type === "condition" ? formData.equalColor : undefined,
       moreColor:
@@ -283,6 +292,9 @@ function Form({
       sorting: false,
       conditionColumn1: "",
       conditionColumn2: "",
+      equalPrefix: "",
+      morePrefix: "",
+      lessPrefix: "",
       hasDefaultValue: false,
       defaultValue: "",
       access: [],
@@ -535,6 +547,45 @@ function Form({
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Prefix (if days equal 0)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Deadline Today"
+                    value={formData.equalPrefix}
+                    onChange={(e) =>
+                      setFormData({ ...formData, equalPrefix: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Prefix (if days &gt; 0)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Due in"
+                    value={formData.morePrefix}
+                    onChange={(e) =>
+                      setFormData({ ...formData, morePrefix: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Prefix (if days &lt; 0)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Overdue by"
+                    value={formData.lessPrefix}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lessPrefix: e.target.value })
+                    }
+                  />
                 </div>
               </div>
             )}

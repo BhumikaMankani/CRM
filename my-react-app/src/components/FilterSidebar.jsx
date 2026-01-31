@@ -70,33 +70,37 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                 <div className={`sidebar-header ${status.status !== 'admin' ? 'd-flex justify-content-between align-items-center' : ''}`}>
                     <div className='d-flex align-items-center justify-content-between'>
                         <h5>
-                        <FaFilter className="me-2" />
-                        Filters
-                    </h5>
+                            <FaFilter className="me-2" />
+                            Filters
+                        </h5>
                     </div>
-                {Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v) && (
-                    <div className={`d-flex gap-2 ${status.status === 'staff' ? '' : 'mt-2'}`}>
-                    {status.status === 'admin' &&
-                        <button
-                            onClick={() => setIsSaveFilterModalOpen(true)}
-                            className="btn btn-success"
-                            title="Save Current Filters"
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Save as</span>
-                        </button>
-                    }
+                    {Object.values(filters).some(v => {
+                        if (Array.isArray(v)) return v.length > 0;
+                        if (typeof v === 'object' && v !== null) return Object.values(v).some(val => val);
+                        return !!v;
+                    }) && (
+                            <div className={`d-flex gap-2 ${status.status === 'staff' ? '' : 'mt-2'}`}>
+                                {status.status === 'admin' &&
+                                    <button
+                                        onClick={() => setIsSaveFilterModalOpen(true)}
+                                        className="btn btn-success"
+                                        title="Save Current Filters"
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Save as</span>
+                                    </button>
+                                }
 
-                        <button
-                            onClick={clearFilters}
-                            className="btn btn-outline-secondary"
-                            title="Clear All Filters"
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Clear All</span>
-                        </button>
-                    </div>
-                )}
+                                <button
+                                    onClick={clearFilters}
+                                    className="btn btn-outline-secondary"
+                                    title="Clear All Filters"
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Clear All</span>
+                                </button>
+                            </div>
+                        )}
                 </div>
 
                 <div className="sidebar-content">
@@ -116,11 +120,10 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                             {savedFilters.map(filter => (
                                 <div
                                     key={filter._id}
-                                    className={`filter-item ${
-                                        JSON.stringify(currentFilters) === JSON.stringify(filter.filterData)
+                                    className={`filter-item ${JSON.stringify(currentFilters) === JSON.stringify(filter.filterData)
                                             ? 'active'
                                             : ''
-                                    }`}
+                                        }`}
                                     onClick={() => onFilterSelect(filter.filterData)}
                                 >
                                     <div className="filter-item-content">
@@ -131,16 +134,16 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                         </div> */}
                                     </div>
                                     {status.status === 'admin' && (
-                                    <button
-                                        className="delete-filter-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setDeleteConfirm({ isOpen: true, filterId: filter._id, filterName: filter.filterName });
-                                        }}
-                                        title="Delete filter"
-                                    >
-                                        <FaTrash />
-                                    </button>
+                                        <button
+                                            className="delete-filter-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteConfirm({ isOpen: true, filterId: filter._id, filterName: filter.filterName });
+                                            }}
+                                            title="Delete filter"
+                                        >
+                                            <FaTrash />
+                                        </button>
                                     )}
                                 </div>
                             ))}
