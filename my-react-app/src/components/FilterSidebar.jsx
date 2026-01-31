@@ -8,6 +8,7 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
     const [isOpen, setIsOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, filterId: null, filterName: '' });
 
     useEffect(() => {
         if (userId) {
@@ -86,6 +87,23 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                     <button
                                         onClick={() => setIsSaveFilterModalOpen(true)}
                                         className="btn btn-success btn-sm"
+                <div className={`sidebar-header ${status.status !== 'admin' ? 'd-flex justify-content-between align-items-center' : ''}`}>
+                    <div className='d-flex align-items-center justify-content-between'>
+                        <h5>
+                            <FaFilter className="me-2" />
+                            Filters
+                        </h5>
+                    </div>
+                    {Object.values(filters).some(v => {
+                        if (Array.isArray(v)) return v.length > 0;
+                        if (typeof v === 'object' && v !== null) return Object.values(v).some(val => val);
+                        return !!v;
+                    }) && (
+                            <div className={`d-flex gap-2 ${status.status === 'staff' ? '' : 'mt-2'}`}>
+                                {status.status === 'admin' &&
+                                    <button
+                                        onClick={() => setIsSaveFilterModalOpen(true)}
+                                        className="btn btn-success"
                                         title="Save Current Filters"
                                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     >
@@ -98,6 +116,9 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                     className="btn btn-outline-secondary btn-sm w-max-content"
                                     title="Clear All Filters"
                                     style={{ width: 'max-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    className="btn btn-outline-secondary"
+                                    title="Clear All Filters"
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                 >
                                     <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Clear All</span>
                                 </button>
@@ -126,6 +147,8 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                     className={`filter-item ${JSON.stringify(currentFilters) === JSON.stringify(filter.filterData)
                                         ? 'active'
                                         : ''
+                                            ? 'active'
+                                            : ''
                                         }`}
                                     onClick={() => onFilterSelect(filter.filterData)}
                                 >
@@ -140,6 +163,10 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                         <button
                                             className="delete-filter-btn"
                                             onClick={(e) => handleDeleteFilter(filter._id, e)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteConfirm({ isOpen: true, filterId: filter._id, filterName: filter.filterName });
+                                            }}
                                             title="Delete filter"
                                         >
                                             <FaTrash />
@@ -157,6 +184,61 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                     )}
                 </div>
             </div >
+            </div>
+
+            {deleteConfirm.isOpen && (
+                <div
+                    className="delete-confirmation-overlay"
+                    style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(0,0,0,0.5)",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        zIndex: 1000,
+                    }}
+                >
+                    <div
+                        className="delete-confirmation-modal"
+                        style={{
+                            backgroundColor: "white",
+                            padding: "20px",
+                            borderRadius: "8px",
+                            textAlign: "center",
+                            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                        }}
+                    >
+                        <h4>Delete Filter</h4>
+                        <p>
+                            Are you sure you want to delete this filter?
+                            {deleteConfirm.filterName && (
+                                <> "<strong>{deleteConfirm.filterName}</strong>"</>
+                            )}
+                        </p>
+                        <div className="d-flex justify-content-center gap-2 mt-3">
+                            <button
+                                className="btn btn-danger me-2"
+                                onClick={() => {
+                                    handleDeleteFilter(deleteConfirm.filterId);
+                                    setDeleteConfirm({ isOpen: false, filterId: null, filterName: '' });
+                                }}
+                            >
+                                Yes
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setDeleteConfirm({ isOpen: false, filterId: null, filterName: '' })}
+                            >
+                                No
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 });

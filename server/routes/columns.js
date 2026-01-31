@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 // Add new column
 router.post("/", async (req, res) => {
     try {
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, hasDefaultValue, defaultValue, optionColors } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, hasDefaultValue, defaultValue, access } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -34,8 +34,7 @@ router.post("/", async (req, res) => {
             conditionColumn2: conditionColumn2 || undefined,
             hasDefaultValue: hasDefaultValue || false,
             defaultValue: defaultValue || undefined,
-            optionColors: optionColors || {},
-            order: nextOrder,
+            access: Array.isArray(access) ? access : [],
             status: 'active'
         });
         await column.save();
@@ -124,4 +123,31 @@ router.patch("/deactivate/:name", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Update column access and/or heading
+router.patch("/:name/access", async (req, res) => {
+    try {
+        const { access, column_heading, sorting } = req.body;
+        const updateData = {};
+        if (Array.isArray(access)) updateData.access = access;
+        if (column_heading && typeof column_heading === "string" && column_heading.trim()) {
+            updateData.column_heading = column_heading.trim();
+        }
+        if (typeof sorting === "boolean") {
+            updateData.sorting = sorting;
+        }
+        const updated = await Column.findOneAndUpdate(
+            { name: req.params.name },
+            updateData,
+            { new: true }
+        );
+        if (!updated) {
+            return res.status(404).json({ error: "Column not found" });
+        }
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

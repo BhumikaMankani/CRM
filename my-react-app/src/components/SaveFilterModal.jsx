@@ -138,6 +138,23 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus }) => {
                                                 </div>
                                             </div>
                                         ))}
+                    <div className="filter-preview visually-hidden">
+                        <h6 className="mb-2">Applied Filters:</h6>
+                        <div className="filters-list">
+                            {Object.keys(filters).length > 0 ? (
+                                Object.entries(filters).map(([key, value]) => (
+                                    <div key={key} className="filter-tag">
+                                        <strong>{key}:</strong>{' '}
+                                        {(() => {
+                                            if (Array.isArray(value)) return value.join(', ');
+                                            if (typeof value === 'object' && value !== null) {
+                                                const parts = [];
+                                                if (value.start) parts.push(`From: ${value.start}`);
+                                                if (value.end) parts.push(`To: ${value.end}`);
+                                                return parts.join(' ');
+                                            }
+                                            return value;
+                                        })()}
                                     </div>
                                 ) : (
                                     <p className="text-muted small mb-0">No other staff members found.</p>
