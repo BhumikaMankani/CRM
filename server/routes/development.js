@@ -98,12 +98,13 @@ router.put("/:id", async (req, res) => {
                 // We only care about select columns that are configured with default value tracking
                 if (col.column_type !== "select" || !col.hasDefaultValue) continue;
 
-                const field = col.name; // e.g. test1769667448522
+                const field = col.name;
 
-                const oldValue = existing[field];
-                const newValue = updated[field];
+                // Use .get() for dynamic fields on Mongoose documents
+                const oldValue = existing.get ? existing.get(field) : existing[field];
+                const newValue = updated.get ? updated.get(field) : updated[field];
 
-                // Skip if value didn't actually change (including both undefined/empty)
+                // Skip if value didn't actually change
                 if (oldValue === newValue) continue;
 
                 auditOps.push(
@@ -112,10 +113,10 @@ router.put("/:id", async (req, res) => {
                         columnId: col._id,
                         columnName: col.column_heading,
                         columnFieldName: field,
-                        oldValue: oldValue ?? null,
-                        newValue: newValue ?? null,
-                        changedByUserId: changedByUserId || null,
-                        changedByUserName: changedByUserName || null,
+                        oldValue: (oldValue === undefined || oldValue === null) ? "" : String(oldValue),
+                        newValue: (newValue === undefined || newValue === null) ? "" : String(newValue),
+                        changedByUserId: changedByUserId || "Unknown",
+                        changedByUserName: changedByUserName || "Unknown",
                     })
                 );
             }
