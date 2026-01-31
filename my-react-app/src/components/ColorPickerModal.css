@@ -89,7 +89,7 @@ button.btn.delete-btn-minimal svg {
     gap: 0.75rem;
     background: #ffffff;
     border: 1px solid #edf2f7;
-    border-radius: 12px;
+    border-radius: 4px;
     padding: 0.75rem;
     margin-bottom: 0.75rem;
     transition: all 0.2s ease;
@@ -107,9 +107,9 @@ button.btn.delete-btn-minimal svg {
 
 .color-input-wrapper {
     position: relative;
-    width: 35px;
-    height: 35px;
-    border-radius: 10px;
+    width: 25px;
+    height: 25px;
+    border-radius: 4px;
     overflow: hidden;
     flex-shrink: 0;
     border: 2px solid #fff;
@@ -133,8 +133,8 @@ button.btn.delete-btn-minimal svg {
     background: transparent !important;
     font-size: 0.95rem;
     font-weight: 500;
+    padding: 0px !important;
     color: #2d3748;
-    padding: 0.5rem !important;
 }
 
 .option-label-input:focus {
@@ -144,7 +144,7 @@ button.btn.delete-btn-minimal svg {
 .delete-btn-minimal {
     color: #cbd5e0;
     transition: color 0.2s ease;
-    padding: 0.5rem;
+    display: inline-flex;
 }
 
 .option-edit-card:hover .delete-btn-minimal {

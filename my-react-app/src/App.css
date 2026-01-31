@@ -77,6 +77,22 @@ select:focus-visible {
   outline: none;
 }
 
+/* button.btn.btn-outline-dark {
+  border-color: #e87c00;
+  color: #e87c00;
+}
+
+button.btn.btn-outline-dark:hover {
+  color: var(--bs-btn-hover-color);
+  background-color: #e87c00;
+  border-color: #e87c00;
+} */
+
+.row_index button.btn {
+  width: auto;
+  display: inline-flex;
+}
+
 button.btn svg {
   width: 16px;
   height: 16px;
@@ -96,11 +112,6 @@ button.btn svg * {
   color: #2563eb;
   text-decoration: none;
   transition: color 0.2s ease;
-}
-
-.table>tbody a:hover {
-  color: #1e40af;
-  text-decoration: underline;
 }
 
 section.ftco-section {
