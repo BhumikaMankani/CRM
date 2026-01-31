@@ -453,3 +453,22 @@ h5.fw-bold {
     overflow-y: auto;
     scrollbar-width: thin;
 } */
+
+.delete-confirmation-overlay {
+
+  position: fixed;
+  inset: 0px;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-confirmation-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 10px;
+}

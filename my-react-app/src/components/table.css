@@ -36,7 +36,7 @@ span.rounded-circle {
     /* background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     border-bottom: 2px solid #e2e8f0; */
     font-weight: 700;
-    max-width: 200px;
+    /* max-width: 200px; */
     color: #1e293b;
     padding: 14px;
     text-align: left;
@@ -339,7 +339,7 @@ input {
     border: 1px solid #ced4da;
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1050;
+    z-index: 1;
     scrollbar-width: none;
 }
 
