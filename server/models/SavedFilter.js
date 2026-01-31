@@ -28,6 +28,11 @@ const SavedFilterSchema = new mongoose.Schema(
         updatedAt: {
             type: Date,
             default: Date.now
+        },
+        allowedUsers: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: 'User',
+            default: []
         }
     },
     {
@@ -37,7 +42,7 @@ const SavedFilterSchema = new mongoose.Schema(
 );
 
 // Update the updatedAt field before saving - FIX for "next is not a function" error
-SavedFilterSchema.pre('save', function() {
+SavedFilterSchema.pre('save', function () {
     this.updatedAt = new Date();
 });
 
