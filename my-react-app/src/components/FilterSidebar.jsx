@@ -10,17 +10,18 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
     const [error, setError] = useState('');
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, filterId: null, filterName: '' });
 
-
     useEffect(() => {
-        fetchSavedFilters();
-    }, [refreshTrigger]);
+        if (userId) {
+            fetchSavedFilters();
+        }
+    }, [refreshTrigger, userId]);
 
     const fetchSavedFilters = async () => {
 
         setLoading(true);
         setError('');
         try {
-            const response = await fetch(`${API_URL}/api/filters`, {
+            const response = await fetch(`${API_URL}/api/filters?userId=${userId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -56,17 +57,36 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
 
     return (
         <>
-            {/* Toggle Button */}
-            {/* <button
-                className="sidebar-toggle-btn"
-                onClick={() => setIsOpen(!isOpen)}
-                title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-            >
-                {isOpen ? <FaChevronLeft /> : <FaChevronRight />}
-            </button> */}
-
             {/* Sidebar */}
             <div className={`filter-sidebar ${isOpen ? 'open' : 'closed'} col-md-2 col-sm-4 pt-3 pb-3`}>
+                <div className={`sidebar-header ${status.status === 'staff' ? 'd-flex align-items-center justify-content-between mb-2' : ''}`}>
+                    <div className={`d-flex align-items-center justify-content-between mb-2 ${status.status === 'staff' ? 'w-100' : ''}`}>
+                        <h5 className="m-0">
+                            <FaFilter className="me-2" />
+                            Filters
+                        </h5>
+
+                        {!isFilterOpen &&
+                            Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v) && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="btn btn-outline-secondary btn-sm w-max-content"
+                                    title="Clear All Filters"
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Clear All</span>
+                                </button>
+                            )
+                        }
+                    </div>
+
+                    {isFilterOpen &&
+                        Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v) && (
+                            <div className={`gap-2 d-flex ${status.status === 'staff' ? '' : 'mt-2 mb-2'}`}>
+                                {status.status === 'admin' &&
+                                    <button
+                                        onClick={() => setIsSaveFilterModalOpen(true)}
+                                        className="btn btn-success btn-sm"
                 <div className={`sidebar-header ${status.status !== 'admin' ? 'd-flex justify-content-between align-items-center' : ''}`}>
                     <div className='d-flex align-items-center justify-content-between'>
                         <h5>
@@ -93,6 +113,9 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
 
                                 <button
                                     onClick={clearFilters}
+                                    className="btn btn-outline-secondary btn-sm w-max-content"
+                                    title="Clear All Filters"
+                                    style={{ width: 'max-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     className="btn btn-outline-secondary"
                                     title="Clear All Filters"
                                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -101,6 +124,7 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                 </button>
                             </div>
                         )}
+
                 </div>
 
                 <div className="sidebar-content">
@@ -121,6 +145,8 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                 <div
                                     key={filter._id}
                                     className={`filter-item ${JSON.stringify(currentFilters) === JSON.stringify(filter.filterData)
+                                        ? 'active'
+                                        : ''
                                             ? 'active'
                                             : ''
                                         }`}
@@ -136,6 +162,7 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                                     {status.status === 'admin' && (
                                         <button
                                             className="delete-filter-btn"
+                                            onClick={(e) => handleDeleteFilter(filter._id, e)}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setDeleteConfirm({ isOpen: true, filterId: filter._id, filterName: filter.filterName });
@@ -156,6 +183,7 @@ const FilterSidebar = forwardRef(({ onFilterSelect, handleColumnEditClick, isDel
                         </div>
                     )}
                 </div>
+            </div >
             </div>
 
             {deleteConfirm.isOpen && (

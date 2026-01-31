@@ -166,3 +166,55 @@
 .small {
     font-size: 0.85rem;
 }
+
+.staff-selection-box {
+    background-color: #fff !important;
+    border: 1px solid #dee2e6 !important;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.staff-selection-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.staff-selection-box::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.staff-selection-box::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.staff-selection-box::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.form-check {
+    padding: 6px 10px;
+    margin-bottom: 0;
+    transition: background-color 0.2s ease;
+    border-radius: 4px;
+}
+
+.form-check:hover {
+    background-color: #f8f9fa;
+}
+
+.form-check-input {
+    cursor: pointer;
+}
+
+.form-check-label {
+    cursor: pointer;
+    width: 100%;
+}
+
+.fw-bold {
+    font-weight: 700;
+}
+
+.smallest {
+    font-size: 0.75rem;
+}

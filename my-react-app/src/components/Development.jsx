@@ -751,7 +751,8 @@ import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
 import { FaTrash, FaTimes, FaUserCog } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
-
+import ColorPickerModal from "./ColorPickerModal";
+import { FaPalette } from "react-icons/fa";
 
 function TableColumns() {
   // Create a ref for FilterSidebar
@@ -764,6 +765,8 @@ function TableColumns() {
   const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+  const [selectedColorCol, setSelectedColorCol] = useState(null);
 
   const [loading, setLoading] = useState(false);
   // Column delete states
@@ -814,6 +817,18 @@ function TableColumns() {
     return savedData ? JSON.parse(savedData) : null;
   });
   // Handle column delete
+  // Helper for text contrast
+  const getContrastYIQ = (hexcolor) => {
+    if (!hexcolor || typeof hexcolor !== 'string') return 'black';
+    const hex = hexcolor.replace("#", "");
+    if (hex.length !== 3 && hex.length !== 6) return 'black';
+    const r = parseInt(hex.length === 3 ? hex[0] + hex[0] : hex.substr(0, 2), 16);
+    const g = parseInt(hex.length === 3 ? hex[1] + hex[1] : hex.substr(2, 2), 16);
+    const b = parseInt(hex.length === 3 ? hex[2] + hex[2] : hex.substr(4, 2), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 128 ? "black" : "white";
+  };
+
   const handleColumnEditClick = () => {
     setIsDelete(!isDelete);
   };
@@ -892,7 +907,7 @@ function TableColumns() {
   }, []);
 
   // Save filter
-  const handleSaveFilter = async (filterName, filterData) => {
+  const handleSaveFilter = async (filterName, filterData, allowedUsers) => {
     try {
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
@@ -907,6 +922,7 @@ function TableColumns() {
         userId: user._id,
         filterName,
         filterData,
+        allowedUsers,
       });
 
       const response = await fetch(`${API_URL}/api/filters`, {
@@ -918,6 +934,7 @@ function TableColumns() {
           userId: user._id,
           filterName,
           filterData,
+          allowedUsers,
         }),
       });
 
@@ -948,7 +965,6 @@ function TableColumns() {
   // Apply saved filter
   const handleFilterSelect = (filterData) => {
     setFilters(filterData);
-    setIsFilterOpen(true);
   };
 
   // Delete saved filter
@@ -1175,6 +1191,65 @@ function TableColumns() {
     }
   };
 
+  const handleOnDragEnd = async (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+
+    // Prevent dragging the "#" column (index 0) or dragging into its position
+    if (source.index === 0 || destination.index === 0) return;
+    if (source.index === destination.index) return;
+
+    const items = Array.from(columnsDef);
+    // source.index 1 corresponds to columnsDef[0]
+    const [reorderedItem] = items.splice(source.index - 1, 1);
+    items.splice(destination.index - 1, 0, reorderedItem);
+
+    // Optimistic update
+    setColumnsDef(items);
+
+    const columnOrders = items.map((col, idx) => ({
+      name: col.name,
+      order: idx,
+    }));
+
+    try {
+      const res = await fetch(`${API_URL}/api/columns/reorder/update`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columnOrders }),
+      });
+      if (!res.ok) throw new Error("Failed to save column order");
+    } catch (err) {
+      console.error("Error saving column order:", err);
+    }
+  };
+
+  const handleSaveOptions = async ({ multipleValue, optionColors }) => {
+    if (!selectedColorCol) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/columns/${selectedColorCol.name}/options`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ multipleValue, optionColors }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save column options");
+
+      setColumnsDef((prev) =>
+        prev.map((col) =>
+          col.name === selectedColorCol.name
+            ? { ...col, multipleValue, optionColors }
+            : col
+        )
+      );
+    } catch (err) {
+      console.error("Options save failed:", err);
+      alert("Error saving options: " + err.message);
+    }
+  };
+
+
   const handleDeleteClick = (col) => {
     setDeleteConfirmation({
       isOpen: true,
@@ -1298,7 +1373,7 @@ function TableColumns() {
 
   /* ---------------- ADD ROW ---------------- */
   const addRow = async (newRowData) => {
-    // Clear sorting and filters to ensure new row is visible at bottom
+    // Clear sorting and filters to ensure new row is visible at the top
     setSortConfig({ key: null, direction: "asc" });
     setFilters({});
 
@@ -1322,14 +1397,10 @@ function TableColumns() {
       }
 
       const saved = await res.json();
-      setData((prev) => [...prev, saved]);
+      // Add new row to the top of the list
+      setData((prev) => [saved, ...prev]);
       setIsModalOpen(false); // Close modal after saving
 
-      // Scroll to bottom
-      const tableWrap = document.querySelector(".table-wrap");
-      if (tableWrap) {
-        tableWrap.scrollTop = tableWrap.scrollHeight;
-      }
     } catch (err) {
       console.error("Error adding row:", err);
       alert("Error adding row: " + err.message);
@@ -1523,6 +1594,18 @@ function TableColumns() {
                   <FaTrash className="delete-icon" size={14} />
                 </button>
               )}
+              {isDelete && col.column_type === "select" && (
+                <button
+                  className="btn btn-link text-primary p-0"
+                  onClick={() => {
+                    setSelectedColorCol(col);
+                    setIsColorModalOpen(true);
+                  }}
+                  title="Edit Option Colors"
+                >
+                  <FaPalette className="color-icon" size={14} />
+                </button>
+              )}
             </div>
             {isFilterOpen && col.sorting && (
               <div className="filter-row-input">
@@ -1547,7 +1630,7 @@ function TableColumns() {
                             ? `${filters[col.name].length} selected`
                             : "All"}
                         </span>
-                        <span
+                        {/* <span
                           className="dropdown-arrow"
                           style={{
                             transform:
@@ -1557,7 +1640,7 @@ function TableColumns() {
                           }}
                         >
                           ▼
-                        </span>
+                        </span> */}
                       </button>
                       {openFilterDropdown === col.name && (
                         <div
@@ -1668,6 +1751,39 @@ function TableColumns() {
           </div>
         ),
         accessor: col.name,
+        getCellProps: (row) => {
+          if (col.column_type === "select") {
+            const value = (row[col.name] || "").toString().trim();
+            const optionColors = col.optionColors || {};
+
+            let optionColor = null;
+            if (optionColors[value]) {
+              optionColor = optionColors[value];
+            } else if (optionColors.get && optionColors.get(value)) {
+              optionColor = optionColors.get(value);
+            } else {
+              const target = value.toLowerCase();
+              const keys = Object.keys(optionColors);
+              const match = keys.find(k => k.trim().toLowerCase() === target);
+              if (match) optionColor = optionColors[match];
+            }
+
+            if (optionColor) {
+              const textColor = getContrastYIQ(optionColor);
+              return {
+                style: {
+                  '--cell-bg': optionColor,
+                  '--cell-color': textColor,
+                  backgroundColor: optionColor,
+                  color: textColor,
+                  padding: '0 8px'
+                },
+                className: 'has-option-color'
+              };
+            }
+          }
+          return {};
+        },
         render: (row) => {
           const value = row[col.name] || "";
 
@@ -1732,22 +1848,59 @@ function TableColumns() {
           }
 
           if (col.column_type === "select") {
+            const trimmedValue = value.toString().trim();
+            const optionColors = col.optionColors || {};
+
+            let optionColor = null;
+            if (optionColors[trimmedValue]) {
+              optionColor = optionColors[trimmedValue];
+            } else if (optionColors.get && optionColors.get(trimmedValue)) {
+              optionColor = optionColors.get(trimmedValue);
+            } else {
+              const target = trimmedValue.toLowerCase();
+              const keys = Object.keys(optionColors);
+              const match = keys.find(k => k.trim().toLowerCase() === target);
+              if (match) optionColor = optionColors[match];
+            }
+
             return (
               <div className="d-flex align-items-center gap-1">
                 <select
                   value={value}
-                  className="bg-transparent border-0 w-100 text-dark"
+                  className={`bg-transparent border-0 w-100 ${optionColor ? '' : 'text-dark'}`}
+                  style={{
+                    color: optionColor ? getContrastYIQ(optionColor) : 'inherit',
+                    fontWeight: optionColor ? '600' : 'normal',
+                    cursor: 'pointer'
+                  }}
                   onChange={(e) =>
                     handleChange(row._id, col.name, e.target.value)
                   }
                   disabled={!canEdit(col.name, col)}
                 >
-                  <option value="">Select</option>
-                  {(col.multipleValue || []).map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
+                  <option value="" style={{ backgroundColor: 'white', color: 'black' }}>Select</option>
+                  {(col.multipleValue || []).map((opt) => {
+                    const trimmedOpt = opt.toString().trim();
+                    let optColor = null;
+                    if (optionColors[trimmedOpt]) {
+                      optColor = optionColors[trimmedOpt];
+                    } else if (optionColors.get && optionColors.get(trimmedOpt)) {
+                      optColor = optionColors.get(trimmedOpt);
+                    } else {
+                      const target = trimmedOpt.toLowerCase();
+                      const keys = Object.keys(optionColors);
+                      const match = keys.find(k => k.trim().toLowerCase() === target);
+                      if (match) optColor = optionColors[match];
+                    }
+                    return (
+                      <option
+                        key={opt}
+                        value={opt}
+                      >
+                        {opt}
+                      </option>
+                    );
+                  })}
                 </select>
                 {col.hasDefaultValue && status?.status === "admin" && (
                   <button
@@ -1901,7 +2054,7 @@ function TableColumns() {
         <FilterSidebar
           ref={filterSidebarRef}
           filters={filters}
-          isOpen={isFilterOpen}
+          isFilterOpen={isFilterOpen}
           status={status}
           handleFilterChange={handleFilterChange}
           handleChange={handleChange}
@@ -1920,7 +2073,11 @@ function TableColumns() {
               <p className="small">Loading ...</p>
             </div>
           ) : (
-            <Table columns={columns} data={filteredAndSortedData} />
+            <Table
+              columns={columns}
+              data={filteredAndSortedData}
+              onDragEnd={handleOnDragEnd}
+            />
           )}
         </div>
       </div>
@@ -2162,11 +2319,21 @@ function TableColumns() {
         </div>
       )}
 
+      <ColorPickerModal
+        isOpen={isColorModalOpen}
+        onClose={() => setIsColorModalOpen(false)}
+        onSave={handleSaveOptions}
+        columnHeading={selectedColorCol?.column_heading}
+        options={selectedColorCol?.multipleValue || []}
+        existingColors={selectedColorCol?.optionColors}
+      />
+
       <SaveFilterModal
         isOpen={isSaveFilterModalOpen}
         onClose={() => setIsSaveFilterModalOpen(false)}
         onSave={handleSaveFilter}
         filters={filters}
+        userStatus={status}
       />
     </section>
   );

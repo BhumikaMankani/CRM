@@ -54,7 +54,7 @@ function Registration({ onLoginSuccess }) {
                 localStorage.setItem('Password', JSON.stringify(hashedPassword));
                 localStorage.setItem('user', JSON.stringify(data.user));
                 onLoginSuccess();
-                navigate('/department');
+                navigate('/');
             } else {
                 setError(data.error || 'Invalid email or password');
             }
