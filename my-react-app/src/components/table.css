@@ -7,6 +7,7 @@
     scrollbar-width: thin;
     scroll-behavior: smooth;
     border: 1px solid #e2e8f0;
+    /* max-height: fit-content; */
     /* scrollbar-width: none; */
     height: calc(100vh - 300px);
 
@@ -35,10 +36,20 @@ span.rounded-circle {
     /* background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     border-bottom: 2px solid #e2e8f0; */
     font-weight: 700;
+    max-width: 200px;
     color: #1e293b;
     padding: 14px;
     text-align: left;
     font-size: 0.9rem;
+    cursor: grab;
+    user-select: none;
+}
+
+.dragging {
+    background-color: #e2e8f0 !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+    cursor: grabbing !important;
+    z-index: 100 !important;
 }
 
 .custom-table tbody tr {
@@ -59,6 +70,11 @@ span.rounded-circle {
     padding: 12px 14px;
     color: #1e293b;
     font-size: 0.9rem;
+}
+
+.has-option-color {
+    background-color: var(--cell-bg) !important;
+    color: var(--cell-color) !important;
 }
 
 table.custom-table th:first-child {

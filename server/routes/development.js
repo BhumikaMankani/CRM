@@ -6,7 +6,7 @@ const Audit = require("../models/Audit");
 // Get all rows
 router.get("/", async (req, res) => {
     try {
-        const projects = await Project.find({ showstatus: { $ne: 'deactivate' } });
+        const projects = await Project.find({ showstatus: { $ne: 'deactivate' } }).sort({ createdAt: -1 });
         res.json(projects);
     } catch (err) {
         res.status(500).json({ error: err.message });
