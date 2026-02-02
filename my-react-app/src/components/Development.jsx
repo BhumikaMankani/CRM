@@ -1489,9 +1489,9 @@ function TableColumns() {
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo }) => {
+  const handleSaveColumnAccess = async (columnName, { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky }) => {
     try {
-      const body = { access, sorting, equalPrefix, morePrefix, lessPrefix, showInfo };
+      const body = { access, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}/api/columns/${columnName}/access`,
@@ -1517,6 +1517,7 @@ function TableColumns() {
               morePrefix: updated.morePrefix,
               lessPrefix: updated.lessPrefix,
               showInfo: updated.showInfo,
+              sticky: updated.sticky,
               ...(updated.column_heading && { column_heading: updated.column_heading }),
             }
             : col
@@ -1940,6 +1941,7 @@ function TableColumns() {
             )}
           </div>
         ),
+        sticky: col.sticky,
         accessor: col.name,
         getCellProps: (row) => {
           if (col.column_type === "select") {

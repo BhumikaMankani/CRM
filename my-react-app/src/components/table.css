@@ -373,3 +373,34 @@ input {
 .d-flex.flex-column.gap-2 {
     min-width: 120px;
 }
+
+/* Sticky Column Styles */
+.sticky-col {
+    position: sticky !important;
+    z-index: 10 !important;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+thead th.sticky-col {
+    z-index: 110 !important;
+    background-color: #f8fafc !important;
+    /* Match table-light head */
+}
+
+tbody td.sticky-col {
+    background-color: #fff !important;
+}
+
+tbody tr:nth-of-type(odd) td.sticky-col {
+    background-color: #f9f9f9 !important;
+    /* Match striped row */
+}
+
+tbody tr:hover td.sticky-col {
+    background-color: #f1f5f9 !important;
+    /* Match hover row */
+}
+
+tbody td.sticky-col.has-option-color {
+    background-color: var(--cell-bg) !important;
+}

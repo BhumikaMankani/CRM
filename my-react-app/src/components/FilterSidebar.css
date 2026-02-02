@@ -56,11 +56,18 @@
 }
 
 .filter-item.active {
-    background-color: #e0f2fe;
+    background-color: #e87c00;
     border-color: #0ea5e9;
-    color: #0369a1;
+    color: #fff;
     box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
 }
+
+.filter-item.active .edit-filter-btn svg path,
+.filter-item.active .delete-filter-btn svg path {
+    fill: #fff
+}
+
+
 
 .filter-name {
     font-weight: 600;

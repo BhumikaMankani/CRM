@@ -16,6 +16,7 @@ const EditColumnAccessModal = ({
   const [morePrefix, setMorePrefix] = useState("");
   const [lessPrefix, setLessPrefix] = useState("");
   const [showInfo, setShowInfo] = useState(false);
+  const [sticky, setSticky] = useState(false);
 
 
   const handleSortingChange = (e) => {
@@ -34,6 +35,7 @@ const EditColumnAccessModal = ({
       setMorePrefix(column.morePrefix || "");
       setLessPrefix(column.lessPrefix || "");
       setShowInfo(!!column.showInfo);
+      setSticky(!!column.sticky);
     }
   }, [column]);
 
@@ -58,6 +60,7 @@ const EditColumnAccessModal = ({
         morePrefix: column.column_type === "condition" ? morePrefix : undefined,
         lessPrefix: column.column_type === "condition" ? lessPrefix : undefined,
         showInfo,
+        sticky,
       });
     }
     onClose?.();
@@ -117,6 +120,20 @@ const EditColumnAccessModal = ({
               />
               <label className="form-check-label" htmlFor="showInfo">
                 Show Info
+              </label>
+            </div>
+
+            <div className="form-check form-check-inline">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="sticky"
+                name="sticky"
+                checked={sticky}
+                onChange={(e) => setSticky(e.target.checked)}
+              />
+              <label className="form-check-label" htmlFor="sticky">
+                Sticky Column
               </label>
             </div>
 
