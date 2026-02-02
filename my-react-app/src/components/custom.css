@@ -320,7 +320,10 @@ button.close_button:hover img {
     height: 20px;
 }
 
-.custom-table thead {
+.custom-table thead th {
     position: sticky;
     top: 0;
+    z-index: 20;
+    background-color: #f8fafc;
+    /* Ensure solid background for stickiness */
 }
