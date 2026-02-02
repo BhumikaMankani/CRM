@@ -26,6 +26,7 @@ function Form({
     defaultValue: "",
     access: [],
     showInfo: false,
+    sticky: false,
   });
 
   const handleChange = (e) => {
@@ -132,6 +133,7 @@ function Form({
           : undefined,
       access: Array.isArray(formData.access) ? formData.access : [],
       showInfo: !!formData.showInfo,
+      sticky: !!formData.sticky,
     };
 
     console.log("payload", payload);
@@ -158,6 +160,7 @@ function Form({
       defaultValue: "",
       access: [],
       showInfo: false,
+      sticky: false,
     });
   };
 
@@ -241,6 +244,23 @@ function Form({
                 htmlFor="showInfo"
               >
                 Show Info
+              </label>
+            </div>
+
+            <div className="form-check form-check-inline">
+              <input
+                className="form-check-input"
+                onChange={handleChange}
+                type="checkbox"
+                id="sticky"
+                name="sticky"
+                checked={formData.sticky}
+              />
+              <label
+                className="form-check-label"
+                htmlFor="sticky"
+              >
+                Sticky Column
               </label>
             </div>
 

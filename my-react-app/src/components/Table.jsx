@@ -24,24 +24,42 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
                                                 ref={provided.innerRef}
                                                 {...provided.droppableProps}
                                             >
-                                                {columns.map((column, index) => (
-                                                    <Draggable
-                                                        key={column.accessor || `col-${index}`}
-                                                        draggableId={column.accessor || `col-${index}`}
-                                                        index={index}
-                                                    >
-                                                        {(provided, snapshot) => (
-                                                            <th
-                                                                className={snapshot.isDragging ? 'dragging' : ''}
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                            >
-                                                                {column.header}
-                                                            </th>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
+                                                {columns.map((column, index) => {
+                                                    const isSticky = column.sticky || index === 0;
+                                                    // Calculate left offset for sticky columns
+                                                    // This is a simple approximation; ideally widths should be measured or fixed.
+                                                    let leftOffset = 0;
+                                                    if (isSticky) {
+                                                        for (let i = 0; i < index; i++) {
+                                                            if (columns[i].sticky || i === 0) {
+                                                                leftOffset += (i === 0 ? 45 : 150); // 45px for index, 150px for others
+                                                            }
+                                                        }
+                                                    }
+
+                                                    return (
+                                                        <Draggable
+                                                            key={column.accessor || `col-${index}`}
+                                                            draggableId={column.accessor || `col-${index}`}
+                                                            index={index}
+                                                        >
+                                                            {(provided, snapshot) => (
+                                                                <th
+                                                                    className={`${snapshot.isDragging ? 'dragging' : ''} ${isSticky ? 'sticky-col' : ''}`}
+                                                                    ref={provided.innerRef}
+                                                                    {...provided.draggableProps}
+                                                                    {...provided.dragHandleProps}
+                                                                    style={{
+                                                                        ...provided.draggableProps.style,
+                                                                        left: isSticky ? `${leftOffset}px` : provided.draggableProps.style?.left
+                                                                    }}
+                                                                >
+                                                                    {column.header}
+                                                                </th>
+                                                            )}
+                                                        </Draggable>
+                                                    );
+                                                })}
                                                 {provided.placeholder}
                                             </tr>
                                         )}
@@ -54,10 +72,26 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
                                         <tr key={row._id || rowIndex}>
                                             {columns.map((column, colIndex) => {
                                                 const cellProps = column.getCellProps ? column.getCellProps(row) : {};
+                                                const isSticky = column.sticky || colIndex === 0;
+
+                                                let leftOffset = 0;
+                                                if (isSticky) {
+                                                    for (let i = 0; i < colIndex; i++) {
+                                                        if (columns[i].sticky || i === 0) {
+                                                            leftOffset += (i === 0 ? 45 : 150);
+                                                        }
+                                                    }
+                                                }
+
                                                 return (
                                                     <td
                                                         key={column.accessor || `cell-${colIndex}`}
                                                         {...cellProps}
+                                                        className={`${cellProps.className || ''} ${isSticky ? 'sticky-col' : ''}`}
+                                                        style={{
+                                                            ...cellProps.style,
+                                                            left: isSticky ? `${leftOffset}px` : cellProps.style?.left
+                                                        }}
                                                     >
                                                         {column.render ? column.render(row, rowIndex) : row[column.accessor]}
                                                     </td>
