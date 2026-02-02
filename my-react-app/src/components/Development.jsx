@@ -2419,7 +2419,7 @@ function TableColumns() {
         <div className="">
           {/* Saved Filters List above the table */}
           {savedFilters.length > 0 && (
-            <div className="saved-filters-row mb-3">
+            <div className="saved-filters-row w-100 mb-3">
               <div className="row flex-nowrap align-items-center">
                 <div className={`filters-list-horizontal ${isFilterOpen ? 'col-10' : 'col-12'}`}>
                   {savedFilters.map((filter) => (
@@ -2430,7 +2430,7 @@ function TableColumns() {
                       title="Click to toggle (apply/deactivate)"
                     >
                       <span className="filter-name">{filter.filterName}                       <span className="">({countMatchingRows(filter.filterData)})</span>
-</span>
+                      </span>
                       {status.status === 'admin' && (
                         <div className="filter-actions-group">
                           <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><FaEdit size={12} /></button>
@@ -2441,24 +2441,24 @@ function TableColumns() {
                   ))}
                 </div>
                 {isFilterOpen && (
-                <div className="filters-actions col-2 d-flex gap-2 justify-content-end align-items-center">
-                  {status?.status === 'admin' && (
+                  <div className="filters-actions col-2 d-flex gap-2 justify-content-end align-items-center">
+                    {status?.status === 'admin' && (
+                      <button
+                        onClick={() => setIsSaveFilterModalOpen(true)}
+                        className="btn btn-success btn-sm"
+                        title="Save current filter configuration"
+                      >
+                        Save As
+                      </button>
+                    )}
                     <button
-                      onClick={() => setIsSaveFilterModalOpen(true)}
-                      className="btn btn-success btn-sm"
-                      title="Save current filter configuration"
+                      onClick={clearFilters}
+                      className="btn btn-outline-secondary btn-sm"
+                      title="Clear all active filters"
                     >
-                      Save As
+                      Clear All
                     </button>
-                  )}
-                  <button
-                    onClick={clearFilters}
-                    className="btn btn-outline-secondary btn-sm"
-                    title="Clear all active filters"
-                  >
-                    Clear All
-                  </button>
-                </div>
+                  </div>
                 )}
               </div>
             </div>
