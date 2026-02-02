@@ -15,6 +15,7 @@ const EditColumnAccessModal = ({
   const [equalPrefix, setEqualPrefix] = useState("");
   const [morePrefix, setMorePrefix] = useState("");
   const [lessPrefix, setLessPrefix] = useState("");
+  const [showInfo, setShowInfo] = useState(false);
 
 
   const handleSortingChange = (e) => {
@@ -32,6 +33,7 @@ const EditColumnAccessModal = ({
       setEqualPrefix(column.equalPrefix || "");
       setMorePrefix(column.morePrefix || "");
       setLessPrefix(column.lessPrefix || "");
+      setShowInfo(!!column.showInfo);
     }
   }, [column]);
 
@@ -55,6 +57,7 @@ const EditColumnAccessModal = ({
         equalPrefix: column.column_type === "condition" ? equalPrefix : undefined,
         morePrefix: column.column_type === "condition" ? morePrefix : undefined,
         lessPrefix: column.column_type === "condition" ? lessPrefix : undefined,
+        showInfo,
       });
     }
     onClose?.();
@@ -102,6 +105,20 @@ const EditColumnAccessModal = ({
                 </label>
               </div>
             )}
+
+            <div className="form-check form-check-inline">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="showInfo"
+                name="showInfo"
+                checked={showInfo}
+                onChange={(e) => setShowInfo(e.target.checked)}
+              />
+              <label className="form-check-label" htmlFor="showInfo">
+                Show Info
+              </label>
+            </div>
 
             {column.column_type === "condition" && (
               <div className="options-container" style={{ padding: "10px", border: "1px solid #dee2e6", borderRadius: "6px", marginBottom: "15px" }}>

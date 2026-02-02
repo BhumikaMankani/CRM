@@ -104,13 +104,14 @@ router.get("/:filterId", async (req, res) => {
 router.patch("/:filterId", async (req, res) => {
     try {
         const { filterId } = req.params;
-        const { filterName, filterData } = req.body;
+        const { filterName, filterData, allowedUsers } = req.body;
 
         const filter = await SavedFilter.findByIdAndUpdate(
             filterId,
             {
                 filterName: filterName || undefined,
                 filterData: filterData || undefined,
+                allowedUsers: allowedUsers || undefined,
                 updatedAt: Date.now()
             },
             { new: true }
@@ -118,6 +119,23 @@ router.patch("/:filterId", async (req, res) => {
 
         if (!filter) {
             return res.status(404).json({ message: "Filter not found" });
+        }
+
+        // If allowedUsers provided, sync with User collection
+        if (allowedUsers) {
+            // First remove this filter from all users it was shared with
+            await User.updateMany(
+                { sharedFilters: filterId },
+                { $pull: { sharedFilters: filterId } }
+            );
+
+            // Then add it back to the current set of allowed users
+            if (allowedUsers.length > 0) {
+                await User.updateMany(
+                    { _id: { $in: allowedUsers } },
+                    { $addToSet: { sharedFilters: filterId } }
+                );
+            }
         }
 
         res.status(200).json(filter);

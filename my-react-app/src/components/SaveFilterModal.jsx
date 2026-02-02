@@ -3,7 +3,7 @@ import { FaTimes, FaUsers } from 'react-icons/fa';
 import { API_URL } from '../../proxy';
 import './SaveFilterModal.css';
 
-const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus }) => {
+const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFilter }) => {
     const [filterName, setFilterName] = useState('');
     const [error, setError] = useState('');
     const [staffList, setStaffList] = useState([]);
@@ -14,7 +14,15 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus }) => {
         if (isOpen && userStatus?.status === 'admin') {
             fetchStaff();
         }
-    }, [isOpen, userStatus]);
+
+        if (isOpen && editFilter) {
+            setFilterName(editFilter.filterName || '');
+            setSelectedStaff(editFilter.allowedUsers || []);
+        } else if (isOpen) {
+            setFilterName('');
+            setSelectedStaff([]);
+        }
+    }, [isOpen, userStatus, editFilter]);
 
     const fetchStaff = async () => {
         setLoadingStaff(true);
@@ -56,7 +64,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus }) => {
 
         try {
             setError(''); // Clear error before saving
-            await onSave(filterName, filters, selectedStaff);
+            await onSave(filterName, editFilter ? editFilter.filterData : filters, selectedStaff, editFilter?._id);
             setFilterName('');
             setSelectedStaff([]);
             setError('');
@@ -82,7 +90,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus }) => {
         <div className="modal-overlay" onClick={handleClose}>
             <div className="save-filter-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h4>Save & Share Filter</h4>
+                    <h4>{editFilter ? 'Edit Filter' : 'Save & Share Filter'}</h4>
                     <button className="close-btn" onClick={handleClose}>
                         <FaTimes />
                     </button>
@@ -182,7 +190,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus }) => {
                         className="btn btn-primary px-4"
                         onClick={handleSave}
                     >
-                        Save & Share
+                        {editFilter ? 'Update & Share' : 'Save & Share'}
                     </button>
                 </div>
             </div>

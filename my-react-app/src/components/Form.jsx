@@ -25,6 +25,7 @@ function Form({
     hasDefaultValue: false,
     defaultValue: "",
     access: [],
+    showInfo: false,
   });
 
   const handleChange = (e) => {
@@ -130,6 +131,7 @@ function Form({
           ? formData.defaultValue
           : undefined,
       access: Array.isArray(formData.access) ? formData.access : [],
+      showInfo: !!formData.showInfo,
     };
 
     console.log("payload", payload);
@@ -155,6 +157,7 @@ function Form({
       hasDefaultValue: false,
       defaultValue: "",
       access: [],
+      showInfo: false,
     });
   };
 
@@ -224,6 +227,22 @@ function Form({
                 </label>
               </div>
             )}
+            <div className="form-check form-check-inline">
+              <input
+                className="form-check-input"
+                onChange={handleChange}
+                type="checkbox"
+                id="showInfo"
+                name="showInfo"
+                checked={formData.showInfo}
+              />
+              <label
+                className="form-check-label"
+                htmlFor="showInfo"
+              >
+                Show Info
+              </label>
+            </div>
 
             <div className="form-group">
               <label>Access</label>
