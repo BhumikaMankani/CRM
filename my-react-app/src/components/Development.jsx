@@ -2420,7 +2420,7 @@ function TableColumns() {
           {/* Saved Filters List above the table */}
           {savedFilters.length > 0 && (
             <div className="saved-filters-row w-100 mb-3">
-              <div className="row flex-nowrap align-items-center">
+              <div className="row flex-nowrap w-100 align-items-center">
                 <div className={`filters-list-horizontal ${isFilterOpen ? 'col-10' : 'col-12'}`}>
                   {savedFilters.map((filter) => (
                     <div
