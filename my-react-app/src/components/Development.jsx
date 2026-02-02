@@ -749,7 +749,7 @@ import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
 import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
-import { FaTrash, FaTimes, FaUserCog } from "react-icons/fa";
+import { FaTrash, FaTimes, FaUserCog, FaEdit } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
 import ColorPickerModal from "./ColorPickerModal";
 import { FaPalette } from "react-icons/fa";
@@ -796,6 +796,15 @@ function TableColumns() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
   const [isSaveFilterModalOpen, setIsSaveFilterModalOpen] = useState(false);
+  const [filterToEdit, setFilterToEdit] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [savedFilters, setSavedFilters] = useState([]);
+  const [activeFilterId, setActiveFilterId] = useState(null);
+  const [deleteFilterConfirmation, setDeleteFilterConfirmation] = useState({
+    isOpen: false,
+    filterId: null,
+    filterName: "",
+  });
 
   // Audit modal state
   const [auditModal, setAuditModal] = useState({
@@ -903,11 +912,12 @@ function TableColumns() {
 
   const clearFilters = useCallback(() => {
     setFilters({});
+    setActiveFilterId(null);
     setIsFilterOpen(false);
   }, []);
 
   // Save filter
-  const handleSaveFilter = async (filterName, filterData, allowedUsers) => {
+  const handleSaveFilter = async (filterName, filterData, allowedUsers, filterId = null) => {
     try {
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
@@ -923,38 +933,70 @@ function TableColumns() {
         filterName,
         filterData,
         allowedUsers,
+        filterId
       });
 
-      const response = await fetch(`${API_URL}/api/filters`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: user._id,
-          filterName,
-          filterData,
-          allowedUsers,
-        }),
-      });
+      if (filterId) {
+        // Update existing filter
+        const response = await fetch(`${API_URL}/api/filters/${filterId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            filterName,
+            filterData,
+            allowedUsers,
+          }),
+        });
 
-      console.log("Filter save response status:", response.status);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+        }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Filter save error response:", errorData);
-        throw new Error(errorData.message || `HTTP Error: ${response.status}`);
-      }
+        const updatedData = await response.json();
+        console.log("Filter updated successfully:", updatedData);
 
-      const savedData = await response.json();
-      console.log("Filter saved successfully:", savedData);
+        // Update the sidebar list (simplest to just force a refresh or update the specific item)
+        if (filterSidebarRef.current) {
+          setRefreshTrigger(prev => prev + 1);
+        }
+      } else {
+        // Create new filter
+        const response = await fetch(`${API_URL}/api/filters`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: user._id,
+            filterName,
+            filterData,
+            allowedUsers,
+          }),
+        });
 
-      // Add the new filter to the sidebar immediately
-      if (filterSidebarRef.current) {
-        filterSidebarRef.current.addNewFilterToList(savedData);
+        console.log("Filter save response status:", response.status);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Filter save error response:", errorData);
+          throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+        }
+
+        const savedData = await response.json();
+        console.log("Filter saved successfully:", savedData);
+
+        if (savedData) {
+          setSavedFilters(prev => [savedData, ...prev]);
+          // Auto-apply if it's a new filter
+          handleFilterSelect(savedData);
+        }
       }
 
       setIsSaveFilterModalOpen(false);
+      setFilterToEdit(null);
       // alert("Filter saved successfully!");
     } catch (err) {
       console.error("Error saving filter:", err);
@@ -963,13 +1005,34 @@ function TableColumns() {
   };
 
   // Apply saved filter
-  const handleFilterSelect = (filterData) => {
-    setFilters(filterData);
+  const handleFilterSelect = (filter) => {
+    if (activeFilterId === filter._id) {
+      console.log("Deactivating filter:", filter.filterName);
+      clearFilters();
+      return;
+    }
+
+    console.log("Applying saved filter:", filter.filterName, filter.filterData);
+    if (filter && filter.filterData) {
+      setFilters(filter.filterData);
+      setActiveFilterId(filter._id);
+      setIsFilterOpen(true);
+    }
   };
 
   // Delete saved filter
-  const handleDeleteFilter = async (filterId, e) => {
+  const handleDeleteFilter = (filterId, filterName, e) => {
     if (e) e.stopPropagation();
+    setDeleteFilterConfirmation({
+      isOpen: true,
+      filterId,
+      filterName,
+    });
+  };
+
+  const confirmDeleteFilter = async () => {
+    const { filterId } = deleteFilterConfirmation;
+    if (!filterId) return;
 
     try {
       const response = await fetch(`${API_URL}/api/filters/${filterId}`, {
@@ -984,15 +1047,8 @@ function TableColumns() {
         throw new Error(errorData.message || "Failed to delete filter");
       }
 
-      // Update the sidebar to remove the deleted filter
-      if (
-        filterSidebarRef.current &&
-        filterSidebarRef.current.removeFilterFromList
-      ) {
-        filterSidebarRef.current.removeFilterFromList(filterId);
-      }
-
-      // alert("Filter deleted successfully!");
+      setSavedFilters((prev) => prev.filter((f) => f._id !== filterId));
+      setDeleteFilterConfirmation({ isOpen: false, filterId: null, filterName: "" });
     } catch (err) {
       console.error("Error deleting filter:", err);
       alert(`Failed to delete filter: ${err.message}`);
@@ -1152,6 +1208,22 @@ function TableColumns() {
     };
   }, []);
 
+  const fetchSavedFilters = useCallback(async () => {
+    if (!status?._id) return;
+    try {
+      const response = await fetch(`${API_URL}/api/filters?userId=${status._id}`);
+      if (!response.ok) throw new Error('Failed to fetch filters');
+      const data = await response.json();
+      setSavedFilters(data);
+    } catch (err) {
+      console.error('Failed to load saved filters:', err);
+    }
+  }, [status?._id]);
+
+  useEffect(() => {
+    fetchSavedFilters();
+  }, [fetchSavedFilters, refreshTrigger]);
+
   /* ---------------- UPDATE CELL ---------------- */
   const handleChange = (rowId, field, value) => {
     // Update local UI state immediately
@@ -1301,9 +1373,9 @@ function TableColumns() {
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix }) => {
+  const handleSaveColumnAccess = async (columnName, { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo }) => {
     try {
-      const body = { access, sorting, equalPrefix, morePrefix, lessPrefix };
+      const body = { access, sorting, equalPrefix, morePrefix, lessPrefix, showInfo };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}/api/columns/${columnName}/access`,
@@ -1328,6 +1400,7 @@ function TableColumns() {
               equalPrefix: updated.equalPrefix,
               morePrefix: updated.morePrefix,
               lessPrefix: updated.lessPrefix,
+              showInfo: updated.showInfo,
               ...(updated.column_heading && { column_heading: updated.column_heading }),
             }
             : col
@@ -1797,7 +1870,48 @@ function TableColumns() {
             const endDateValue = row["end_date"] || row["endDate"] || "";
             const overdueInfo = calculateOverdue(endDateValue);
             return (
-              <div className={overdueInfo.className}>{overdueInfo.text}</div>
+              <div className="d-flex align-items-center gap-1">
+                <div className={overdueInfo.className}>{overdueInfo.text}</div>
+                {(col.showInfo || (col.hasDefaultValue && status?.status === "admin")) && (
+                  <button
+                    type="button"
+                    className="btn btn-link p-0 small"
+                    title="View change history"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setAuditModal({
+                        isOpen: true,
+                        columnName: col.column_heading,
+                        auditData: [],
+                        loading: true,
+                      });
+                      try {
+                        const res = await fetch(
+                          `${API_URL}/api/development/${row._id}/audit/${col.name}`,
+                        );
+                        if (!res.ok) throw new Error("Failed to fetch history");
+                        const history = await res.json();
+                        setAuditModal({
+                          isOpen: true,
+                          columnName: col.column_heading,
+                          auditData: history,
+                          loading: false,
+                        });
+                      } catch (err) {
+                        console.error("Failed to load audit history", err);
+                        setAuditModal({
+                          isOpen: true,
+                          columnName: col.column_heading,
+                          auditData: [],
+                          loading: false,
+                        });
+                      }
+                    }}
+                  >
+                    <BsInfoCircleFill style={{ color: "#2563eb" }} />
+                  </button>
+                )}
+              </div>
             );
           }
 
@@ -1842,7 +1956,50 @@ function TableColumns() {
                 displayText = `${prefix} ${Math.abs(diffDays)} days`;
               }
 
-              return <span className={dayClass}>{displayText}</span>;
+              return (
+                <div className="d-flex align-items-center gap-1">
+                  <span className={dayClass}>{displayText}</span>
+                  {(col.showInfo || (col.hasDefaultValue && status?.status === "admin")) && (
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 small"
+                      title="View change history"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setAuditModal({
+                          isOpen: true,
+                          columnName: col.column_heading,
+                          auditData: [],
+                          loading: true,
+                        });
+                        try {
+                          const res = await fetch(
+                            `${API_URL}/api/development/${row._id}/audit/${col.name}`,
+                          );
+                          if (!res.ok) throw new Error("Failed to fetch history");
+                          const history = await res.json();
+                          setAuditModal({
+                            isOpen: true,
+                            columnName: col.column_heading,
+                            auditData: history,
+                            loading: false,
+                          });
+                        } catch (err) {
+                          console.error("Failed to load audit history", err);
+                          setAuditModal({
+                            isOpen: true,
+                            columnName: col.column_heading,
+                            auditData: [],
+                            loading: false,
+                          });
+                        }
+                      }}
+                    >
+                      <BsInfoCircleFill style={{ color: "#2563eb" }} />
+                    </button>
+                  )}
+                </div>
+              );
             } catch (err) {
               return <span className="text-muted">Error</span>;
             }
@@ -1903,7 +2060,7 @@ function TableColumns() {
                     );
                   })}
                 </select>
-                {(col.hasDefaultValue && status?.status === "admin") && (
+                {(col.showInfo || (col.hasDefaultValue && status?.status === "admin")) && (
                   <button
                     type="button"
                     className="btn btn-link p-0 small"
@@ -1947,19 +2104,60 @@ function TableColumns() {
           }
 
           return (
-            <input
-              type={
-                col.column_type === "date"
-                  ? "date"
-                  : col.column_type === "number"
-                    ? "number"
-                    : "text"
-              }
-              value={value}
-              className="bg-transparent border-0 w-100 text-dark"
-              onChange={(e) => handleChange(row._id, col.name, e.target.value)}
-              disabled={!canEdit(col.name, col)}
-            />
+            <div className="d-flex align-items-center gap-1">
+              <input
+                type={
+                  col.column_type === "date"
+                    ? "date"
+                    : col.column_type === "number"
+                      ? "number"
+                      : "text"
+                }
+                value={value}
+                className="bg-transparent border-0 w-100 text-dark"
+                onChange={(e) => handleChange(row._id, col.name, e.target.value)}
+                disabled={!canEdit(col.name, col)}
+              />
+              {(col.showInfo || (col.hasDefaultValue && status?.status === "admin")) && (
+                <button
+                  type="button"
+                  className="btn btn-link p-0 small"
+                  title="View change history"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setAuditModal({
+                      isOpen: true,
+                      columnName: col.column_heading,
+                      auditData: [],
+                      loading: true,
+                    });
+                    try {
+                      const res = await fetch(
+                        `${API_URL}/api/development/${row._id}/audit/${col.name}`,
+                      );
+                      if (!res.ok) throw new Error("Failed to fetch history");
+                      const history = await res.json();
+                      setAuditModal({
+                        isOpen: true,
+                        columnName: col.column_heading,
+                        auditData: history,
+                        loading: false,
+                      });
+                    } catch (err) {
+                      console.error("Failed to load audit history", err);
+                      setAuditModal({
+                        isOpen: true,
+                        columnName: col.column_heading,
+                        auditData: [],
+                        loading: false,
+                      });
+                    }
+                  }}
+                >
+                  <BsInfoCircleFill style={{ color: "#2563eb" }} />
+                </button>
+              )}
+            </div>
           );
         },
       })),
@@ -2054,20 +2252,37 @@ function TableColumns() {
       <div className="row">
         <FilterSidebar
           ref={filterSidebarRef}
-          filters={filters}
-          isFilterOpen={isFilterOpen}
           status={status}
-          handleFilterChange={handleFilterChange}
-          handleChange={handleChange}
-          onFilterSelect={handleFilterSelect}
-          currentFilters={filters}
-          userId={status?._id}
+          isFilterOpen={isFilterOpen}
           clearFilters={clearFilters}
           setIsSaveFilterModalOpen={setIsSaveFilterModalOpen}
-          handleDeleteFilter={handleDeleteFilter}
+          filters={filters}
         />
 
         <div className="col-md-10 col-sm-8 main-tb">
+          {/* Saved Filters List above the table */}
+          {savedFilters.length > 0 && (
+            <div className="saved-filters-row mb-3">
+              <div className="filters-list-horizontal">
+                {savedFilters.map((filter) => (
+                  <div
+                    key={filter._id}
+                    className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
+                    onClick={() => handleFilterSelect(filter)}
+                    title="Click to toggle (apply/deactivate)"
+                  >
+                    <span className="filter-name">{filter.filterName}</span>
+                    {status.status === 'admin' && (
+                      <div className="filter-actions-group">
+                        <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><FaEdit size={12} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn"><FaTrash size={12} /></button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {loading ? (
             <div className="loading-spinner">
               <div className="spinner"></div>
@@ -2215,6 +2430,49 @@ function TableColumns() {
         </div>
       )}
 
+      {deleteFilterConfirmation.isOpen && (
+        <div
+          className="delete-confirmation-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="delete-confirmation-modal"
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            }}
+          >
+            <h4>Delete Filter</h4>
+            <p>
+              Are you sure you want to delete the filter "
+              <strong>{deleteFilterConfirmation.filterName}</strong>"?
+            </p>
+            <div className="d-flex justify-content-center gap-2 mt-3">
+              <button className="btn btn-danger me-2" onClick={confirmDeleteFilter}>
+                Yes
+              </button>
+              <button className="btn btn-secondary" onClick={() => setDeleteFilterConfirmation({ isOpen: false, filterId: null, filterName: "" })}>
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Audit History Modal */}
       {auditModal.isOpen && (
         <div
@@ -2343,10 +2601,14 @@ function TableColumns() {
 
       <SaveFilterModal
         isOpen={isSaveFilterModalOpen}
-        onClose={() => setIsSaveFilterModalOpen(false)}
+        onClose={() => {
+          setIsSaveFilterModalOpen(false);
+          setFilterToEdit(null);
+        }}
         onSave={handleSaveFilter}
         filters={filters}
         userStatus={status}
+        editFilter={filterToEdit}
       />
     </section>
   );
