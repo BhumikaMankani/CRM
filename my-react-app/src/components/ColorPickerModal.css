@@ -100,7 +100,41 @@ button.btn.delete-btn-minimal svg {
     border-color: #cbd5e0;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
+.color-pickers-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
 
+.color-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+}
+
+.color-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.color-picker-input {
+    width: 45px;
+    height: 38px;
+    border: 2px solid #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 2px;
+}
+
+.color-picker-input:hover {
+    border-color: #cbd5e0;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
 .modal-content {
     max-height: 100%;
 }
@@ -183,16 +217,23 @@ button.btn.delete-btn-minimal svg {
     z-index: 1100;
     padding: 2rem;
     text-align: center;
+    pointer-events: auto;
 }
 
 .confirm-dialog {
     max-width: 300px;
+    pointer-events: auto;
 }
 
 .confirm-dialog p {
     font-weight: 600;
     color: #2d3748;
     margin-bottom: 1.5rem;
+}
+
+.confirm-dialog button {
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 /* Scrollbar styling */

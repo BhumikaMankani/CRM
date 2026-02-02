@@ -52,11 +52,12 @@ router.post("/", async (req, res) => {
 // Update options (labels and colors) for a specific column
 router.put("/:name/options", async (req, res) => {
     try {
-        const { multipleValue, optionColors } = req.body;
+        const { multipleValue, optionColors, optionTextColors } = req.body;
 
         const updateData = {};
         if (multipleValue !== undefined) updateData.multipleValue = multipleValue;
         if (optionColors !== undefined) updateData.optionColors = optionColors;
+        if (optionTextColors !== undefined) updateData.optionTextColors = optionTextColors;
 
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({ error: "No update data provided" });

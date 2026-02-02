@@ -29,8 +29,10 @@
 
 .filters-list-horizontal {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* padding: 10px; */
     gap: 12px;
 }
 
@@ -50,7 +52,7 @@
 .filter-item:hover {
     background-color: #f1f5f9;
     border-color: #cbd5e1;
-    transform: translateY(-1px);
+    /* transform: translateY(-1px); */
 }
 
 .filter-item.active {
@@ -119,4 +121,19 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+.filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    background-color: #0ea5e9;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-right: 4px;
 }

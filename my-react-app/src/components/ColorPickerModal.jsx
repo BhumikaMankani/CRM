@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaSave, FaTimes, FaPlus, FaTrash } from "react-icons/fa";
 import "./ColorPickerModal.css";
 
-function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, existingColors }) {
+function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, existingColors, existingTextColors }) {
     const [localOptions, setLocalOptions] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(null); // stores index of option to delete
 
@@ -10,12 +10,13 @@ function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, exi
         if (isOpen) {
             const merged = (options || []).map(opt => ({
                 text: opt,
-                color: (existingColors && existingColors[opt]) || "#ffffff"
+                color: (existingColors && existingColors[opt]) || "#ffffff",
+                textColor: (existingTextColors && existingTextColors[opt]) || "#000000"
             }));
             setLocalOptions(merged);
             setShowDeleteConfirm(null);
         }
-    }, [isOpen, options, existingColors]);
+    }, [isOpen, options, existingColors, existingTextColors]);
 
     const handleLabelChange = (index, newText) => {
         const updated = [...localOptions];
@@ -29,8 +30,14 @@ function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, exi
         setLocalOptions(updated);
     };
 
+    const handleTextColorChange = (index, newColor) => {
+        const updated = [...localOptions];
+        updated[index].textColor = newColor;
+        setLocalOptions(updated);
+    };
+
     const handleAddOption = () => {
-        setLocalOptions([...localOptions, { text: "", color: "#ffffff" }]);
+        setLocalOptions([...localOptions, { text: "", color: "#ffffff", textColor: "#000000" }]);
     };
 
     const confirmDelete = (index) => {
@@ -48,12 +55,14 @@ function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, exi
     const handleSave = () => {
         const multipleValue = localOptions.map(o => o.text.trim()).filter(Boolean);
         const optionColors = {};
+        const optionTextColors = {};
         localOptions.forEach(o => {
             if (o.text.trim()) {
                 optionColors[o.text.trim()] = o.color;
+                optionTextColors[o.text.trim()] = o.textColor;
             }
         });
-        onSave({ multipleValue, optionColors });
+        onSave({ multipleValue, optionColors, optionTextColors });
         onClose();
     };
 
@@ -77,13 +86,27 @@ function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, exi
                     <div className="options-stack mb-4">
                         {localOptions.map((opt, index) => (
                             <div key={index} className="option-edit-card">
-                                <div className="color-input-wrapper">
-                                    <input
-                                        type="color"
-                                        value={opt.color}
-                                        onChange={(e) => handleColorChange(index, e.target.value)}
-                                        title="Assign Color"
-                                    />
+                                <div className="color-pickers-wrapper">
+                                    <div className="color-input-group">
+                                        <label className="color-label">Background</label>
+                                        <input
+                                            type="color"
+                                            value={opt.color}
+                                            onChange={(e) => handleColorChange(index, e.target.value)}
+                                            title="Assign Background Color"
+                                            className="color-picker-input"
+                                        />
+                                    </div>
+                                    <div className="color-input-group">
+                                        <label className="color-label">Text</label>
+                                        <input
+                                            type="color"
+                                            value={opt.textColor}
+                                            onChange={(e) => handleTextColorChange(index, e.target.value)}
+                                            title="Assign Text Color"
+                                            className="color-picker-input"
+                                        />
+                                    </div>
                                 </div>
                                 <input
                                     type="text"

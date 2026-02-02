@@ -16,7 +16,10 @@ const ColumnSchema = new mongoose.Schema({
   column_heading: { type: String, required: true }, name: { type: String, required: true },
   column_type: { type: String, default: "text" }, // text, select, date, condition
   sorting: { type: Boolean, default: false },
+  order: { type: Number, default: 0 }, // For column ordering/drag-drop
   multipleValue: { type: [String], default: [] }, // for select
+  optionColors: { type: Map, of: String, default: new Map() }, // background colors for options
+  optionTextColors: { type: Map, of: String, default: new Map() }, // text colors for options
   conditionColumn1: { type: String }, // for condition type
   conditionColumn2: { type: String }, // for condition type
   equalPrefix: { type: String }, // label if days == 0

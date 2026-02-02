@@ -916,6 +916,108 @@ function TableColumns() {
     setIsFilterOpen(false);
   }, []);
 
+  // Helper function to count active filters in a filter configuration
+  const countActiveFilters = (filterData) => {
+    if (!filterData) return 0;
+    let count = 0;
+    Object.keys(filterData).forEach(key => {
+      const value = filterData[key];
+      if (Array.isArray(value) && value.length > 0) {
+        count++;
+      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        // Date range object
+        if (value.start || value.end) {
+          count++;
+        }
+      } else if (value) {
+        // String or number
+        count++;
+      }
+    });
+    return count;
+  };
+
+  // Helper function to count rows that match a filter
+  const countMatchingRows = (filterData) => {
+    if (!filterData || !data) return 0;
+
+    let matchingCount = 0;
+    data.forEach(row => {
+      let rowMatches = true;
+
+      Object.keys(filterData).forEach(key => {
+        const filterValue = filterData[key];
+        if (filterValue === undefined || filterValue === null) return;
+
+        // Handle Date Range (object with start/end)
+        if (typeof filterValue === "object" && !Array.isArray(filterValue)) {
+          const { start, end } = filterValue;
+          if (!start && !end) return;
+
+          const cellValue = row[key];
+          if (!cellValue) {
+            rowMatches = false;
+            return;
+          }
+
+          let rowDate;
+          if (String(cellValue).includes("-")) {
+            rowDate = new Date(cellValue);
+          } else if (String(cellValue).includes("/")) {
+            const [d, m, y] = String(cellValue).split("/");
+            rowDate = new Date(`${y}-${m}-${d}`);
+          } else {
+            rowDate = new Date(cellValue);
+          }
+
+          if (isNaN(rowDate.getTime())) {
+            rowMatches = false;
+            return;
+          }
+
+          rowDate.setHours(0, 0, 0, 0);
+
+          if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            if (!(rowDate >= startDate && rowDate <= endDate)) rowMatches = false;
+          } else if (start) {
+            const startDate = new Date(start);
+            startDate.setHours(0, 0, 0, 0);
+            if (!(rowDate >= startDate)) rowMatches = false;
+          } else if (end) {
+            const endDate = new Date(end);
+            endDate.setHours(0, 0, 0, 0);
+            if (!(rowDate <= endDate)) rowMatches = false;
+          }
+          return;
+        }
+
+        // Multi-select (array)
+        if (Array.isArray(filterValue)) {
+          if (filterValue.length === 0) return;
+          const cellValue = String(row[key] ?? "").trim();
+          const matches = filterValue.some(
+            (fv) => String(fv ?? "").trim().toLowerCase() === cellValue.toLowerCase()
+          );
+          if (!matches) rowMatches = false;
+        } else {
+          // String or number
+          const filterStr = String(filterValue).toLowerCase();
+          if (!filterStr) return;
+          const cellValue = String(row[key] || "").toLowerCase();
+          if (!cellValue.includes(filterStr)) rowMatches = false;
+        }
+      });
+
+      if (rowMatches) matchingCount++;
+    });
+
+    return matchingCount;
+  };
+
   // Save filter
   const handleSaveFilter = async (filterName, filterData, allowedUsers, filterId = null) => {
     try {
@@ -1011,12 +1113,14 @@ function TableColumns() {
       clearFilters();
       return;
     }
+    console.log("Saved Filters:", filter.length);
+
 
     console.log("Applying saved filter:", filter.filterName, filter.filterData);
     if (filter && filter.filterData) {
       setFilters(filter.filterData);
       setActiveFilterId(filter._id);
-      setIsFilterOpen(true);
+      // setIsFilterOpen(true);
     }
   };
 
@@ -1272,6 +1376,9 @@ function TableColumns() {
     if (source.index === destination.index) return;
 
     const items = Array.from(columnsDef);
+    // Keep original for reverting on failure
+    const originalItems = Array.from(columnsDef);
+
     // source.index 1 corresponds to columnsDef[0]
     const [reorderedItem] = items.splice(source.index - 1, 1);
     items.splice(destination.index - 1, 0, reorderedItem);
@@ -1290,20 +1397,29 @@ function TableColumns() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ columnOrders }),
       });
-      if (!res.ok) throw new Error("Failed to save column order");
+
+      if (!res.ok) {
+        throw new Error("Failed to save column order");
+      }
+
+      const result = await res.json();
+      console.log("Column order saved successfully:", result);
     } catch (err) {
       console.error("Error saving column order:", err);
+      // Revert to original state on failure
+      setColumnsDef(originalItems);
+      alert("Failed to save column order. Changes have been reverted.");
     }
   };
 
-  const handleSaveOptions = async ({ multipleValue, optionColors }) => {
+  const handleSaveOptions = async ({ multipleValue, optionColors, optionTextColors }) => {
     if (!selectedColorCol) return;
 
     try {
       const res = await fetch(`${API_URL}/api/columns/${selectedColorCol.name}/options`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ multipleValue, optionColors }),
+        body: JSON.stringify({ multipleValue, optionColors, optionTextColors }),
       });
 
       if (!res.ok) throw new Error("Failed to save column options");
@@ -1311,7 +1427,7 @@ function TableColumns() {
       setColumnsDef((prev) =>
         prev.map((col) =>
           col.name === selectedColorCol.name
-            ? { ...col, multipleValue, optionColors }
+            ? { ...col, multipleValue, optionColors, optionTextColors }
             : col
         )
       );
@@ -1843,7 +1959,19 @@ function TableColumns() {
             }
 
             if (optionColor) {
-              const textColor = getContrastYIQ(optionColor);
+              const optionTextColors = col.optionTextColors || {};
+              let textColor = getContrastYIQ(optionColor);
+              // Use custom text color if provided
+              if (optionTextColors[value]) {
+                textColor = optionTextColors[value];
+              } else if (optionTextColors.get && optionTextColors.get(value)) {
+                textColor = optionTextColors.get(value);
+              } else {
+                const target = value.toLowerCase();
+                const keys = Object.keys(optionTextColors);
+                const match = keys.find(k => k.trim().toLowerCase() === target);
+                if (match) textColor = optionTextColors[match];
+              }
               return {
                 style: {
                   '--cell-bg': optionColor,
@@ -2008,6 +2136,7 @@ function TableColumns() {
           if (col.column_type === "select") {
             const trimmedValue = value.toString().trim();
             const optionColors = col.optionColors || {};
+            const optionTextColors = col.optionTextColors || {};
 
             let optionColor = null;
             if (optionColors[trimmedValue]) {
@@ -2021,13 +2150,27 @@ function TableColumns() {
               if (match) optionColor = optionColors[match];
             }
 
+            let textColor = getContrastYIQ(optionColor);
+            if (optionColor) {
+              if (optionTextColors[trimmedValue]) {
+                textColor = optionTextColors[trimmedValue];
+              } else if (optionTextColors.get && optionTextColors.get(trimmedValue)) {
+                textColor = optionTextColors.get(trimmedValue);
+              } else {
+                const target = trimmedValue.toLowerCase();
+                const keys = Object.keys(optionTextColors);
+                const match = keys.find(k => k.trim().toLowerCase() === target);
+                if (match) textColor = optionTextColors[match];
+              }
+            }
+
             return (
               <div className="d-flex align-items-center gap-1">
                 <select
                   value={value}
                   className={`bg-transparent border-0 w-100 ${optionColor ? '' : 'text-dark'}`}
                   style={{
-                    color: optionColor ? getContrastYIQ(optionColor) : 'inherit',
+                    color: optionColor ? textColor : 'inherit',
                     fontWeight: optionColor ? '600' : 'normal',
                     cursor: 'pointer'
                   }}
@@ -2049,6 +2192,20 @@ function TableColumns() {
                       const keys = Object.keys(optionColors);
                       const match = keys.find(k => k.trim().toLowerCase() === target);
                       if (match) optColor = optionColors[match];
+                    }
+
+                    let optTextColor = getContrastYIQ(optColor);
+                    if (optColor) {
+                      if (optionTextColors[trimmedOpt]) {
+                        optTextColor = optionTextColors[trimmedOpt];
+                      } else if (optionTextColors.get && optionTextColors.get(trimmedOpt)) {
+                        optTextColor = optionTextColors.get(trimmedOpt);
+                      } else {
+                        const target = trimmedOpt.toLowerCase();
+                        const keys = Object.keys(optionTextColors);
+                        const match = keys.find(k => k.trim().toLowerCase() === target);
+                        if (match) optTextColor = optionTextColors[match];
+                      }
                     }
                     return (
                       <option
@@ -2249,37 +2406,60 @@ function TableColumns() {
                 )} */}
       </div>
 
-      <div className="row">
-        <FilterSidebar
+      <div className="">
+        {/* <FilterSidebar
           ref={filterSidebarRef}
           status={status}
           isFilterOpen={isFilterOpen}
           clearFilters={clearFilters}
           setIsSaveFilterModalOpen={setIsSaveFilterModalOpen}
           filters={filters}
-        />
+        /> */}
 
-        <div className="col-md-10 col-sm-8 main-tb">
+        <div className="">
           {/* Saved Filters List above the table */}
           {savedFilters.length > 0 && (
             <div className="saved-filters-row mb-3">
-              <div className="filters-list-horizontal">
-                {savedFilters.map((filter) => (
-                  <div
-                    key={filter._id}
-                    className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
-                    onClick={() => handleFilterSelect(filter)}
-                    title="Click to toggle (apply/deactivate)"
+              <div className="row flex-nowrap align-items-center">
+                <div className={`filters-list-horizontal ${isFilterOpen ? 'col-10' : 'col-12'}`}>
+                  {savedFilters.map((filter) => (
+                    <div
+                      key={filter._id}
+                      className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
+                      onClick={() => handleFilterSelect(filter)}
+                      title="Click to toggle (apply/deactivate)"
+                    >
+                      <span className="filter-name">{filter.filterName}                       <span className="">({countMatchingRows(filter.filterData)})</span>
+</span>
+                      {status.status === 'admin' && (
+                        <div className="filter-actions-group">
+                          <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><FaEdit size={12} /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn"><FaTrash size={12} /></button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {isFilterOpen && (
+                <div className="filters-actions col-2 d-flex gap-2 justify-content-end align-items-center">
+                  {status?.status === 'admin' && (
+                    <button
+                      onClick={() => setIsSaveFilterModalOpen(true)}
+                      className="btn btn-success btn-sm"
+                      title="Save current filter configuration"
+                    >
+                      Save As
+                    </button>
+                  )}
+                  <button
+                    onClick={clearFilters}
+                    className="btn btn-outline-secondary btn-sm"
+                    title="Clear all active filters"
                   >
-                    <span className="filter-name">{filter.filterName}</span>
-                    {status.status === 'admin' && (
-                      <div className="filter-actions-group">
-                        <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><FaEdit size={12} /></button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn"><FaTrash size={12} /></button>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                    Clear All
+                  </button>
+                </div>
+                )}
               </div>
             </div>
           )}
@@ -2597,6 +2777,7 @@ function TableColumns() {
         columnHeading={selectedColorCol?.column_heading}
         options={selectedColorCol?.multipleValue || []}
         existingColors={selectedColorCol?.optionColors}
+        existingTextColors={selectedColorCol?.optionTextColors}
       />
 
       <SaveFilterModal
