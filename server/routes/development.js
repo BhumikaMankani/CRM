@@ -95,8 +95,9 @@ router.put("/:id", async (req, res) => {
             const auditOps = [];
 
             for (const col of columns) {
-                // We only care about select columns that are configured with default value tracking
-                if (col.column_type !== "select" || !col.hasDefaultValue) continue;
+                // Track audit if showInfo is enabled OR it's a select column with default value tracking
+                const isSpecialSelect = col.column_type === "select" && col.hasDefaultValue;
+                if (!col.showInfo && !isSpecialSelect) continue;
 
                 const field = col.name;
 

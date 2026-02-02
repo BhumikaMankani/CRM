@@ -25,6 +25,7 @@ const ColumnSchema = new mongoose.Schema({
   hasDefaultValue: { type: Boolean, default: false }, // for select dropdown default value
   defaultValue: { type: String }, // default value for select dropdown
   access: { type: [String], default: [] }, // user IDs who can edit/delete this column
+  showInfo: { type: Boolean, default: false }, // whether to show change history info icon
   status: { type: String, default: "active" }, // active, inactive
 },
   { timestamps: true },);

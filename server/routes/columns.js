@@ -29,6 +29,7 @@ router.post("/", async (req, res) => {
             name,
             column_type: column_type || 'text',
             sorting: !!sorting,
+            showInfo: !!req.body.showInfo,
             multipleValue: multipleValue || [],
             conditionColumn1: conditionColumn1 || undefined,
             conditionColumn2: conditionColumn2 || undefined,
@@ -138,6 +139,9 @@ router.patch("/:name/access", async (req, res) => {
         }
         if (typeof sorting === "boolean") {
             updateData.sorting = sorting;
+        }
+        if (typeof req.body.showInfo === "boolean") {
+            updateData.showInfo = req.body.showInfo;
         }
         if (equalPrefix !== undefined) updateData.equalPrefix = equalPrefix;
         if (morePrefix !== undefined) updateData.morePrefix = morePrefix;
