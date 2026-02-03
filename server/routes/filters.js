@@ -7,17 +7,35 @@ const router = express.Router();
 // Get all saved filters (respecting access control)
 router.get("/", async (req, res) => {
     try {
-        const { userId } = req.query;
+        const { userId, department } = req.query;
 
         if (!userId) {
             return res.status(400).json({ message: "userId query parameter is required" });
         }
 
-        const filters = await SavedFilter.find({
+        const accessQuery = {
             $or: [
                 { userId: userId },
                 { allowedUsers: userId }
             ]
+        };
+
+        // Optional department scoping.
+        // If a department is provided, return filters either explicitly for that department
+        // OR legacy filters without a department field (so older filters still show up).
+        const deptQuery = department
+            ? {
+                $or: [
+                    { department: department },
+                    { department: { $exists: false } },
+                    { department: null },
+                    { department: "" },
+                ],
+            }
+            : {};
+
+        const filters = await SavedFilter.find({
+            $and: [accessQuery, deptQuery],
         }).sort({ createdAt: -1 });
 
         res.status(200).json(filters);
@@ -42,7 +60,7 @@ router.post("/", async (req, res) => {
             userId,
             filterName,
             filterData,
-            department,
+            department: department || undefined,
             allowedUsers: allowedUsers || []
         });
 
