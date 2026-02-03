@@ -1742,7 +1742,7 @@ function TableColumns() {
       auditData: [],
       loading: true,
       createdInfo: {
-        name: row.createdByUserName || "Unknown",
+        name: row.createdByUserName || "Mandasa Admin",
         time: row.createdAt
       }
     });
