@@ -8,6 +8,7 @@ import Development from "./pages/development";
 import Marketing from "./pages/marketing";
 import Seo from "./pages/seo";
 import Footer from "./components/Footer"
+import './components/color.css';
 import Header from "./components/header";
 
 function App() {

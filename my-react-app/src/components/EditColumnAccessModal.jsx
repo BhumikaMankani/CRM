@@ -174,7 +174,7 @@ const EditColumnAccessModal = ({
             )}
 
 
-            <div className="form-group">
+            <div className="form-group" style={{ marginTop: "15px" }}>
               <label>Access</label>
               <p className="small text-muted mb-2">
                 Users who can edit or delete this column (Admin always has
