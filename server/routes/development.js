@@ -17,7 +17,13 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
     console.log("➕ ADD ROW REQUEST:", req.body);
     try {
-        const project = new Project({ ...req.body, showstatus: 'activate' });
+        const { createdByUserId, createdByUserName, ...rowContent } = req.body;
+        const project = new Project({
+            ...rowContent,
+            showstatus: 'activate',
+            createdByUserId: createdByUserId || "Unknown",
+            createdByUserName: createdByUserName || "Unknown"
+        });
         await project.save();
         console.log("✅ Row added successfully:", project);
         res.json(project);
@@ -82,7 +88,13 @@ router.put("/:id", async (req, res) => {
         // 2) Apply update and get the new doc
         const updated = await Project.findByIdAndUpdate(
             req.params.id,
-            { $set: updateBody },
+            {
+                $set: {
+                    ...updateBody,
+                    lastChangedByUserName: changedByUserName || "Unknown",
+                    lastChangedAt: new Date()
+                }
+            },
             { new: true }
         );
 
@@ -95,10 +107,6 @@ router.put("/:id", async (req, res) => {
             const auditOps = [];
 
             for (const col of columns) {
-                // Track audit if showInfo is enabled OR it's a select column with default value tracking
-                const isSpecialSelect = col.column_type === "select" && col.hasDefaultValue;
-                if (!col.showInfo && !isSpecialSelect) continue;
-
                 const field = col.name;
 
                 // Use .get() for dynamic fields on Mongoose documents
@@ -135,6 +143,18 @@ router.put("/:id", async (req, res) => {
         res.json(updated);
     } catch (err) {
         console.error("❌ Error updating row:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get audit history for a specific record (all fields)
+router.get("/:id/audit", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const history = await Audit.find({ recordId: id }).sort({ changedAt: -1 });
+        res.json(history);
+    } catch (err) {
+        console.error("❌ Error fetching record audit history:", err.message);
         res.status(500).json({ error: err.message });
     }
 });

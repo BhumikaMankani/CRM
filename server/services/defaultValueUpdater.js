@@ -3,7 +3,7 @@ const Project = require("../models/Development");
 const Audit = require("../models/Audit");
 
 /**
- * Service to update column values to their default values every 24 hours
+ * Service to update column values to their default values every night at 11:00 PM
  */
 const updateDefaultValues = async () => {
   try {
@@ -52,35 +52,6 @@ const updateDefaultValues = async () => {
           const oldValue = project[fieldName];
           const newValue = column.defaultValue;
 
-          // Check last audit entry for this record/field to enforce 24-hour wait
-          try {
-            const lastAudit = await Audit.findOne({
-              recordId: project._id,
-              columnFieldName: fieldName,
-            }).sort({ changedAt: -1 });
-
-            const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
-
-            if (lastAudit) {
-              const age = Date.now() - new Date(lastAudit.changedAt).getTime();
-              // If the last change is less than 24 hours old, skip resetting now
-              if (age < TWENTY_FOUR_HOURS_MS) {
-                continue;
-              }
-            } else {
-              // If no audit entry exists, it hasn't been changed since creation.
-              // Check if the record itself is older than 24 hours.
-              const recordAge = Date.now() - new Date(project.createdAt).getTime();
-              if (recordAge < TWENTY_FOUR_HOURS_MS) {
-                continue;
-              }
-            }
-          } catch (auditLookupErr) {
-            console.error(
-              `⚠️ Failed to read last audit for project ${project._id} / column "${column.column_heading}":`,
-              auditLookupErr.message
-            );
-          }
 
           // 1) Write an audit entry so it appears in View change history
           try {
@@ -141,21 +112,45 @@ const updateDefaultValues = async () => {
  * Start the interval to update default values every 24 hours
  */
 const startDefaultValueUpdater = () => {
-  const ONE_HOUR_MS = 60 * 60 * 1000;
+  // We want to run at 11:00 PM IST (Indian Standard Time).
+  // IST is UTC + 5 hours 30 minutes.
+  // 23:00 IST = 17:30 UTC.
+  // Since Fly.io servers run on UTC, we target 17:30 UTC.
+
+  console.log("⏰ Scheduling default value updater for 11:00 PM IST (17:30 UTC) daily...");
+
+  const now = new Date();
+  const target = new Date(now);
+
+  // Set target to 17:30:00.000 UTC (which is 23:00 IST)
+  target.setUTCHours(17, 30, 0, 0);
+
+  // If it's already past 17:30 UTC for 'today', schedule for tomorrow
+  if (now > target) {
+    target.setUTCDate(target.getUTCDate() + 1);
+  }
+
+  const msUntilTarget = target.getTime() - now.getTime();
+
+  // Calculate formatted string for logging
+  // We show both UTC and the implied IST time for clarity
+  const targetIST = new Date(target.getTime() + (5.5 * 60 * 60 * 1000));
 
   console.log(
-    "⏰ Default value updater service initialized. Running first check..."
+    `⏳ Next update scheduled in ${Math.floor(msUntilTarget / 1000 / 60)} minutes (Server UTC: ${target.toUTCString()} | IST: ${targetIST.toISOString().replace('Z', '').split('T')[1].substring(0, 5)})`
   );
 
-  // Run immediately on startup
-  updateDefaultValues();
-
-  // Then run every hour to catch items as they hit their 24h mark
-  const intervalId = setInterval(() => {
+  // Schedule the first run
+  const timeoutId = setTimeout(() => {
     updateDefaultValues();
-  }, ONE_HOUR_MS);
 
-  return intervalId;
+    // Then run every 24 hours thereafter
+    setInterval(() => {
+      updateDefaultValues();
+    }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+  }, msUntilTarget);
+
+  return timeoutId;
 };
 
 module.exports = {
