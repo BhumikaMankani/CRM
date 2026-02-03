@@ -26,13 +26,14 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
                                             >
                                                 {columns.map((column, index) => {
                                                     const isSticky = column.sticky || index === 0;
+                                                    const isInfo = column.accessor === 'row_info_column';
                                                     // Calculate left offset for sticky columns
-                                                    // This is a simple approximation; ideally widths should be measured or fixed.
                                                     let leftOffset = 0;
                                                     if (isSticky) {
                                                         for (let i = 0; i < index; i++) {
                                                             if (columns[i].sticky || i === 0) {
-                                                                leftOffset += (i === 0 ? 45 : 150); // 45px for index, 150px for others
+                                                                const w = i === 0 ? 45 : (columns[i].accessor === 'row_info_column' ? 60 : 150);
+                                                                leftOffset += w;
                                                             }
                                                         }
                                                     }
@@ -43,20 +44,31 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
                                                             draggableId={column.accessor || `col-${index}`}
                                                             index={index}
                                                         >
-                                                            {(provided, snapshot) => (
-                                                                <th
-                                                                    className={`${snapshot.isDragging ? 'dragging' : ''} ${isSticky ? 'sticky-col' : ''}`}
-                                                                    ref={provided.innerRef}
-                                                                    {...provided.draggableProps}
-                                                                    {...provided.dragHandleProps}
-                                                                    style={{
-                                                                        ...provided.draggableProps.style,
-                                                                        left: isSticky ? `${leftOffset}px` : provided.draggableProps.style?.left
-                                                                    }}
-                                                                >
-                                                                    {column.header}
-                                                                </th>
-                                                            )}
+                                                            {(provided, snapshot) => {
+                                                                const style = {
+                                                                    ...provided.draggableProps.style,
+                                                                    left: isSticky ? `${leftOffset}px` : provided.draggableProps.style?.left
+                                                                };
+
+                                                                if (isInfo) {
+                                                                    style.width = '60px';
+                                                                    style.minWidth = '60px';
+                                                                    style.maxWidth = '60px';
+
+                                                                }
+
+                                                                return (
+                                                                    <th
+                                                                        className={`${snapshot.isDragging ? 'dragging' : ''} ${isSticky ? 'sticky-col' : ''}`}
+                                                                        ref={provided.innerRef}
+                                                                        {...provided.draggableProps}
+                                                                        {...provided.dragHandleProps}
+                                                                        style={style}
+                                                                    >
+                                                                        {column.header}
+                                                                    </th>
+                                                                );
+                                                            }}
                                                         </Draggable>
                                                     );
                                                 })}
@@ -73,14 +85,28 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
                                             {columns.map((column, colIndex) => {
                                                 const cellProps = column.getCellProps ? column.getCellProps(row) : {};
                                                 const isSticky = column.sticky || colIndex === 0;
+                                                const isInfo = column.accessor === 'row_info_column';
 
                                                 let leftOffset = 0;
                                                 if (isSticky) {
                                                     for (let i = 0; i < colIndex; i++) {
                                                         if (columns[i].sticky || i === 0) {
-                                                            leftOffset += (i === 0 ? 45 : 150);
+                                                            const w = i === 0 ? 45 : (columns[i].accessor === 'row_info_column' ? 60 : 150);
+                                                            leftOffset += w;
                                                         }
                                                     }
+                                                }
+
+                                                const style = {
+                                                    ...cellProps.style,
+                                                    left: isSticky ? `${leftOffset}px` : cellProps.style?.left
+                                                };
+
+                                                if (isInfo) {
+                                                    style.width = '60px';
+                                                    style.minWidth = '60px';
+                                                    style.maxWidth = '60px';
+                                                    style.padding = '5px';
                                                 }
 
                                                 return (
@@ -88,10 +114,7 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
                                                         key={column.accessor || `cell-${colIndex}`}
                                                         {...cellProps}
                                                         className={`${cellProps.className || ''} ${isSticky ? 'sticky-col' : ''}`}
-                                                        style={{
-                                                            ...cellProps.style,
-                                                            left: isSticky ? `${leftOffset}px` : cellProps.style?.left
-                                                        }}
+                                                        style={style}
                                                     >
                                                         {column.render ? column.render(row, rowIndex) : row[column.accessor]}
                                                     </td>

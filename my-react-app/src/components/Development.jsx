@@ -816,6 +816,7 @@ function TableColumns() {
     columnName: "",
     auditData: [],
     loading: false,
+    createdInfo: null,
   });
 
   // hover delete row icon
@@ -1334,6 +1335,10 @@ function TableColumns() {
   useEffect(() => {
     fetchSavedFilters();
   }, [fetchSavedFilters, refreshTrigger]);
+  const dataRef = useRef(data);
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   const updateTimeoutRef = useRef({});
 
@@ -1730,6 +1735,33 @@ function TableColumns() {
     }
   };
 
+  const handleShowRowInfo = async (row) => {
+    setAuditModal({
+      isOpen: true,
+      columnName: "Row Details",
+      auditData: [],
+      loading: true,
+      createdInfo: {
+        name: row.createdByUserName || "Unknown",
+        time: row.createdAt
+      }
+    });
+
+    try {
+      const res = await fetch(`${API_URL}/api/development/${row._id}/audit`);
+      if (!res.ok) throw new Error("Failed to fetch audit history");
+      const data = await res.json();
+      setAuditModal(prev => ({
+        ...prev,
+        auditData: data,
+        loading: false
+      }));
+    } catch (err) {
+      console.error("Failed to fetch row audit:", err);
+      setAuditModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
   /* ---------------- DYNAMIC COLUMNS ---------------- */
   const columns = useMemo(() => {
     const baseColumns = [
@@ -1770,8 +1802,13 @@ function TableColumns() {
             </div>
           ) : null,
       },
-
-      ...columnsDef.map((col) => ({
+      ...columnsDef.filter(col => {
+        // Hide Info column from non-admins
+        if (status?.status !== 'admin' && (col.name === 'row_info' || col.column_heading === 'Info')) {
+          return false;
+        }
+        return true;
+      }).map((col) => ({
         header: (
           <div className="d-flex flex-column gap-2">
             <div className="d-flex align-items-center justify-content-between gap-2">
@@ -2362,6 +2399,35 @@ function TableColumns() {
           );
         },
       })),
+      ...(status?.status === "admin"
+        ? [
+          {
+            header: (
+              <div
+                className="d-flex flex-column gap-2 align-items-center"
+                style={{ minWidth: "auto" }}
+              >
+                <span>Info</span>
+              </div>
+            ),
+            accessor: "row_info_column",
+            render: (row) => (
+              <div className="d-flex justify-content-center">
+                <button
+                  className="btn btn-link p-0 text-primary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShowRowInfo(row);
+                  }}
+                  title="View Row Details & History"
+                >
+                  <BsInfoCircleFill size={16} />
+                </button>
+              </div>
+            ),
+          },
+        ]
+        : []),
     ];
     return baseColumns;
   }, [
@@ -2734,7 +2800,7 @@ function TableColumns() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h4>Change History - {auditModal.columnName}</h4>
+              <h4>{auditModal.columnName}</h4>
               <button
                 className="btn btn-link p-0"
                 onClick={() =>
@@ -2743,6 +2809,7 @@ function TableColumns() {
                     columnName: "",
                     auditData: [],
                     loading: false,
+                    createdInfo: null
                   })
                 }
               >
@@ -2755,46 +2822,67 @@ function TableColumns() {
                   <span className="visually-hidden">Loading...</span>
                 </div>
               </div>
-            ) : auditModal.auditData.length === 0 ? (
-              <p className="text-muted text-center py-4">
-                No changes recorded for this field.
-              </p>
             ) : (
-              <div className="table-responsive">
-                <table className="table table-sm table-bordered">
-                  <thead>
-                    <tr>
-                      <th>User Name</th>
-                      <th>Time</th>
-                      <th>Old Value</th>
-                      <th>New Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {auditModal.auditData.map((audit, idx) => (
-                      <tr key={idx}>
-                        <td>{audit.changedByUserName || "Unknown"}</td>
-                        <td>
-                          {new Date(audit.changedAt).toLocaleString()}
-                        </td>
-                        <td>
-                          {audit.oldValue === "" ? (
-                            <em className="text-muted">Empty</em>
-                          ) : (
-                            audit.oldValue ?? "-"
-                          )}
-                        </td>
-                        <td>
-                          {audit.newValue === "" ? (
-                            <em className="text-muted">Empty</em>
-                          ) : (
-                            audit.newValue ?? "-"
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="d-flex flex-column gap-3">
+                {auditModal.createdInfo && (
+                  <div className="p-3 bg-light rounded border">
+                    <h6 className="mb-2 fw-bold">Creation Details</h6>
+                    <div className="d-flex justify-content-between border-bottom pb-2 mb-2">
+                      <span>Created By:</span>
+                      <span className="fw-bold">{auditModal.createdInfo.name}</span>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                      <span>Created At:</span>
+                      <span className="fw-bold">{auditModal.createdInfo.time ? new Date(auditModal.createdInfo.time).toLocaleString() : "Unknown"}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h6 className="mb-2 fw-bold">Change History</h6>
+                  {auditModal.auditData.length === 0 ? (
+                    <p className="text-muted text-center py-2 border rounded">
+                      No changes recorded.
+                    </p>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-sm table-bordered">
+                        <thead>
+                          <tr>
+                            <th>User</th>
+                            <th>Time</th>
+                            <th>Field</th>
+                            <th>Old Value</th>
+                            <th>New Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {auditModal.auditData.map((audit, idx) => (
+                            <tr key={idx}>
+                              <td>{audit.changedByUserName || "Unknown"}</td>
+                              <td>{new Date(audit.changedAt).toLocaleString()}</td>
+                              <td>{audit.columnName || audit.columnFieldName}</td>
+                              <td>
+                                {audit.oldValue === "" ? (
+                                  <em className="text-muted">Empty</em>
+                                ) : (
+                                  audit.oldValue ?? "-"
+                                )}
+                              </td>
+                              <td>
+                                {audit.newValue === "" ? (
+                                  <em className="text-muted">Empty</em>
+                                ) : (
+                                  audit.newValue ?? "-"
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             {/* <div className="d-flex justify-content-end mt-3">
