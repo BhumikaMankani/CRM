@@ -1,0 +1,69 @@
+button.btn.save_as {
+    background: #e87c00;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+}
+
+.filters-actions button.btn {
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.modal-content .form-check {
+    padding: 6px 1.5em;
+}
+
+.modal-content {
+    max-height: 80%;
+}
+
+.filters-actions button.clear_all {
+    font-size: 12px;
+}
+
+.filter-item:hover,
+.filter-item.active {
+    background-color: #000;
+    border-color: #fff;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.filter-item:hover button,
+.filter-item.active button {
+    color: #fff;
+}
+
+.access-users-list .form-check {
+    padding: 6px 1.5em;
+}
+
+button.submit-btn,
+.modal-footer .btn-primary,
+button[type="submit"] {
+    background: black;
+    color: white;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+}
+
+button.password-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+.submit-btn:hover,
+.modal-footer .btn-primary:hover,
+button[type="submit"]:hover {
+    transform: unset;
+    box-shadow: none;
+    background: white;
+    color: black;
+    border-color: black;
+    border: 1px solid;
+}
+
+button.btn {
+    border-radius: 10px !important;
+}

@@ -1,0 +1,24 @@
+const mongoose = require("mongoose");
+const ColumnSeoSchema = new mongoose.Schema({
+  column_heading: { type: String, required: true },
+  name: { type: String, required: true },
+  column_type: { type: String, default: "text" }, // text, select, date, condition
+  sorting: { type: Boolean, default: false },
+  order: { type: Number, default: 0 }, // For column ordering/drag-drop
+  multipleValue: { type: [String], default: [] }, // for select
+  optionColors: { type: Map, of: String, default: new Map() }, // background colors for options
+  optionTextColors: { type: Map, of: String, default: new Map() }, // text colors for options
+  conditionColumn1: { type: String }, // for condition type
+  conditionColumn2: { type: String }, // for condition type
+  equalPrefix: { type: String }, // label if days == 0
+  morePrefix: { type: String }, // label if days > 0
+  lessPrefix: { type: String }, // label if days < 0
+  hasDefaultValue: { type: Boolean, default: false }, // for select dropdown default value
+  defaultValue: { type: String }, // default value for select dropdown
+  access: { type: [String], default: [] }, // user IDs who can edit/delete this column
+  showInfo: { type: Boolean, default: false }, // whether to show change history info icon
+  status: { type: String, default: "active" }, // active, inactive
+},
+  { timestamps: true }
+);
+module.exports = mongoose.model("ColumnSeo", ColumnSeoSchema);

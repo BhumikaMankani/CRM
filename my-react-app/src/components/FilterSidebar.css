@@ -85,7 +85,7 @@
 .edit-filter-btn {
     background: none;
     border: none;
-    color: #94a3b8;
+    color: currentColor;
     cursor: pointer;
     padding: 2px;
     display: flex;
