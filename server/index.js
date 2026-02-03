@@ -2,9 +2,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-// const projectRoutes = require('./routes/project');
+
+// .Api collections
+// COlumns api
 const Columns = require('./routes/columns');
+const MarketingColumns = require('./routes/marketing-columns');
+const Seo_Column = require('./routes/seo-columns');
+// project api
 const Development = require('./routes/development');
+const Marketing = require('./routes/marketing');
+const Seo = require('./routes/seo');
 const Department = require('./routes/department');
 const User = require('./routes/user');
 const Filters = require('./routes/filters');
@@ -39,7 +46,7 @@ connectDB();
 // Start the default value updater service
 // Wait for DB connection before starting
 mongoose.connection.once('open', () => {
-  startDefaultValueUpdater();
+    startDefaultValueUpdater();
 });
 
 // User.syncIndexes();
@@ -54,6 +61,18 @@ app.use("/api", (req, res, next) => {
 app.use("/api/columns", Columns);
 app.use("/api/development", Development);
 app.use("/api/user", User);
+
+// Marketing & SEO routes (JSON APIs used by frontend)
+app.use("/api/marketing", Marketing);
+app.use("/api/seo", Seo);
+
+// Column routes
+app.use("/api/marketing-columns", MarketingColumns);
+app.use("/api/seo-columns", Seo_Column);
+
+// Backwards‑compat: keep old path if anything else still calls it
+app.use("/api/marketingcolumns", MarketingColumns);
+
 app.use("/api/department", Department);
 app.use("/api/filters", Filters);
 
