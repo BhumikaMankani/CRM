@@ -40,7 +40,7 @@ const FilterSidebar = forwardRef(
                             {status.status === 'admin' && (
                                 <button
                                     onClick={() => setIsSaveFilterModalOpen(true)}
-                                    className="btn btn-success btn-sm w-100"
+                                    className="btn btn-sm w-100"
                                 >
                                     Save as
                                 </button>

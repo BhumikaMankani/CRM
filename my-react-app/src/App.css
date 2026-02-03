@@ -307,23 +307,20 @@ button.filter_button svg {
 .registration-container button[type="submit"] {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 8px;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
-.registration-container button[type="submit"]:hover {
+/* .registration-container button[type="submit"]:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
   background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-}
+} */
 
 .registration-container button[type="submit"]:active {
   transform: translateY(0);
@@ -351,12 +348,6 @@ button.filter_button svg {
   transition: all 0.2s;
   user-select: none;
 }
-
-.password-toggle:hover {
-  background: rgba(37, 99, 235, 0.1);
-  color: #1e40af;
-}
-
 /* Filter Clear Styling */
 .filter-input-wrapper {
   position: relative;
