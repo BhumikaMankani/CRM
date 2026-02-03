@@ -33,8 +33,11 @@ span.rounded-circle {
 
 .custom-table thead th {
     vertical-align: top;
-    /* background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-bottom: 2px solid #e2e8f0; */
+    position: sticky;
+    top: 0;
+    background-color: #f8fafc;
+    /* Match table-light */
+    z-index: 20;
     font-weight: 700;
     max-width: 250px;
     color: #1e293b;
@@ -43,6 +46,7 @@ span.rounded-circle {
     font-size: 0.9rem;
     cursor: grab;
     user-select: none;
+    border-bottom: 2px solid #e2e8f0;
 }
 
 .dragging {
@@ -383,6 +387,7 @@ input {
 
 thead th.sticky-col {
     z-index: 110 !important;
+    top: 0 !important;
     background-color: #f8fafc !important;
     /* Match table-light head */
 }

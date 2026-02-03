@@ -320,8 +320,42 @@ button.close_button:hover img {
     height: 20px;
 }
 
-.custom-table thead {
+.custom-table thead th {
     position: sticky;
     top: 0;
     z-index: 20;
+    background-color: #f8fafc;
+    /* Ensure solid background for stickiness */
 }
+
+/* Info Icon Hover */
+.btn-link:hover .BsInfoCircleFill {
+    color: #1e40af !important;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+.audit-history-table {
+    font-size: 0.85rem;
+}
+
+.audit-history-table thead th {
+    background-color: #f1f5f9;
+    font-weight: 600;
+    color: #475569;
+}
+
+.audit-history-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.text-success-custom {
+    color: #059669;
+    font-weight: 500;
+}
+
+.text-danger-custom {
+    color: #dc2626;
+    font-weight: 500;
+}
+

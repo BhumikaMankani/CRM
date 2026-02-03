@@ -798,6 +798,7 @@ function TableColumns() {
   const [isSaveFilterModalOpen, setIsSaveFilterModalOpen] = useState(false);
   const [filterToEdit, setFilterToEdit] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   const [savedFilters, setSavedFilters] = useState([]);
   const [activeFilterId, setActiveFilterId] = useState(null);
   const [deleteFilterConfirmation, setDeleteFilterConfirmation] = useState({
@@ -1328,6 +1329,8 @@ function TableColumns() {
     fetchSavedFilters();
   }, [fetchSavedFilters, refreshTrigger]);
 
+  const updateTimeoutRef = useRef({});
+
   /* ---------------- UPDATE CELL ---------------- */
   const handleChange = (rowId, field, value) => {
     // Update local UI state immediately
@@ -1335,36 +1338,51 @@ function TableColumns() {
       prev.map((row) => (row._id === rowId ? { ...row, [field]: value } : row)),
     );
 
-    // Find the row we are going to send to backend
-    const rowToUpdate = data.find((r) => r._id === rowId);
-    if (rowToUpdate) {
-      // Read currently logged-in user from localStorage (same as used for `status`)
+    // Clear existing timeout for this row-field combination if it exists
+    const timeoutKey = `${rowId}-${field}`;
+    if (updateTimeoutRef.current[timeoutKey]) {
+      clearTimeout(updateTimeoutRef.current[timeoutKey]);
+    }
+
+    // Debounce the API call
+    updateTimeoutRef.current[timeoutKey] = setTimeout(() => {
+      // Find the row we are going to send to backend (get the latest from the current state if needed, 
+      // but simpler to just use what we have and the new value)
       let changedByUserName = "Unknown";
-      let changedByUserId = null; // we will store email here, per requirement
+      let changedByUserId = null;
       try {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const parsed = JSON.parse(storedUser);
-          // Display name
           changedByUserName = parsed.user_name || parsed.email || "Unknown";
-          // Store email as the identifier (not ObjectId)
           changedByUserId = parsed.email || null;
         }
-      } catch (e) {
-        // ignore JSON parse errors and fall back to "Unknown"
-      }
+      } catch (e) { }
 
-      fetch(`${API_URL}/api/development/${rowId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...rowToUpdate,
-          [field]: value,
-          changedByUserName,
-          changedByUserId,
-        }),
+      // We need to get the full row content to ensure strict:false fields are preserved
+      // but since the backend does $set: updateBody, we only need to send the changed fields
+      // or the whole object if the backend expects it. 
+      // The current backend uses req.body and expects changedByUserId/Name.
+
+      // Get the latest row from state to include any other concurrent changes
+      setData(prevData => {
+        const latestRow = prevData.find(r => r._id === rowId);
+        if (latestRow) {
+          fetch(`${API_URL}/api/development/${rowId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...latestRow,
+              changedByUserName,
+              changedByUserId,
+            }),
+          });
+        }
+        return prevData;
       });
-    }
+
+      delete updateTimeoutRef.current[timeoutKey];
+    }, 1000); // 1 second debounce
   };
 
   const handleOnDragEnd = async (result) => {
@@ -1576,10 +1594,27 @@ function TableColumns() {
         }
       });
 
+      let createdByUserName = "Unknown";
+      let createdByUserId = null;
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          createdByUserName = parsed.user_name || parsed.email || "Unknown";
+          createdByUserId = parsed.email || null;
+        }
+      } catch (e) {
+        // ignore
+      }
+
       const res = await fetch(`${API_URL}/api/development`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newRow),
+        body: JSON.stringify({
+          ...newRow,
+          createdByUserId,
+          createdByUserName
+        }),
       });
 
       if (!res.ok) {
@@ -1729,6 +1764,7 @@ function TableColumns() {
             </div>
           ) : null,
       },
+
       ...columnsDef.map((col) => ({
         header: (
           <div className="d-flex flex-column gap-2">
@@ -2654,6 +2690,8 @@ function TableColumns() {
           </div>
         </div>
       )}
+
+
 
       {/* Audit History Modal */}
       {auditModal.isOpen && (
