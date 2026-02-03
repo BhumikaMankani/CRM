@@ -10,6 +10,10 @@
     sans-serif;
 }
 
+td.has-option-color select option {
+    color: black;
+}
+
 /* CSS Variables from index.css */
 body {
   min-height: 100vh;
