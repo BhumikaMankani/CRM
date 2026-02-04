@@ -2112,9 +2112,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                           <tr>
                             <th>User</th>
                             <th>Time</th>
-                            <th>Field</th>
-                            <th>Old Value</th>
                             <th>New Value</th>
+                            <th>Old Value</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2122,19 +2121,18 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                             <tr key={idx}>
                               <td>{audit.changedByUserName || "Unknown"}</td>
                               <td>{new Date(audit.changedAt).toLocaleString()}</td>
-                              <td>{audit.columnName || audit.columnFieldName}</td>
-                              <td>
-                                {audit.oldValue === "" ? (
-                                  <em className="text-muted">Empty</em>
-                                ) : (
-                                  audit.oldValue ?? "-"
-                                )}
-                              </td>
                               <td>
                                 {audit.newValue === "" ? (
                                   <em className="text-muted">Empty</em>
                                 ) : (
                                   audit.newValue ?? "-"
+                                )}
+                              </td>
+                              <td>
+                                {audit.oldValue === "" ? (
+                                  <em className="text-muted">Empty</em>
+                                ) : (
+                                  audit.oldValue ?? "-"
                                 )}
                               </td>
                             </tr>
