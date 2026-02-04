@@ -97,29 +97,42 @@ const updateDefaultValues = async () => {
 /**
  * Start the interval to update default values every 24 hours
  */
+// const startDefaultValueUpdater = () => {
+//   console.log(":alarm_clock: Scheduling default value updater for 11:00 PM (23:00) daily...");
+//   const now = new Date();
+//   const target = new Date();
+//   // Set target to 23:00:00.000 today
+//   // target.setHours(23, 0, 0, 0);
+//   // If it's already past 23:00 for today, schedule for tomorrow
+//   if (now > target) {
+//     target.setDate(target.getDate() + 1);
+//   }
+//   const msUntilTarget = target.getTime() - now.getTime();
+//   console.log(
+//     `:hourglass_flowing_sand: Next update scheduled in ${Math.floor(msUntilTarget / 1000 / 60)} minutes (at ${target.toLocaleString()})`
+//   );
+//   // Schedule the first run
+//   const timeoutId = setTimeout(() => {
+//     updateDefaultValues();
+//     // Then run every 24 hours thereafter
+//     setInterval(() => {
+//       updateDefaultValues();
+//     }, 2 * 60 * 1000);
+//   }, msUntilTarget);
+//   return timeoutId;
+// };
 const startDefaultValueUpdater = () => {
-  console.log(":alarm_clock: Scheduling default value updater for 11:00 PM (23:00) daily...");
-  const now = new Date();
-  const target = new Date();
-  // Set target to 23:00:00.000 today
-  // target.setHours(23, 0, 0, 0);
-  // If it's already past 23:00 for today, schedule for tomorrow
-  if (now > target) {
-    target.setDate(target.getDate() + 1);
-  }
-  const msUntilTarget = target.getTime() - now.getTime();
-  console.log(
-    `:hourglass_flowing_sand: Next update scheduled in ${Math.floor(msUntilTarget / 1000 / 60)} minutes (at ${target.toLocaleString()})`
-  );
-  // Schedule the first run
-  const timeoutId = setTimeout(() => {
+  console.log("⏰ Starting default value updater (runs every 5 minutes)");
+
+  // Run once immediately (optional but recommended)
+  updateDefaultValues();
+
+  // Run every 5 minutes
+  const intervalId = setInterval(() => {
     updateDefaultValues();
-    // Then run every 24 hours thereafter
-    setInterval(() => {
-      updateDefaultValues();
-    }, 2 * 60 * 1000);
-  }, msUntilTarget);
-  return timeoutId;
+  }, 2 * 60 * 1000); // 5 minutes
+
+  return intervalId;
 };
 module.exports = {
   updateDefaultValues,
