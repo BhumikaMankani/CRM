@@ -16,6 +16,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Create a ref for FilterSidebar
   const filterSidebarRef = useRef(null);
 
+  // Data FILTERED COUNT..
+  const [filterCount, setFilterCount] = useState([]);
+
   const [showClearFilterButton, setShowClearFilterButton] = useState(false);
 
   // Column states
@@ -508,6 +511,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         });
       }
     });
+    setFilterCount(processedData.length);
 
     // Apply sorting
     if (sortConfig.key) {
@@ -1792,7 +1796,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           {savedFilters.length > 0 && (
             <div className="saved-filters-row w-100 mb-3">
               <div className="row flex-nowrap w-100 align-items-center">
-                <div className={`filters-list-horizontal col-10`}>
+                <div className={`filters-list-horizontal align-items-center col-10`}>
                   {savedFilters.map((filter) => (
                     <div
                       key={filter._id}
@@ -1830,6 +1834,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                       Clear All
                     </button>
                   )}
+                  <span className="filter-count" style={{ fontSize: '14px' }}><b>{filterCount} Projects</b></span>
                 </div>
               </div>
             </div>
@@ -2047,7 +2052,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           }
         >
           <div
-            className="delete-confirmation-modal"
+            className="delete-confirmation-modal info_popup_custom"
             style={{
               backgroundColor: "white",
               padding: "20px",
@@ -2061,7 +2066,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h4>{auditModal.columnName}</h4>
+              <h4 className="mb-0">{auditModal.columnName}</h4>
               <button
                 className="btn btn-link p-0"
                 onClick={() =>
@@ -2086,21 +2091,21 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             ) : (
               <div className="d-flex flex-column gap-3">
                 {auditModal.createdInfo && (
-                  <div className="p-3 bg-light rounded border">
-                    <h6 className="mb-2 fw-bold">Creation Details</h6>
-                    <div className="d-flex justify-content-between border-bottom pb-2 mb-2">
-                      <span>Created By:</span>
-                      <span className="fw-bold">{auditModal.createdInfo.name}</span>
+                  <div className="d-flex align-items-center gap-2 justify-content-between p-3 bg-light rounded border">
+                    {/* <h6 className="mb-2 fw-bold">Creation Details</h6> */}
+                    <div className="d-flex gap-2">
+                      <span className="fs-14 letter-spacing_ct">Created By:</span>
+                      <span className="fw-bold fs-14">{auditModal.createdInfo.name}</span>
                     </div>
-                    <div className="d-flex justify-content-between">
-                      <span>Created At:</span>
-                      <span className="fw-bold">{auditModal.createdInfo.time ? new Date(auditModal.createdInfo.time).toLocaleString() : "Unknown"}</span>
+                    <div className="d-flex gap-2">
+                      <span className="fs-14 letter-spacing_ct">Created At:</span>
+                      <span className="fw-bold fs-14">{auditModal.createdInfo.time ? new Date(auditModal.createdInfo.time).toLocaleString() : "Unknown"}</span>
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <h6 className="mb-2 fw-bold">Change History</h6>
+                  <h6 className="mb-3 fw-bold">Change History</h6>
                   {auditModal.auditData.length === 0 ? (
                     <p className="text-muted text-center py-2 border rounded">
                       No changes recorded.
