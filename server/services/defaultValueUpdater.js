@@ -147,7 +147,9 @@ const Audit = require("../models/Audit");
 let isRunning = false;
 
 // FOR TESTING: 2 minutes instead of 24 hours
-const RESET_AFTER_MS = 2 * 60 * 1000;
+// const RESET_AFTER_MS = 2 * 60 * 1000;
+const RESET_AFTER_MS = 24 * 60 * 60 * 1000;
+
 // const RESET_AFTER_MS = 24 * 60 * 60 * 1000;
 
 /**
@@ -250,7 +252,7 @@ const updateDefaultValues = async () => {
 const startDefaultValueUpdater = () => {
   console.log("⏰ Default value cron started (every 2 minutes)");
 
-  cron.schedule("*/2 * * * *", async () => {
+  cron.schedule("0 23 * * *", async () => {
     if (isRunning) {
       console.log("⏳ Previous cycle still running, skipping");
       return;
