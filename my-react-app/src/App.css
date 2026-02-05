@@ -483,3 +483,12 @@ h5.fw-bold {
   height: 16px;
   display: inline-flex !important;
 }
+
+table td select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+  box-shadow: none;
+  border-radius: 0px;
+}
