@@ -144,3 +144,8 @@
     border-radius: 12px;
     margin-right: 4px;
 }
+
+.main-parent .nav-link.active{
+    background-color: #e87c00;
+    color: #fff;
+}

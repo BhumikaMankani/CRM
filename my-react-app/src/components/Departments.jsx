@@ -355,7 +355,7 @@ function Departments({ setIsLoggedIn }) {
 
                 {/* Display Total Projects for Logged-in Staff */}
                 {status?.status === 'staff' && (
-                    <div className="row mb-4">
+                    <div className="row ">
                         <div className="col-md-12">
                             <div className="alert alert-light border">
                                 <h2 className="mb-3"> <strong> Welcome back, {status.user_name}!</strong></h2>
