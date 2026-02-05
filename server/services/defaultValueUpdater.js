@@ -252,7 +252,8 @@ const updateDefaultValues = async () => {
 const startDefaultValueUpdater = () => {
   console.log("⏰ Default value cron started (every 2 minutes)");
 
-  cron.schedule("0 23 * * *", async () => {
+  cron.schedule("11 05 * * *", async () => {
+  // cron.schedule("0 23 * * *", async () => {
     if (isRunning) {
       console.log("⏳ Previous cycle still running, skipping");
       return;
