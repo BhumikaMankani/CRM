@@ -4,7 +4,11 @@ import Development from '../components/Development';
 const DevelopmentPage = () => {
     return (
         <div>
-            <Development />
+            <Development
+                departmentKey="development"
+                dataEndpoint="/api/development"
+                dataColumns="/api/columns"
+            />
         </div>
     );
 }

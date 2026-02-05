@@ -15,12 +15,12 @@ function App() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     // Check if user is already logged in (using sessionStorage for current session)
-    return sessionStorage.getItem('isLoggedIn') === 'true';
+    return localStorage.getItem('isLoggedIn') === 'true';
   });
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
-    sessionStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('isLoggedIn', 'true');
   };
 
   const handleLogout = () => {
