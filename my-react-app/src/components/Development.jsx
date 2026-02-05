@@ -2033,8 +2033,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         </div>
       )}
 
-
-
       {/* Audit History Modal */}
       {auditModal.isOpen && (
         <div
