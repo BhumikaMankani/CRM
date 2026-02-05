@@ -53,6 +53,7 @@ function Registration({ onLoginSuccess }) {
             if (data.exists) {
                 localStorage.setItem('Password', JSON.stringify(hashedPassword));
                 localStorage.setItem('user', JSON.stringify(data.user));
+                sessionStorage.setItem('user', JSON.stringify(data.user));
                 onLoginSuccess();
                 navigate('/');
             } else {
