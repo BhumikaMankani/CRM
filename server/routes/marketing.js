@@ -6,8 +6,8 @@ const Audit = require("../models/Audit");
 // Get all rows
 router.get("/", async (req, res) => {
     try {
-        const records = await Marketing.find({ showstatus: { $ne: 'deactivate' } }).sort({ createdAt: -1 });
-        res.json(records);
+        const marketingprojects = await Marketing.find({ showstatus: { $ne: 'deactivate' } }).sort({ createdAt: -1 });
+        res.json(marketingprojects);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -15,12 +15,18 @@ router.get("/", async (req, res) => {
 
 // Add new row
 router.post("/", async (req, res) => {
-    console.log("➕ ADD ROW REQUEST (Marketing):", req.body);
+    console.log("➕ ADD ROW REQUEST:", req.body);
     try {
-        const record = new Marketing({ ...req.body, showstatus: 'activate' });
-        await record.save();
-        console.log("✅ Row added successfully:", record);
-        res.json(record);
+        const { createdByUserId, createdByUserName, ...rowContent } = req.body;
+        const marketingproject = new Marketing({
+            ...rowContent,
+            showstatus: 'activate',
+            createdByUserId: createdByUserId || "Unknown",
+            createdByUserName: createdByUserName || "Unknown"
+        });
+        await marketingproject.save();
+        console.log("✅ Row added successfully:", marketingproject);
+        res.json(marketingproject);
     } catch (err) {
         console.error("❌ Error adding row:", err.message);
         res.status(500).json({ error: err.message });
@@ -30,8 +36,8 @@ router.post("/", async (req, res) => {
 // Get column access
 router.get("/columnAccess/:id", async (req, res) => {
     try {
-        const record = await Marketing.findById(req.params.id);
-        res.json(record ? record.column_access : "");
+        const marketingprojects = await Marketing.findById(req.params.id);
+        res.json(marketingprojects ? marketingprojects.column_access : "");
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -41,13 +47,13 @@ router.get("/columnAccess/:id", async (req, res) => {
 router.put("/columnAccess/:id", async (req, res) => {
     try {
         const { columnName } = req.body;
-        const record = await Marketing.findById(req.params.id);
+        const marketingproject = await Marketing.findById(req.params.id);
 
-        if (!record) {
+        if (!marketingproject) {
             return res.status(404).json({ error: "Record not found" });
         }
 
-        let currentAccess = record.column_access || "";
+        let currentAccess = marketingproject.column_access || "";
         let accessArray = currentAccess.split(',').map(item => item.trim()).filter(item => item !== "");
 
         if (accessArray.includes(columnName)) {
@@ -58,10 +64,10 @@ router.put("/columnAccess/:id", async (req, res) => {
             accessArray.push(columnName);
         }
 
-        record.column_access = accessArray.join(',');
-        await record.save();
+        marketingproject.column_access = accessArray.join(',');
+        await marketingproject.save();
 
-        res.json(record.column_access);
+        res.json(marketingproject.column_access);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -69,7 +75,7 @@ router.put("/columnAccess/:id", async (req, res) => {
 
 // Update row
 router.put("/:id", async (req, res) => {
-    console.log("📝 UPDATE ROW REQUEST (Marketing):", req.params.id, req.body);
+    console.log("📝 UPDATE ROW REQUEST:", req.params.id, req.body);
     try {
         const { changedByUserId, changedByUserName, ...updateBody } = req.body;
 
@@ -82,23 +88,25 @@ router.put("/:id", async (req, res) => {
         // 2) Apply update and get the new doc
         const updated = await Marketing.findByIdAndUpdate(
             req.params.id,
-            { $set: updateBody },
+            {
+                $set: {
+                    ...updateBody,
+                    lastChangedByUserName: changedByUserName || "Unknown",
+                    lastChangedAt: new Date()
+                }
+            },
             { new: true }
         );
 
         // 3) For select/default-value columns, write audit entries for any changed fields
         try {
             // Load column definitions so we know metadata (hasDefaultValue, etc.)
-            const Column = require("../models/Column");
+            const Column = require("../models/MarketingColumn");
             const columns = await Column.find({ status: { $ne: "deactive" } });
 
             const auditOps = [];
 
             for (const col of columns) {
-                // Track audit if showInfo is enabled OR it's a select column with default value tracking
-                const isSpecialSelect = col.column_type === "select" && col.hasDefaultValue;
-                if (!col.showInfo && !isSpecialSelect) continue;
-
                 const field = col.name;
 
                 // Use .get() for dynamic fields on Mongoose documents
@@ -139,7 +147,20 @@ router.put("/:id", async (req, res) => {
     }
 });
 
+// Get audit history for a specific record (all fields)
+router.get("/:id/audit", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const history = await Audit.find({ recordId: id }).sort({ changedAt: -1 });
+        res.json(history);
+    } catch (err) {
+        console.error("❌ Error fetching record audit history:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Get audit history for a specific record + column
+// URL shape must match frontend: /api/development/:id/audit/:field
 router.get("/:id/audit/:field", async (req, res) => {
     const { id, field } = req.params;
     try {
@@ -157,9 +178,26 @@ router.get("/:id/audit/:field", async (req, res) => {
     }
 });
 
-// Deactivate row
+// router.patch("/deactivate/:id", async (req, res) => {
+//     try {
+//         const updated = await Project.findByIdAndUpdate(
+//             req.params.id,
+//             { $set: { showstatus: "deactivate" } },
+//             { new: true, runValidators: true }
+//         );
+//         if (!updated) {
+//             console.warn("Row not found for deactivation:", req.params.id);
+//             return res.status(404).json({ error: "Row not found" });
+//         }
+//         console.log("✅ Row deactivated successfully:", req.params.id);
+//         res.json(updated);
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+
 router.patch("/deactivate/:id", async (req, res) => {
-    console.log("🔥 DEACTIVATE API HIT (Marketing):", req.params.id);
+    console.log("🔥 DEACTIVATE API HIT:", req.params.id);
 
     const updated = await Marketing.findByIdAndUpdate(
         req.params.id,

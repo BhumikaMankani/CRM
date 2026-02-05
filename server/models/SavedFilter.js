@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Development = require("./Development");
 
 const SavedFilterSchema = new mongoose.Schema(
     {
@@ -29,6 +30,10 @@ const SavedFilterSchema = new mongoose.Schema(
             type: Date,
             default: Date.now
         },
+        department: {
+            type: String,
+            default: Development
+        },
         allowedUsers: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: 'User',
@@ -46,4 +51,9 @@ SavedFilterSchema.pre('save', function () {
     this.updatedAt = new Date();
 });
 
-module.exports = mongoose.model("SavedFilter", SavedFilterSchema);
+// Default model (used for development / general filters)
+const SavedFilter = mongoose.model("SavedFilter", SavedFilterSchema);
+
+module.exports = SavedFilter;
+// Also export schema so we can create department‑specific models with separate collections
+module.exports.SavedFilterSchema = SavedFilterSchema;

@@ -16,11 +16,13 @@ import { BsInfoCircleFill } from "react-icons/bs";
 import ColorPickerModal from "./ColorPickerModal";
 import { FaPalette } from "react-icons/fa";
 
-function TableColumns() {
+function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Create a ref for FilterSidebar
   const filterSidebarRef = useRef(null);
 
-  // clear filter button
+  // Data FILTERED COUNT..
+  const [filterCount, setFilterCount] = useState([]);
+
   const [showClearFilterButton, setShowClearFilterButton] = useState(false);
 
   // Column states
@@ -304,7 +306,8 @@ function TableColumns() {
         filterName,
         filterData,
         allowedUsers,
-        filterId
+        filterId,
+        department: departmentKey,
       });
 
       if (filterId) {
@@ -318,6 +321,7 @@ function TableColumns() {
             filterName,
             filterData,
             allowedUsers,
+            department: departmentKey,
           }),
         });
 
@@ -344,6 +348,7 @@ function TableColumns() {
             userId: user._id,
             filterName,
             filterData,
+            department: departmentKey,
             allowedUsers,
           }),
         });
@@ -510,6 +515,7 @@ function TableColumns() {
         });
       }
     });
+    setFilterCount(processedData.length);
 
     // Apply sorting
     if (sortConfig.key) {
@@ -546,8 +552,8 @@ function TableColumns() {
         if (showSpinner && isMounted) setLoading(true);
 
         const [columnsRes, devRes] = await Promise.all([
-          fetch(`${API_URL}/api/columns`),
-          fetch(`${API_URL}/api/development`),
+          fetch(`${API_URL}${dataColumns}`),
+          fetch(`${API_URL}${dataEndpoint}`),
         ]);
 
         if (!columnsRes.ok) throw new Error("Failed to fetch columns");
@@ -585,7 +591,8 @@ function TableColumns() {
   const fetchSavedFilters = useCallback(async () => {
     if (!status?._id) return;
     try {
-      const response = await fetch(`${API_URL}/api/filters?userId=${status._id}`);
+      const url = `${API_URL}/api/filters?userId=${status._id}${departmentKey ? `&department=${departmentKey}` : ""}`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch filters');
       const data = await response.json();
       setSavedFilters(data);
@@ -641,7 +648,7 @@ function TableColumns() {
       setData(prevData => {
         const latestRow = prevData.find(r => r._id === rowId);
         if (latestRow) {
-          fetch(`${API_URL}/api/development/${rowId}`, {
+          fetch(`${API_URL}${dataEndpoint}/${rowId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -683,7 +690,7 @@ function TableColumns() {
     }));
 
     try {
-      const res = await fetch(`${API_URL}/api/columns/reorder/update`, {
+      const res = await fetch(`${API_URL}${dataColumns}/reorder/update`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ columnOrders }),
@@ -707,7 +714,7 @@ function TableColumns() {
     if (!selectedColorCol) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/columns/${selectedColorCol.name}/options`, {
+      const res = await fetch(`${API_URL}${dataColumns}/${selectedColorCol.name}/options`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ multipleValue, optionColors, optionTextColors }),
@@ -752,7 +759,7 @@ function TableColumns() {
 
     try {
       const response = await fetch(
-        `${API_URL}/api/development/deactivate/${rowId}`,
+        `${API_URL}${dataEndpoint}/deactivate/${rowId}`,
         {
           method: "PATCH",
         },
@@ -785,7 +792,7 @@ function TableColumns() {
       const body = { access, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
-        `${API_URL}/api/columns/${columnName}/access`,
+        `${API_URL}${dataColumns}/${columnName}/access`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -824,7 +831,7 @@ function TableColumns() {
   const confirmDelete = async () => {
     const { accessor } = deleteConfirmation;
     try {
-      const res = await fetch(`${API_URL}/api/columns/deactivate/${accessor}`, {
+      const res = await fetch(`${API_URL}${dataColumns}/deactivate/${accessor}`, {
         method: "PATCH",
       });
 
@@ -880,7 +887,7 @@ function TableColumns() {
         // ignore
       }
 
-      const res = await fetch(`${API_URL}/api/development`, {
+      const res = await fetch(`${API_URL}${dataEndpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -976,7 +983,7 @@ function TableColumns() {
     if (!trimmedNewName || oldName === trimmedNewName) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/columns/${oldName}`, {
+      const res = await fetch(`${API_URL}${dataColumns}/${oldName}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newHeading: trimmedNewName }),
@@ -1358,7 +1365,7 @@ function TableColumns() {
                       });
                       try {
                         const res = await fetch(
-                          `${API_URL}/api/development/${row._id}/audit/${col.name}`,
+                          `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
                         );
                         if (!res.ok) throw new Error("Failed to fetch history");
                         const history = await res.json();
@@ -1445,7 +1452,7 @@ function TableColumns() {
                         });
                         try {
                           const res = await fetch(
-                            `${API_URL}/api/development/${row._id}/audit/${col.name}`,
+                            `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
                           );
                           if (!res.ok) throw new Error("Failed to fetch history");
                           const history = await res.json();
@@ -1575,7 +1582,7 @@ function TableColumns() {
                       });
                       try {
                         const res = await fetch(
-                          `${API_URL}/api/development/${row._id}/audit/${col.name}`,
+                          `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
                         );
                         if (!res.ok) throw new Error("Failed to fetch history");
                         const history = await res.json();
@@ -1633,7 +1640,7 @@ function TableColumns() {
                     });
                     try {
                       const res = await fetch(
-                        `${API_URL}/api/development/${row._id}/audit/${col.name}`,
+                        `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
                       );
                       if (!res.ok) throw new Error("Failed to fetch history");
                       const history = await res.json();
@@ -1793,7 +1800,7 @@ function TableColumns() {
           {savedFilters.length > 0 && (
             <div className="saved-filters-row w-100 mb-3">
               <div className="row flex-nowrap w-100 align-items-center">
-                <div className={`filters-list-horizontal col-10`}>
+                <div className={`filters-list-horizontal align-items-center col-9`}>
                   {savedFilters.map((filter) => (
                     <div
                       key={filter._id}
@@ -1812,7 +1819,11 @@ function TableColumns() {
                     </div>
                   ))}
                 </div>
+<<<<<<< Khushi
                 <div className="filters-actions col-2 d-flex gap-2 justify-content-end align-items-center">
+=======
+                <div className="filters-actions col-3 d-flex gap-2 justify-content-end align-items-center">
+>>>>>>> main
                   {status?.status === 'admin' && isFilterOpen && (
                     <button
                       onClick={() => setIsSaveFilterModalOpen(true)}
@@ -1831,6 +1842,10 @@ function TableColumns() {
                       Clear All
                     </button>
                   )}
+<<<<<<< Khushi
+=======
+                  <span className="filter-count" style={{ fontSize: '14px' }}><b>{filterCount} Projects</b></span>
+>>>>>>> main
                 </div>
               </div>
             </div>
@@ -1868,7 +1883,7 @@ function TableColumns() {
         availableUsers={userData}
         onPopupSave={async (newColumn) => {
           try {
-            const res = await fetch(`${API_URL}/api/columns`, {
+            const res = await fetch(`${API_URL}${dataColumns}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(newColumn),
@@ -2048,7 +2063,7 @@ function TableColumns() {
           }
         >
           <div
-            className="delete-confirmation-modal"
+            className="delete-confirmation-modal info_popup_custom"
             style={{
               backgroundColor: "white",
               padding: "20px",
@@ -2062,7 +2077,7 @@ function TableColumns() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h4>{auditModal.columnName}</h4>
+              <h4 className="mb-0">{auditModal.columnName}</h4>
               <button
                 className="btn btn-link p-0"
                 onClick={() =>
@@ -2087,21 +2102,21 @@ function TableColumns() {
             ) : (
               <div className="d-flex flex-column gap-3">
                 {auditModal.createdInfo && (
-                  <div className="p-3 bg-light rounded border">
-                    <h6 className="mb-2 fw-bold">Creation Details</h6>
-                    <div className="d-flex justify-content-between border-bottom pb-2 mb-2">
-                      <span>Created By:</span>
-                      <span className="fw-bold">{auditModal.createdInfo.name}</span>
+                  <div className="d-flex align-items-center gap-2 justify-content-between p-3 bg-light rounded border">
+                    {/* <h6 className="mb-2 fw-bold">Creation Details</h6> */}
+                    <div className="d-flex gap-2">
+                      <span className="fs-14 letter-spacing_ct">Created By:</span>
+                      <span className="fw-bold fs-14">{auditModal.createdInfo.name}</span>
                     </div>
-                    <div className="d-flex justify-content-between">
-                      <span>Created At:</span>
-                      <span className="fw-bold">{auditModal.createdInfo.time ? new Date(auditModal.createdInfo.time).toLocaleString() : "Unknown"}</span>
+                    <div className="d-flex gap-2">
+                      <span className="fs-14 letter-spacing_ct">Created At:</span>
+                      <span className="fw-bold fs-14">{auditModal.createdInfo.time ? new Date(auditModal.createdInfo.time).toLocaleString() : "Unknown"}</span>
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <h6 className="mb-2 fw-bold">Change History</h6>
+                  <h6 className="mb-3 fw-bold">Change History</h6>
                   {auditModal.auditData.length === 0 ? (
                     <p className="text-muted text-center py-2 border rounded">
                       No changes recorded.
@@ -2113,9 +2128,8 @@ function TableColumns() {
                           <tr>
                             <th>User</th>
                             <th>Time</th>
-                            <th>Field</th>
-                            <th>Old Value</th>
                             <th>New Value</th>
+                            <th>Old Value</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2123,19 +2137,18 @@ function TableColumns() {
                             <tr key={idx}>
                               <td>{audit.changedByUserName || "Unknown"}</td>
                               <td>{new Date(audit.changedAt).toLocaleString()}</td>
-                              <td>{audit.columnName || audit.columnFieldName}</td>
-                              <td>
-                                {audit.oldValue === "" ? (
-                                  <em className="text-muted">Empty</em>
-                                ) : (
-                                  audit.oldValue ?? "-"
-                                )}
-                              </td>
                               <td>
                                 {audit.newValue === "" ? (
                                   <em className="text-muted">Empty</em>
                                 ) : (
                                   audit.newValue ?? "-"
+                                )}
+                              </td>
+                              <td>
+                                {audit.oldValue === "" ? (
+                                  <em className="text-muted">Empty</em>
+                                ) : (
+                                  audit.oldValue ?? "-"
                                 )}
                               </td>
                             </tr>
