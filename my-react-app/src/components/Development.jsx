@@ -1796,7 +1796,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           {savedFilters.length > 0 && (
             <div className="saved-filters-row w-100 mb-3">
               <div className="row flex-nowrap w-100 align-items-center">
-                <div className={`filters-list-horizontal align-items-center col-10`}>
+                <div className={`filters-list-horizontal align-items-center col-9`}>
                   {savedFilters.map((filter) => (
                     <div
                       key={filter._id}
@@ -1815,7 +1815,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                     </div>
                   ))}
                 </div>
-                <div className="filters-actions col-2 d-flex gap-2 justify-content-end align-items-center">
+                <div className="filters-actions col-3 d-flex gap-2 justify-content-end align-items-center">
                   {status?.status === 'admin' && isFilterOpen && (
                     <button
                       onClick={() => setIsSaveFilterModalOpen(true)}
