@@ -105,17 +105,44 @@ function Departments({ setIsLoggedIn }) {
     useEffect(() => {
         const fetchProjectsAndCount = async () => {
             try {
-                // Fetch all projects
-                const projectsResponse = await fetch(`${API_URL}/api/development`);
-                const data = await projectsResponse.json();
+                // Fetch projects and columns together (same as Development page)
+                const [projectsRes, columnsRes] = await Promise.all([
+                    fetch(`${API_URL}/api/development`),
+                    fetch(`${API_URL}/api/columns`),
+                ]);
+                const data = await projectsRes.json();
+                const columns = await columnsRes.json();
                 setProjects(data);
 
                 // Calculate total projects for the logged-in user by Team Lead field
                 if (status?.user_name) {
+                    // Use the exact same Team Lead column as the Development filter
+                    const teamLeadColumn = Array.isArray(columns) && columns.find(col => {
+                        const h = (col.column_heading || '').toLowerCase();
+                        return h.includes('team') && (h.includes('lead') || h.includes('leader'));
+                    });
+                    let teamLeadField = teamLeadColumn?.name;
+
+                    // Fallback: find by key pattern if columns API didn't return the column
+                    if (!teamLeadField && data.length > 0) {
+                        const firstProject = data[0];
+                        teamLeadField = Object.keys(firstProject).find(key => {
+                            const k = key.toLowerCase();
+                            return (k.startsWith('team_lead') || k.startsWith('team_leader') ||
+                                (k.includes('team') && (k.includes('lead') || k.includes('leader'))));
+                        }) || null;
+                    }
+
+                    const userNameNorm = (status.user_name || '').trim().toLowerCase();
                     const userProjects = data.filter(project => {
-                        // Find any field that starts with 'team_lead'
-                        const teamLeadField = Object.keys(project).find(key => key.startsWith('team_lead'));
-                        return teamLeadField && project[teamLeadField] === status.user_name;
+                        const field = teamLeadField || Object.keys(project).find(key => {
+                            const k = key.toLowerCase();
+                            return (k.startsWith('team_lead') || k.startsWith('team_leader') ||
+                                (k.includes('team') && (k.includes('lead') || k.includes('leader'))));
+                        });
+                        if (!field || !(field in project)) return false;
+                        const projectValue = (project[field] || '').trim().toLowerCase();
+                        return projectValue === userNameNorm || projectValue.startsWith(userNameNorm + ' ');
                     });
                     setTotalProjects(userProjects.length);
 
@@ -128,13 +155,18 @@ function Departments({ setIsLoggedIn }) {
                     let activeCount = 0;
 
                     const ACTIVE_STATUSES = [
-                        'ON TRACK',
+                        'Not started',
                         'OFF TRACK',
-                        'NOT STARTED',
-                        'FORWARDED TO CLIENT',
-                        'FOLLOW UP',
-                        'OFFTRACK-CLIENT'
+                        'Forworded to Client ',
+                        'Offtrack - client',
+                        'Follow up',
+                        'ON TRACK'
                     ];
+
+                    const isActiveStatus = (value) => {
+                        const normalized = (value || '').trim().toLowerCase();
+                        return ACTIVE_STATUSES.some(s => s.trim().toLowerCase() === normalized);
+                    };
 
                     userProjects.forEach(project => {
                         // Find the status field (it might be named 'status' or have a prefix)
@@ -152,12 +184,15 @@ function Departments({ setIsLoggedIn }) {
                             } else if (statusValue === 'AT RISK') {
                                 statusCounts.atRisk++;
                             }
-                            // ✅ Active projects count
-                            if (ACTIVE_STATUSES.includes(statusValue)) {
+
+                            // Active projects count - all 6 statuses from filter
+                            if (isActiveStatus(statusValue)) {
                                 activeCount++;
                             }
                         }
                     });
+                   
+
 
                     setProjectsByStatus(statusCounts);
                     setActiveProjectsCount(activeCount);
