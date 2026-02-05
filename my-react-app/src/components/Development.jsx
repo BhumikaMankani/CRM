@@ -1,3 +1,7 @@
+
+
+// export default TableColumns;
+
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
@@ -1815,7 +1819,11 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                     </div>
                   ))}
                 </div>
+<<<<<<< Khushi
+                <div className="filters-actions col-2 d-flex gap-2 justify-content-end align-items-center">
+=======
                 <div className="filters-actions col-3 d-flex gap-2 justify-content-end align-items-center">
+>>>>>>> main
                   {status?.status === 'admin' && isFilterOpen && (
                     <button
                       onClick={() => setIsSaveFilterModalOpen(true)}
@@ -1834,7 +1842,10 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                       Clear All
                     </button>
                   )}
+<<<<<<< Khushi
+=======
                   <span className="filter-count" style={{ fontSize: '14px' }}><b>{filterCount} Projects</b></span>
+>>>>>>> main
                 </div>
               </div>
             </div>
