@@ -14,8 +14,15 @@ import { FaRegCheckCircle } from "react-icons/fa";
 import { RxCrossCircled } from "react-icons/rx";
 import { CgDanger } from "react-icons/cg";
 
-
-
+// Status values that should be treated as "ACTIVE"
+const ACTIVE_STATUSES = [
+    "Not started",
+    "OFF TRACK",
+    "Forworded to Client ",
+    "Offtrack - client",
+    "Follow up",
+    "ON TRACK",
+];
 
 function Departments({ setIsLoggedIn }) {
 
@@ -34,6 +41,7 @@ function Departments({ setIsLoggedIn }) {
         offTrack: 0,
         atRisk: 0
     });
+    const [statusColumnName, setStatusColumnName] = useState(null);
     const [status, setStatus] = useState(() => {
         const savedData = localStorage.getItem('user');
         return savedData ? JSON.parse(savedData) : null;
@@ -105,17 +113,65 @@ function Departments({ setIsLoggedIn }) {
     useEffect(() => {
         const fetchProjectsAndCount = async () => {
             try {
-                // Fetch all projects
-                const projectsResponse = await fetch(`${API_URL}/api/development`);
-                const data = await projectsResponse.json();
+                // Fetch projects and columns together (same as Development page)
+                const [projectsRes, columnsRes] = await Promise.all([
+                    fetch(`${API_URL}/api/development`),
+                    fetch(`${API_URL}/api/columns`),
+                ]);
+                const data = await projectsRes.json();
+                const columns = await columnsRes.json();
                 setProjects(data);
+
+                // Find Status column for active filter (used when clicking ACTIVE card)
+                const statusCol = Array.isArray(columns) && columns.find(col => {
+                    const h = (col.column_heading || "").toLowerCase();
+                    return h.includes("status") && !h.includes("showstatus");
+                });
+                if (statusCol?.name) setStatusColumnName(statusCol.name);
 
                 // Calculate total projects for the logged-in user by Team Lead field
                 if (status?.user_name) {
+                    // Use the exact same Team Lead column as the Development filter
+                    const teamLeadColumn = Array.isArray(columns) && columns.find(col => {
+                        const h = (col.column_heading || "").toLowerCase();
+                        return h.includes("team") && (h.includes("lead") || h.includes("leader"));
+                    });
+                    let teamLeadField = teamLeadColumn?.name;
+
+                    // Fallback: find by key pattern if columns API didn't return the column
+                    if (!teamLeadField && data.length > 0) {
+                        const firstProject = data[0];
+                        teamLeadField =
+                            Object.keys(firstProject).find(key => {
+                                const k = key.toLowerCase();
+                                return (
+                                    k.startsWith("team_lead") ||
+                                    k.startsWith("team_leader") ||
+                                    (k.includes("team") &&
+                                        (k.includes("lead") || k.includes("leader")))
+                                );
+                            }) || null;
+                    }
+
+                    const userNameNorm = (status.user_name || "").trim().toLowerCase();
                     const userProjects = data.filter(project => {
-                        // Find any field that starts with 'team_lead'
-                        const teamLeadField = Object.keys(project).find(key => key.startsWith('team_lead'));
-                        return teamLeadField && project[teamLeadField] === status.user_name;
+                        const field =
+                            teamLeadField ||
+                            Object.keys(project).find(key => {
+                                const k = key.toLowerCase();
+                                return (
+                                    k.startsWith("team_lead") ||
+                                    k.startsWith("team_leader") ||
+                                    (k.includes("team") &&
+                                        (k.includes("lead") || k.includes("leader")))
+                                );
+                            });
+                        if (!field || !(field in project)) return false;
+                        const projectValue = (project[field] || "").trim().toLowerCase();
+                        return (
+                            projectValue === userNameNorm ||
+                            projectValue.startsWith(userNameNorm + " ")
+                        );
                     });
                     setTotalProjects(userProjects.length);
 
@@ -123,37 +179,37 @@ function Departments({ setIsLoggedIn }) {
                     const statusCounts = {
                         onTrack: 0,
                         offTrack: 0,
-                        atRisk: 0
+                        atRisk: 0,
                     };
                     let activeCount = 0;
 
-                    const ACTIVE_STATUSES = [
-                        'ON TRACK',
-                        'OFF TRACK',
-                        'NOT STARTED',
-                        'FORWARDED TO CLIENT',
-                        'FOLLOW UP',
-                        'OFFTRACK-CLIENT'
-                    ];
+                    const isActiveStatus = value => {
+                        const normalized = (value || "").trim().toLowerCase();
+                        return ACTIVE_STATUSES.some(
+                            s => s.trim().toLowerCase() === normalized
+                        );
+                    };
 
                     userProjects.forEach(project => {
                         // Find the status field (it might be named 'status' or have a prefix)
-                        const statusField = Object.keys(project).find(key =>
-                            key.toLowerCase().includes('status') &&
-                            !key.toLowerCase().includes('showstatus')
+                        const statusField = Object.keys(project).find(
+                            key =>
+                                key.toLowerCase().includes("status") &&
+                                !key.toLowerCase().includes("showstatus")
                         );
 
                         if (statusField) {
                             const statusValue = project[statusField];
-                            if (statusValue === 'ON TRACK') {
+                            if (statusValue === "ON TRACK") {
                                 statusCounts.onTrack++;
-                            } else if (statusValue === 'OFF TRACK') {
+                            } else if (statusValue === "OFF TRACK") {
                                 statusCounts.offTrack++;
-                            } else if (statusValue === 'AT RISK') {
+                            } else if (statusValue === "AT RISK") {
                                 statusCounts.atRisk++;
                             }
-                            // ✅ Active projects count
-                            if (ACTIVE_STATUSES.includes(statusValue)) {
+
+                            // Active projects count - all 6 statuses from filter
+                            if (isActiveStatus(statusValue)) {
                                 activeCount++;
                             }
                         }
@@ -161,7 +217,10 @@ function Departments({ setIsLoggedIn }) {
 
                     setProjectsByStatus(statusCounts);
                     setActiveProjectsCount(activeCount);
-                    console.log(`Found ${userProjects.length} projects for ${status.user_name}`, statusCounts);
+                    console.log(
+                        `Found ${userProjects.length} projects for ${status.user_name}`,
+                        statusCounts
+                    );
                 }
             } catch (err) {
                 console.error("Failed to fetch projects:", err);
@@ -296,7 +355,7 @@ function Departments({ setIsLoggedIn }) {
 
                 {/* Display Total Projects for Logged-in Staff */}
                 {status?.status === 'staff' && (
-                    <div className="row mb-4">
+                    <div className="row ">
                         <div className="col-md-12">
                             <div className="alert alert-light border">
                                 <h2 className="mb-3"> <strong> Welcome back, {status.user_name}!</strong></h2>
@@ -314,14 +373,32 @@ function Departments({ setIsLoggedIn }) {
                                         </div>
                                     </div>
 
-                                    {/* ACTIVE Card */}
+                                    {/* ACTIVE Card - click to go to Development with active filter applied */}
                                     <div className="col-md-3">
-                                        <div className="card border-danger">
+                                        <div
+                                            className="card border-danger"
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => {
+                                                const initialFilters = statusColumnName
+                                                    ? { [statusColumnName]: ACTIVE_STATUSES }
+                                                    : null;
+                                                navigate("/development", { state: { initialFilters } });
+                                            }}
+                                            onKeyDown={e =>
+                                                e.key === "Enter" && e.currentTarget.click()
+                                            }
+                                            style={{ cursor: "pointer" }}
+                                        >
                                             <div className="card-body ">
                                                 <IoPlayCircleOutline />
 
-                                                <h6 className="card-title text-muted mb-2">ACTIVE Projects</h6>
-                                                <h2 className="mb-0 text-danger">{activeProjectsCount}</h2>
+                                                <h6 className="card-title text-muted mb-2">
+                                                    ACTIVE Projects
+                                                </h6>
+                                                <h2 className="mb-0 text-danger">
+                                                    {activeProjectsCount}
+                                                </h2>
                                             </div>
                                         </div>
                                     </div>

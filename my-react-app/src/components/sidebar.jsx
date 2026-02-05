@@ -4,20 +4,19 @@ import { RiDashboardHorizontalLine } from "react-icons/ri";
 
 const Sidebar = () => {
     return (
-        <div className="d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style={{ width: "280px" }} bis_skin_checked="1">
-            <a href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <div className="d-flex flex-column flex-shrink-0 p-3  alert alert-light border" style={{ width: "280px" }} bis_skin_checked="1">
+            {/* <a href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto  text-decoration-none">
 
                 <span className="fs-4">Mandasa</span>
-            </a>
-            <hr />
-            <ul className="nav nav-pills flex-column mb-auto">
-                <li className="nav-item"> <a href="#" className="nav-link active" aria-current="page">
+            </a> */}
+            <ul className="nav nav-pills flex-column gap-3 mb-auto">
+                <li className="nav-item"> <a href="#" className="nav-link active " aria-current="page">
                     {/* <RiDashboardHorizontalLine /> */}
                     Dashboard
                 </a>
                 </li>
 
-                <li className="nav-item"> <a href="/development" className="nav-link text-white" aria-current="page">
+                <li className="nav-item"> <a href="/development" className="nav-link border text-dark " aria-current="page">
                     Development
                 </a>
                 </li>
