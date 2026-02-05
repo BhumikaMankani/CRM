@@ -27,7 +27,7 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                             <FaArrowLeft size={12} />
                         </button>
                     )}
-                    <h1 className='text-left fw-bold m-0' style={{ fontSize: '1.5rem' }}>CRM</h1>
+                    <h1 className='text-left fw-bold m-0' style={{ fontSize: '1.5rem' }}>Mandasa</h1>
                 </div>
                 <div className='d-flex justify-content-center align-items-center gap-2'>
                     <button className="btn btn-primary mb-1 d-inline-flex align-items-center gap-2" onClick={handleLogout}>
