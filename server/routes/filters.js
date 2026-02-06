@@ -5,6 +5,47 @@ const User = require("../models/User");
 const router = express.Router();
 
 // Get all saved filters (respecting access control)
+// router.get("/", async (req, res) => {
+//     try {
+//         const { userId, department } = req.query;
+
+//         if (!userId) {
+//             return res.status(400).json({ message: "userId query parameter is required" });
+//         }
+
+//         const accessQuery = {
+//             $or: [
+//                 { userId: userId },
+//                 { allowedUsers: userId }
+//             ]
+//         };
+
+//         // Optional department scoping.
+//         // If a department is provided, return filters either explicitly for that department
+//         // OR legacy filters without a department field (so older filters still show up).
+//         const deptQuery = department
+//             ? {
+//                 $or: [
+//                     { department: department },
+//                     { department: { $exists: false } },
+//                     { department: null },
+//                     { department: "" },
+//                 ],
+//             }
+//             : {};
+
+//         const filters = await SavedFilter.find({
+//             $and: [accessQuery, deptQuery],
+//         }).sort({ createdAt: -1 });
+
+//         res.status(200).json(filters);
+//     } catch (err) {
+//         console.error("Error fetching all filters:", err);
+//         res.status(500).json({ message: "Error fetching filters", error: err.message });
+//     }
+// });
+
+// Get all saved filters (respecting access control)
 router.get("/", async (req, res) => {
     try {
         const { userId, department } = req.query;
@@ -13,12 +54,26 @@ router.get("/", async (req, res) => {
             return res.status(400).json({ message: "userId query parameter is required" });
         }
 
-        const accessQuery = {
-            $or: [
-                { userId: userId },
-                { allowedUsers: userId }
-            ]
-        };
+        // Fetch user to check role
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Logic for Admin vs Staff
+        let accessQuery = {};
+        if (user.status === 'admin') {
+            // Admin sees ALL filters
+            accessQuery = {};
+        } else {
+            // Staff sees only their own + shared filters
+            accessQuery = {
+                $or: [
+                    { userId: userId },
+                    { allowedUsers: userId }
+                ]
+            };
+        }
 
         // Optional department scoping.
         // If a department is provided, return filters either explicitly for that department
