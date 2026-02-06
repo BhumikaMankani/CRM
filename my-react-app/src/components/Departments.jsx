@@ -284,9 +284,9 @@ function Departments({ setIsLoggedIn }) {
 
     return (
         < div className="main-parent" >
-            {status?.status === 'staff' &&
+            {/* {status?.status === 'staff' &&
                 <Sidebar />
-            }
+            } */}
             <section className="w-100">
 
                 {status?.status === 'admin' &&
@@ -358,14 +358,22 @@ function Departments({ setIsLoggedIn }) {
                     <div className="row ">
                         <div className="col-md-12">
                             <div className="alert alert-light border">
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <div>
                                 <h2 className="mb-3"> <strong> Welcome back, {status.user_name}!</strong></h2>
                                 <p>Here's what happening with your project's today</p>
+                                </div>
+                                <div className="">
+                                <a href="/development" className="btn btn-primary btn-sm">View All Projects</a>
+                                </div>
+                                </div>
                                 <div className="row g-3">
                                     {/* Total Projects Card */}
                                     <div className="col-md-3">
                                         <div className="card border-primary">
                                             <div className="card-body">
                                                 <MdDashboard />
+                                          
 
                                                 <h6 className="card-title text-muted mb-2">Total Projects</h6>
                                                 <h2 className="mb-0 text-primary">{totalProjects}</h2>
@@ -377,19 +385,12 @@ function Departments({ setIsLoggedIn }) {
                                     <div className="col-md-3">
                                         <div
                                             className="card border-danger"
-                                            role="button"
-                                            tabIndex={0}
-                                            onClick={() => {
-                                                const initialFilters = statusColumnName
-                                                    ? { [statusColumnName]: ACTIVE_STATUSES }
-                                                    : null;
-                                                navigate("/development", { state: { initialFilters } });
-                                            }}
-                                            onKeyDown={e =>
-                                                e.key === "Enter" && e.currentTarget.click()
-                                            }
-                                            style={{ cursor: "pointer" }}
+                                           
                                         >
+                                                                     <Link
+                                            to={`/development?filter_name=${status.user_name.toLowerCase()}-active-projects`}
+                                            className="text-decoration-none"
+                                            >
                                             <div className="card-body ">
                                                 <IoPlayCircleOutline />
 
@@ -400,6 +401,7 @@ function Departments({ setIsLoggedIn }) {
                                                     {activeProjectsCount}
                                                 </h2>
                                             </div>
+                                            </Link>
                                         </div>
                                     </div>
 

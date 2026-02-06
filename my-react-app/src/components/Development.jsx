@@ -3,6 +3,7 @@
 // export default TableColumns;
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
@@ -15,6 +16,7 @@ import { FaTrash, FaTimes, FaUserCog, FaEdit } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
 import ColorPickerModal from "./ColorPickerModal";
 import { FaPalette } from "react-icons/fa";
+
 
 function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Create a ref for FilterSidebar
@@ -68,6 +70,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   const [savedFilters, setSavedFilters] = useState([]);
   const [activeFilterId, setActiveFilterId] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [deleteFilterConfirmation, setDeleteFilterConfirmation] = useState({
     isOpen: false,
     filterId: null,
@@ -185,7 +188,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     setShowClearFilterButton(false);
     setActiveFilterId(null);
     setIsFilterOpen(false);
-  }, []);
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
 
   // Helper function to count active filters in a filter configuration
   const countActiveFilters = (filterData) => {
@@ -380,24 +384,33 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     }
   };
 
-  // Apply saved filter
   const handleFilterSelect = (filter) => {
     if (activeFilterId === filter._id) {
-      console.log("Deactivating filter:", filter.filterName);
       clearFilters();
       return;
     }
-    console.log("Saved Filters:", filter.length);
+  
     setShowClearFilterButton(true);
-
-
-    console.log("Applying saved filter:", filter.filterName, filter.filterData);
+  
     if (filter && filter.filterData) {
       setFilters(filter.filterData);
       setActiveFilterId(filter._id);
-      // setIsFilterOpen(true);
+  
+      // ✅ ONLY set filter name in URL
+      const slugify = (text) =>
+        text
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-")      // spaces → -
+          .replace(/[^a-z0-9-]/g, ""); // remove special chars
+
+      const params = new URLSearchParams();
+      params.set("filter_name", slugify(filter.filterName));
+  
+      setSearchParams(params, { replace: true });
     }
   };
+  
 
   // Delete saved filter
   const handleDeleteFilter = (filterId, filterName, e) => {
@@ -604,6 +617,35 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   useEffect(() => {
     fetchSavedFilters();
   }, [fetchSavedFilters, refreshTrigger]);
+
+  // Apply saved filter from URL when page loads
+  useEffect(() => {
+    const filterId = searchParams.get("filter");
+    const filterNameSlug = searchParams.get("filter_name");
+
+    if ((!filterId && !filterNameSlug) || savedFilters.length === 0) return;
+
+    let saved = null;
+
+    const slugify = (text) =>
+      text
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+
+    if (filterId) {
+      saved = savedFilters.find((f) => f._id === filterId);
+    } else if (filterNameSlug) {
+      saved = savedFilters.find((f) => slugify(f.filterName) === filterNameSlug);
+    }
+
+    if (saved && saved.filterData) {
+      setFilters(saved.filterData);
+      setActiveFilterId(saved._id);
+      setShowClearFilterButton(true);
+    }
+  }, [searchParams, savedFilters]);
   const dataRef = useRef(data);
   useEffect(() => {
     dataRef.current = data;
