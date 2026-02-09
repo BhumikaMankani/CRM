@@ -12,11 +12,19 @@ import './components/color.css';
 import Header from "./components/header";
 
 function App() {
+
+  const [status, setStatus] = useState(null);
+
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     // Check if user is already logged in (using sessionStorage for current session)
     return localStorage.getItem('isLoggedIn') === 'true';
   });
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    setStatus(JSON.parse(user));
+  }, []);
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
@@ -35,7 +43,7 @@ function App() {
     <div className="app-container container pt-5">
       {isLoggedIn ? (
         <>
-          <Header handleLogout={handleLogout} />
+          <Header status={status} handleLogout={handleLogout} />
           <main>
             <Routes>
               <Route path="/" element={<Departments setIsLoggedIn={setIsLoggedIn} />} />

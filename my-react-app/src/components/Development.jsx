@@ -7,9 +7,11 @@ import { useSearchParams } from "react-router-dom";
 import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
+import AnalyticsModal from "./AnalyticsModal";
 import ToggleButtonIcon from "./toggle";
 import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
+
 import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
 import { FaTrash, FaTimes, FaUserCog, FaEdit } from "react-icons/fa";
@@ -21,6 +23,9 @@ import { FaPalette } from "react-icons/fa";
 function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Create a ref for FilterSidebar
   const filterSidebarRef = useRef(null);
+
+  // Analytics Modal
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
 
   // Data FILTERED COUNT..
   const [filterCount, setFilterCount] = useState([]);
@@ -389,13 +394,13 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       clearFilters();
       return;
     }
-  
+
     setShowClearFilterButton(true);
-  
+
     if (filter && filter.filterData) {
       setFilters(filter.filterData);
       setActiveFilterId(filter._id);
-  
+
       // ✅ ONLY set filter name in URL
       const slugify = (text) =>
         text
@@ -406,11 +411,11 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
       const params = new URLSearchParams();
       params.set("filter_name", slugify(filter.filterName));
-  
+
       setSearchParams(params, { replace: true });
     }
   };
-  
+
 
   // Delete saved filter
   const handleDeleteFilter = (filterId, filterName, e) => {
@@ -1815,6 +1820,12 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             Create Column
           </button>
         ) : null}
+        <button
+          className="btn btn-outline-dark"
+          onClick={() => setIsAnalyticsModalOpen(true)}
+        >
+          Analytics
+        </button>
         {/* {isDelete && (
                     <button
                         onClick={() => setIsDelete(false)}
@@ -2232,6 +2243,18 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         filters={filters}
         userStatus={status}
         editFilter={filterToEdit}
+      />
+      <AnalyticsModal
+        isOpen={isAnalyticsModalOpen}
+        onClose={() => setIsAnalyticsModalOpen(false)}
+        filters={savedFilters}
+        onApplyFilter={handleFilterSelect}
+        onEdit={(filter) => {
+          setFilterToEdit(filter);
+          setIsSaveFilterModalOpen(true);
+        }}
+        onDelete={handleDeleteFilter}
+        userStatus={status}
       />
     </section>
   );

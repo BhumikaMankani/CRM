@@ -1,0 +1,151 @@
+/* AnalyticsModal.css */
+
+/* Re-use modal overlay from existing styles if compatible,
+   but specific styles for this modal content */
+
+.analytics-modal-content {
+    background-color: #fff;
+    /* border-radius: 12px; */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 400px;
+    max-width: 90vw;
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: fixed;
+    right: 0;
+    top: 0;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+.analytics-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.analytics-header h4 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.analytics-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    background-color: #f8fafc;
+}
+
+.close-btn-analytics {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 4px;
+    font-size: 1.2rem;
+}
+
+/* Filter Cards */
+.analytics-filter-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    position: relative;
+    /* box-shadow: 0 2px 4px rgba(0,0,0,0.02); */
+}
+
+.analytics-filter-card:hover {
+    transform: translateY(-2px);
+}
+
+.filter-btn-main {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: pointer;
+    color: #333;
+}
+
+.filter-name-text {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1e293b;
+}
+
+.filter-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+/* Action Buttons */
+.analytics-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px;
+    border-radius: 4px;
+}
+
+.analytics-filter-card:hover .analytics-actions {
+    opacity: 1;
+}
+
+.analytics-filter-card button.action-btn-mini {
+    padding: 0 5px;
+}
+
+.action-btn-mini {
+    padding: 0;
+    background-color: white;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn-mini:hover {
+    border-color: #94a3b8;
+    color: #333;
+}
+
+.action-btn-mini.delete:hover {
+    border-color: #fecaca;
+    color: #dc2626;
+    background-color: #fef2f2;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+}
+
+/* .text-brand-orange {
+    color: #e87c00 !important;
+} */
