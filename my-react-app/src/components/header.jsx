@@ -1,17 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { IoIosLock } from "react-icons/io";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
+// import User from "../../../server/models/User";
 
 
 const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [Url, setUrl] = useState("");
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
-        setUrl(window.location.href);
-    }, [location]);
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     return (
         <header className='pt-2 pb-2'>
@@ -20,7 +31,7 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                     {location.pathname !== '/' && (
                         <button
                             className="btn btn-outline-dark btn-sm d-flex align-items-center gap-1"
-                            onClick={() => navigate(-1)}
+                            onClick={() => navigate('/')}
                             title="Go Back"
                             style={{ padding: '8px' }}
                         >
@@ -30,13 +41,33 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                     <h1 className='text-left fw-bold m-0' style={{ fontSize: '1.5rem' }}>Mandasa</h1>
                 </div>
                 <div className='d-flex justify-content-center align-items-center gap-2'>
-                    <button className="btn btn-primary mb-1 d-inline-flex align-items-center gap-2" onClick={handleLogout}>
-                        <IoIosLock />
-                        Logout
-                    </button>
+                    <div className="custom-dropdown" ref={dropdownRef}>
+                        <div
+                            className="dropdown-toggle d-flex align-items-center gap-2 cursor-pointer"
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        >
+                            <span className="profile">{status?.user_name?.[0]?.toUpperCase()}</span>
+                        </div>
+
+                        {isDropdownOpen && (
+                            <div className="dropdown-menu-custom">
+                                <div className="dropdown-user-info">
+                                    <p className="mb-0 fw-bold">{status?.user_name}</p>
+                                    <p className="mb-0 text-muted small">{status?.email}</p>
+                                </div>
+                                <div className="dropdown-divider"></div>
+                                <button className="dropdown-item-custom" style={{ color: "#e87c00" }} onClick={handleLogout}>
+                                    <IoIosLock />
+                                    Logout
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+
                 </div>
             </div>
-        </header>
+        </header >
     )
 }
 
