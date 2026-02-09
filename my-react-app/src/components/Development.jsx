@@ -299,7 +299,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   };
 
   // Save filter
-  const handleSaveFilter = async (filterName, filterData, allowedUsers, filterId = null) => {
+  const handleSaveFilter = async (filterName, filterData, allowedUsers, filterId = null, showInAnalytics) => {
     try {
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
@@ -317,6 +317,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         allowedUsers,
         filterId,
         department: departmentKey,
+        showInAnalytics,
       });
 
       if (filterId) {
@@ -331,6 +332,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             filterData,
             allowedUsers,
             department: departmentKey,
+            showInAnalytics,
           }),
         });
 
@@ -341,6 +343,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
         const updatedData = await response.json();
         console.log("Filter updated successfully:", updatedData);
+
+        // Update local state immediately
+        setSavedFilters(prev => prev.map(f => f._id === filterId ? updatedData : f));
 
         // Update the sidebar list (simplest to just force a refresh or update the specific item)
         if (filterSidebarRef.current) {
@@ -359,6 +364,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             filterData,
             department: departmentKey,
             allowedUsers,
+            showInAnalytics,
           }),
         });
 
@@ -1854,7 +1860,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             <div className="saved-filters-row w-100 mb-3">
               <div className="row flex-nowrap w-100 align-items-center">
                 <div className={`filters-list-horizontal align-items-center col-9`}>
-                  {savedFilters.map((filter) => (
+                  {/* {savedFilters.map((filter) => ( */}
+                  {savedFilters.filter(f => !f.showInAnalytics).map((filter) => (
                     <div
                       key={filter._id}
                       className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
