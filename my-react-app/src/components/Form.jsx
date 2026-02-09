@@ -69,6 +69,15 @@ function Form({
     });
   };
 
+  const handleViewAccessToggle = (userId) => {
+    const userIdStr = String(userId);
+    setViewAccess((prev) => {
+      if (prev.some((id) => String(id) === userIdStr)) {
+        return prev.filter((id) => String(id) !== userIdStr);
+      }
+      return [...prev, userIdStr];
+    });
+  };
   const addOption = () => {
     setFormData({
       ...formData,
@@ -305,6 +314,41 @@ function Form({
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+
+            <div className="col-6 form-group" style={{ marginTop: "5px" }}>
+              <label><b>Who can't see this column :</b></label>
+              {/* <p className="small text-muted mb-2">
+                  Staff members who can't see this column
+                </p> */}
+              <div
+                className="access-users-list"
+              >
+                {availableUsers.length > 1 ? (
+                  availableUsers.map((user) => user.status === 'staff' && (
+                    <div
+                      key={user._id}
+                      className="form-check"
+                      style={{ marginBottom: "2px" }}
+                    >
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id={`view-access-${column.name}-${user._id}`}
+                        checked={viewAccess.some((id) => String(id) === String(user._id))}
+                        onChange={() => handleViewAccessToggle(user._id)}
+                      />
+                      <label
+                        className="form-check-label text-dark"
+                        htmlFor={`view-access-${column.name}-${user._id}`}
+                        style={{ fontSize: "14px" }}
+                      >
+                        {user.user_name}
+                      </label>
+                    </div>
+                  ))
+                ) : null}
               </div>
             </div>
 

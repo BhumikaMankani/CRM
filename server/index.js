@@ -8,6 +8,7 @@ const path = require('path');
 const Columns = require('./routes/columns');
 const MarketingColumns = require('./routes/marketing-columns');
 const Seo_Column = require('./routes/seo-columns');
+const Audit = require('./routes/audit');
 // project api
 const Development = require('./routes/development');
 const Marketing = require('./routes/marketing');
@@ -69,6 +70,9 @@ app.use("/api/seo", Seo);
 // Column routes
 app.use("/api/marketing-columns", MarketingColumns);
 app.use("/api/seo-columns", Seo_Column);
+
+// Audit routes
+app.use("/api/audit", Audit);
 
 // Backwards‑compat: keep old path if anything else still calls it
 app.use("/api/marketingcolumns", MarketingColumns);

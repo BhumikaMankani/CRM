@@ -133,9 +133,10 @@ router.patch("/deactivate/:name", async (req, res) => {
 // Update column access and/or heading
 router.patch("/:name/access", async (req, res) => {
     try {
-        const { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky } = req.body;
+        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky } = req.body;
         const updateData = {};
         if (Array.isArray(access)) updateData.access = access;
+        if (Array.isArray(viewAccess)) updateData.viewAccess = viewAccess;
         if (column_heading && typeof column_heading === "string" && column_heading.trim()) {
             updateData.column_heading = column_heading.trim();
         }

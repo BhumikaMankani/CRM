@@ -198,9 +198,9 @@
     border-radius: 4px;
 }
 
-.form-check:hover {
+/* .form-check:hover {
     background-color: #f8f9fa;
-}
+} */
 
 .form-check-input {
     cursor: pointer;

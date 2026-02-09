@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from 'react-router-dom'
 import Marketing from "../pages/marketing";
 import Seo from "../pages/seo";
@@ -25,6 +25,8 @@ const ACTIVE_STATUSES = [
 ];
 
 function Departments({ setIsLoggedIn }) {
+
+    const [audits, setAudits] = useState([]);
 
     const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
     const [newDepartmentName, setNewDepartmentName] = useState("");
@@ -86,22 +88,39 @@ function Departments({ setIsLoggedIn }) {
         }
     };
 
-    useEffect(() => {
-        fetchDepartments();
-    }, []);
+    const fetchAudits = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/audit`);
+            const data = await response.json();
+            setAudits(data);
+            console.log("audits", data);
+        } catch (err) {
+            console.error("Failed to fetch audits:", err);
+        }
+    };
+
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/user`);
+            const data = await response.json();
+            setUserData(data);
+        } catch (err) {
+            console.error("Failed to fetch users:", err);
+        }
+    };
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await fetch(`${API_URL}/api/user`);
-                const data = await response.json();
-                setUserData(data);
-            } catch (err) {
-                console.error("Failed to fetch users:", err);
-            }
-        };
+        fetchDepartments();
         fetchUsers();
+        fetchAudits();
     }, []);
+
+    const lastActiveTime = useMemo(() => {
+        if (!status?.user_name || !audits.length) return null;
+        // Audits are fetched sorted by changedAt desc
+        const latest = audits.find(a => a.changedByUserName === status.user_name);
+        return latest ? latest.changedAt : null;
+    }, [audits, status]);
 
     useEffect(() => {
         if (!status?.department) return;
@@ -360,12 +379,12 @@ function Departments({ setIsLoggedIn }) {
                             <div className="alert alert-light border">
                                 <div className="d-flex justify-content-between align-items-center">
                                     <div>
-                                <h2 className="mb-3"> <strong> Welcome back, {status.user_name}!</strong></h2>
-                                <p>Here's what happening with your project's today</p>
-                                </div>
-                                <div className="">
-                                <a href="/development" className="btn btn-primary btn-sm">View All Projects</a>
-                                </div>
+                                        <h2 className="mb-3"> <strong> Welcome back, {status.user_name}!</strong></h2>
+                                        <p>Here's what happening with your project's today</p>
+                                    </div>
+                                    <div className="d-flex gap-2">
+                                        <a href="/development" className="btn btn-primary btn-sm">View All Projects</a>
+                                    </div>
                                 </div>
                                 <div className="row g-3">
                                     {/* Total Projects Card */}
@@ -373,7 +392,7 @@ function Departments({ setIsLoggedIn }) {
                                         <div className="card border-primary">
                                             <div className="card-body">
                                                 <MdDashboard />
-                                          
+
 
                                                 <h6 className="card-title text-muted mb-2">Total Projects</h6>
                                                 <h2 className="mb-0 text-primary">{totalProjects}</h2>
@@ -385,22 +404,22 @@ function Departments({ setIsLoggedIn }) {
                                     <div className="col-md-3">
                                         <div
                                             className="card border-danger"
-                                           
-                                        >
-                                                                     <Link
-                                            to={`/development?filter_name=${status.user_name.toLowerCase()}-active-projects`}
-                                            className="text-decoration-none"
-                                            >
-                                            <div className="card-body ">
-                                                <IoPlayCircleOutline />
 
-                                                <h6 className="card-title text-muted mb-2">
-                                                    ACTIVE Projects
-                                                </h6>
-                                                <h2 className="mb-0 text-danger">
-                                                    {activeProjectsCount}
-                                                </h2>
-                                            </div>
+                                        >
+                                            <Link
+                                                to={`/development?filter_name=${status.user_name.toLowerCase()}-active-projects`}
+                                                className="text-decoration-none"
+                                            >
+                                                <div className="card-body ">
+                                                    <IoPlayCircleOutline />
+
+                                                    <h6 className="card-title text-muted mb-2">
+                                                        ACTIVE Projects
+                                                    </h6>
+                                                    <h2 className="mb-0 text-danger">
+                                                        {activeProjectsCount}
+                                                    </h2>
+                                                </div>
                                             </Link>
                                         </div>
                                     </div>
