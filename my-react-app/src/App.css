@@ -391,7 +391,7 @@ button.btn[title="Edit Option Colors"] svg.color-icon {
 }
 
 .table>:not(caption)>*>* {
-  box-shadow: none !important;
+  /* box-shadow: none !important; */
 }
 
 .custom-table tbody tr {

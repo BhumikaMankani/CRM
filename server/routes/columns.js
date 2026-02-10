@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 // Add new column
 router.post("/", async (req, res) => {
     try {
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, sticky } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -39,6 +39,7 @@ router.post("/", async (req, res) => {
             hasDefaultValue: hasDefaultValue || false,
             defaultValue: defaultValue || undefined,
             access: Array.isArray(access) ? access : [],
+            viewAccess: Array.isArray(viewAccess) ? viewAccess : [],
             sticky: !!sticky,
             status: 'active'
         });

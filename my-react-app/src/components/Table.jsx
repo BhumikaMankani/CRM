@@ -1,5 +1,6 @@
 import React from 'react';
 import './table.css';
+// import Updator from './updator';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -13,6 +14,7 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
     return (
         <div className='row'>
             <div className="col-md-12 table-responsive_ct">
+                {/* <Updator /> */}
                 <div className="table-wrap smooth-scroll-container">
                     <DragDropContext onDragEnd={onDragEnd}>
                         <table className="custom-table mb-0 table table-striped table-bordered dataTable table table-hover align-middle mb-0">

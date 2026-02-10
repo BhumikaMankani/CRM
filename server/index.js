@@ -8,6 +8,8 @@ const path = require('path');
 const Columns = require('./routes/columns');
 const MarketingColumns = require('./routes/marketing-columns');
 const Seo_Column = require('./routes/seo-columns');
+const defaultUpdaterRoute = require("./routes/defaultValue");
+
 const Audit = require('./routes/audit');
 // project api
 const Development = require('./routes/development');
@@ -48,6 +50,7 @@ connectDB();
 // Wait for DB connection before starting
 mongoose.connection.once('open', () => {
     startDefaultValueUpdater();
+    updateDefaultValues();
 });
 
 // User.syncIndexes();
@@ -57,6 +60,9 @@ app.use("/api", (req, res, next) => {
     console.log(`[API Request] ${req.method} ${req.originalUrl}`);
     next();
 });
+
+// default value updater route
+app.use("/api", defaultUpdaterRoute);
 
 // app.use('/api/projects', projectRoutes);
 app.use("/api/columns", Columns);

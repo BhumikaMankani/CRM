@@ -93,7 +93,7 @@ function Departments({ setIsLoggedIn }) {
             const response = await fetch(`${API_URL}/api/audit`);
             const data = await response.json();
             setAudits(data);
-            console.log("audits", data);
+            // console.log("audits", data);
         } catch (err) {
             console.error("Failed to fetch audits:", err);
         }
@@ -236,10 +236,6 @@ function Departments({ setIsLoggedIn }) {
 
                     setProjectsByStatus(statusCounts);
                     setActiveProjectsCount(activeCount);
-                    console.log(
-                        `Found ${userProjects.length} projects for ${status.user_name}`,
-                        statusCounts
-                    );
                 }
             } catch (err) {
                 console.error("Failed to fetch projects:", err);
@@ -310,6 +306,7 @@ function Departments({ setIsLoggedIn }) {
 
                 {status?.status === 'admin' &&
                     <div className="row">
+
                         <div className="col-md-12">
                             <table className="table">
                                 <thead className="thead-primary">

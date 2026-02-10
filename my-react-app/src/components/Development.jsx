@@ -20,6 +20,14 @@ import { FaPalette } from "react-icons/fa";
 function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Create a ref for FilterSidebar
   const filterSidebarRef = useRef(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   // Analytics Modal
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
@@ -87,6 +95,41 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     loading: false,
     createdInfo: null,
   });
+
+  const [loadingUpdater, setLoadingUpdater] = useState(false);
+
+  const updateColumnDefaultValue = async () => {
+    try {
+      setLoadingUpdater(true);
+
+      const response = await fetch(
+        `${API_URL}/api/run-default-updater`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+
+      const data = await response.json();
+      console.log("data", data);
+      if (data.success) {
+        // alert("✅ Default values updated successfully");
+        // Refresh the table data
+        fetchAll({ showSpinner: false });
+      } else {
+        alert("❌ Update failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Server error");
+    } finally {
+      setLoadingUpdater(false);
+    }
+  };
+
 
   // hover delete row icon
   const [hoveredRowIndex, setHoveredRowIndex] = useState(null);
@@ -565,36 +608,34 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     return () => document.removeEventListener("click", close);
   }, [openFilterDropdown]);
 
+  const fetchAll = useCallback(async ({ showSpinner } = { showSpinner: true }) => {
+    try {
+      if (showSpinner && isMounted.current) setLoading(true);
+
+      const [columnsRes, devRes] = await Promise.all([
+        fetch(`${API_URL}${dataColumns}`),
+        fetch(`${API_URL}${dataEndpoint}`),
+      ]);
+
+      if (!columnsRes.ok) throw new Error("Failed to fetch columns");
+      if (!devRes.ok) throw new Error("Failed to fetch development data");
+
+      const [cols, dev] = await Promise.all([
+        columnsRes.json(),
+        devRes.json(),
+      ]);
+
+      if (!isMounted.current) return;
+      setColumnsDef(cols);
+      setData(dev);
+    } catch (err) {
+      console.error("Error loading data:", err);
+    } finally {
+      if (showSpinner && isMounted.current) setLoading(false);
+    }
+  }, [API_URL, dataColumns, dataEndpoint]);
+
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchAll = async ({ showSpinner } = { showSpinner: true }) => {
-      try {
-        if (showSpinner && isMounted) setLoading(true);
-
-        const [columnsRes, devRes] = await Promise.all([
-          fetch(`${API_URL}${dataColumns}`),
-          fetch(`${API_URL}${dataEndpoint}`),
-        ]);
-
-        if (!columnsRes.ok) throw new Error("Failed to fetch columns");
-        if (!devRes.ok) throw new Error("Failed to fetch development data");
-
-        const [cols, dev] = await Promise.all([
-          columnsRes.json(),
-          devRes.json(),
-        ]);
-
-        if (!isMounted) return;
-        setColumnsDef(cols);
-        setData(dev);
-      } catch (err) {
-        console.error("Error loading data:", err);
-      } finally {
-        if (showSpinner && isMounted) setLoading(false);
-      }
-    };
-
     // initial load
     fetchAll({ showSpinner: true });
 
@@ -604,10 +645,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     }, 24 * 60 * 60 * 1000); // 24 hours
 
     return () => {
-      isMounted = false;
       clearInterval(refreshInterval);
     };
-  }, []);
+  }, [fetchAll]);
 
   const fetchSavedFilters = useCallback(async () => {
     if (!status?._id) return;
@@ -1807,6 +1847,18 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             Create Column
           </button>
         ) : null}
+        <div>
+          {status?.user_name == 'Mandasa Technologies' && (
+            <button
+              type="button"
+              className="btn btn-outline-dark"
+              onClick={updateColumnDefaultValue}
+              disabled={loadingUpdater}
+            >
+              {loadingUpdater ? "Updating..." : "Default Value Update"}
+            </button>
+          )}
+        </div>
         <button
           className="btn btn-outline-dark"
           onClick={() => setIsAnalyticsModalOpen(true)}

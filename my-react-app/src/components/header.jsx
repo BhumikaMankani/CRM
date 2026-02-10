@@ -17,7 +17,7 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
             const response = await fetch(`${API_URL}/api/audit`);
             const data = await response.json();
             setAudits(data);
-            console.log("audits", data);
+            // console.log("audits", data);
         } catch (err) {
             console.error("Failed to fetch audits:", err);
         }
