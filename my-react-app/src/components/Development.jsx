@@ -1,7 +1,3 @@
-
-
-// export default TableColumns;
-
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Table from "./Table";
@@ -17,12 +13,21 @@ import { API_URL } from "../../proxy";
 import { FaTrash, FaTimes, FaUserCog, FaEdit } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
 import ColorPickerModal from "./ColorPickerModal";
+import CustomSelectDropdown from "./CustomSelectDropdown";
 import { FaPalette } from "react-icons/fa";
 
 
 function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Create a ref for FilterSidebar
   const filterSidebarRef = useRef(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   // Analytics Modal
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
@@ -90,6 +95,41 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     loading: false,
     createdInfo: null,
   });
+
+  const [loadingUpdater, setLoadingUpdater] = useState(false);
+
+  const updateColumnDefaultValue = async () => {
+    try {
+      setLoadingUpdater(true);
+
+      const response = await fetch(
+        `${API_URL}/api/run-default-updater`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+
+      const data = await response.json();
+      console.log("data", data);
+      if (data.success) {
+        // alert("✅ Default values updated successfully");
+        // Refresh the table data
+        fetchAll({ showSpinner: false });
+      } else {
+        alert("❌ Update failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Server error");
+    } finally {
+      setLoadingUpdater(false);
+    }
+  };
+
 
   // hover delete row icon
   const [hoveredRowIndex, setHoveredRowIndex] = useState(null);
@@ -299,7 +339,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   };
 
   // Save filter
-  const handleSaveFilter = async (filterName, filterData, allowedUsers, filterId = null) => {
+  const handleSaveFilter = async (filterName, filterData, allowedUsers, filterId = null, showInAnalytics) => {
     try {
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
@@ -317,6 +357,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         allowedUsers,
         filterId,
         department: departmentKey,
+        showInAnalytics,
       });
 
       if (filterId) {
@@ -331,6 +372,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             filterData,
             allowedUsers,
             department: departmentKey,
+            showInAnalytics,
           }),
         });
 
@@ -341,6 +383,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
         const updatedData = await response.json();
         console.log("Filter updated successfully:", updatedData);
+
+        // Update local state immediately
+        setSavedFilters(prev => prev.map(f => f._id === filterId ? updatedData : f));
 
         // Update the sidebar list (simplest to just force a refresh or update the specific item)
         if (filterSidebarRef.current) {
@@ -359,6 +404,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             filterData,
             department: departmentKey,
             allowedUsers,
+            showInAnalytics,
           }),
         });
 
@@ -562,36 +608,34 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     return () => document.removeEventListener("click", close);
   }, [openFilterDropdown]);
 
+  const fetchAll = useCallback(async ({ showSpinner } = { showSpinner: true }) => {
+    try {
+      if (showSpinner && isMounted.current) setLoading(true);
+
+      const [columnsRes, devRes] = await Promise.all([
+        fetch(`${API_URL}${dataColumns}`),
+        fetch(`${API_URL}${dataEndpoint}`),
+      ]);
+
+      if (!columnsRes.ok) throw new Error("Failed to fetch columns");
+      if (!devRes.ok) throw new Error("Failed to fetch development data");
+
+      const [cols, dev] = await Promise.all([
+        columnsRes.json(),
+        devRes.json(),
+      ]);
+
+      if (!isMounted.current) return;
+      setColumnsDef(cols);
+      setData(dev);
+    } catch (err) {
+      console.error("Error loading data:", err);
+    } finally {
+      if (showSpinner && isMounted.current) setLoading(false);
+    }
+  }, [API_URL, dataColumns, dataEndpoint]);
+
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchAll = async ({ showSpinner } = { showSpinner: true }) => {
-      try {
-        if (showSpinner && isMounted) setLoading(true);
-
-        const [columnsRes, devRes] = await Promise.all([
-          fetch(`${API_URL}${dataColumns}`),
-          fetch(`${API_URL}${dataEndpoint}`),
-        ]);
-
-        if (!columnsRes.ok) throw new Error("Failed to fetch columns");
-        if (!devRes.ok) throw new Error("Failed to fetch development data");
-
-        const [cols, dev] = await Promise.all([
-          columnsRes.json(),
-          devRes.json(),
-        ]);
-
-        if (!isMounted) return;
-        setColumnsDef(cols);
-        setData(dev);
-      } catch (err) {
-        console.error("Error loading data:", err);
-      } finally {
-        if (showSpinner && isMounted) setLoading(false);
-      }
-    };
-
     // initial load
     fetchAll({ showSpinner: true });
 
@@ -601,10 +645,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     }, 24 * 60 * 60 * 1000); // 24 hours
 
     return () => {
-      isMounted = false;
       clearInterval(refreshInterval);
     };
-  }, []);
+  }, [fetchAll]);
 
   const fetchSavedFilters = useCallback(async () => {
     if (!status?._id) return;
@@ -703,6 +746,11 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               changedByUserName,
               changedByUserId,
             }),
+          }).then(response => {
+            if (response.ok) {
+              // Dispatch custom event to notify header to refresh audit data
+              window.dispatchEvent(new CustomEvent('dataUpdated'));
+            }
           });
         }
         return prevData;
@@ -834,9 +882,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky }) => {
+  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky }) => {
     try {
-      const body = { access, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky };
+      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}${dataColumns}/${columnName}/access`,
@@ -857,6 +905,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             ? {
               ...col,
               access: updated.access,
+              viewAccess: updated.viewAccess,
               sorting: updated.sorting,
               equalPrefix: updated.equalPrefix,
               morePrefix: updated.morePrefix,
@@ -1123,6 +1172,16 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         if (status?.status !== 'admin' && (col.name === 'row_info' || col.column_heading === 'Info')) {
           return false;
         }
+
+        // Hide columns from users who are in the viewAccess restriction list
+        // Admin can always see all columns
+        if (status?.status !== 'admin' && Array.isArray(col.viewAccess) && col.viewAccess.length > 0) {
+          const currentUserId = String(status?._id || '');
+          if (col.viewAccess.some(id => String(id) === currentUserId)) {
+            return false; // Hide this column from current user
+          }
+        }
+
         return true;
       }).map((col) => ({
         header: (
@@ -1180,7 +1239,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   <FaTrash className="delete-icon" size={14} />
                 </button>
               )}
-              {isDelete && col.column_type === "select" && (
+              {/* EDIT COLORS OPTION */}
+              {/* {isDelete && col.column_type === "select" && (
                 <button
                   className="btn btn-link text-primary p-0"
                   onClick={() => {
@@ -1191,7 +1251,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                 >
                   <FaPalette className="color-icon" size={14} />
                 </button>
-              )}
+              )} */}
             </div>
             {isFilterOpen && col.sorting && (
               <div className="filter-row-input">
@@ -1397,45 +1457,46 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             return (
               <div className="d-flex align-items-center gap-1">
                 <div className={overdueInfo.className}>{overdueInfo.text}</div>
-                {(col.showInfo || (col.hasDefaultValue && status?.status === "admin")) && (
-                  <button
-                    type="button"
-                    className="btn btn-link p-0 small"
-                    title="View change history"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      setAuditModal({
-                        isOpen: true,
-                        columnName: col.column_heading,
-                        auditData: [],
-                        loading: true,
-                      });
-                      try {
-                        const res = await fetch(
-                          `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
-                        );
-                        if (!res.ok) throw new Error("Failed to fetch history");
-                        const history = await res.json();
-                        setAuditModal({
-                          isOpen: true,
-                          columnName: col.column_heading,
-                          auditData: history,
-                          loading: false,
-                        });
-                      } catch (err) {
-                        console.error("Failed to load audit history", err);
+                {status.status === "admin" &&
+                  (col.showInfo || (col.hasDefaultValue)) && (
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 small"
+                      title="View change history"
+                      onClick={async (e) => {
+                        e.stopPropagation();
                         setAuditModal({
                           isOpen: true,
                           columnName: col.column_heading,
                           auditData: [],
-                          loading: false,
+                          loading: true,
                         });
-                      }
-                    }}
-                  >
-                    <BsInfoCircleFill style={{ color: "#2563eb" }} />
-                  </button>
-                )}
+                        try {
+                          const res = await fetch(
+                            `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                          );
+                          if (!res.ok) throw new Error("Failed to fetch history");
+                          const history = await res.json();
+                          setAuditModal({
+                            isOpen: true,
+                            columnName: col.column_heading,
+                            auditData: history,
+                            loading: false,
+                          });
+                        } catch (err) {
+                          console.error("Failed to load audit history", err);
+                          setAuditModal({
+                            isOpen: true,
+                            columnName: col.column_heading,
+                            auditData: [],
+                            loading: false,
+                          });
+                        }
+                      }}
+                    >
+                      <BsInfoCircleFill style={{ color: "#2563eb" }} />
+                    </button>
+                  )}
               </div>
             );
           }
@@ -1484,45 +1545,46 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               return (
                 <div className="d-flex align-items-center gap-1">
                   <span className={dayClass}>{displayText}</span>
-                  {(col.showInfo || (col.hasDefaultValue && status?.status === "admin")) && (
-                    <button
-                      type="button"
-                      className="btn btn-link p-0 small"
-                      title="View change history"
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        setAuditModal({
-                          isOpen: true,
-                          columnName: col.column_heading,
-                          auditData: [],
-                          loading: true,
-                        });
-                        try {
-                          const res = await fetch(
-                            `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
-                          );
-                          if (!res.ok) throw new Error("Failed to fetch history");
-                          const history = await res.json();
-                          setAuditModal({
-                            isOpen: true,
-                            columnName: col.column_heading,
-                            auditData: history,
-                            loading: false,
-                          });
-                        } catch (err) {
-                          console.error("Failed to load audit history", err);
+                  {status.status === "admin" &&
+                    (col.showInfo || (col.hasDefaultValue)) && (
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 small"
+                        title="View change history"
+                        onClick={async (e) => {
+                          e.stopPropagation();
                           setAuditModal({
                             isOpen: true,
                             columnName: col.column_heading,
                             auditData: [],
-                            loading: false,
+                            loading: true,
                           });
-                        }
-                      }}
-                    >
-                      <BsInfoCircleFill style={{ color: "#2563eb" }} />
-                    </button>
-                  )}
+                          try {
+                            const res = await fetch(
+                              `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                            );
+                            if (!res.ok) throw new Error("Failed to fetch history");
+                            const history = await res.json();
+                            setAuditModal({
+                              isOpen: true,
+                              columnName: col.column_heading,
+                              auditData: history,
+                              loading: false,
+                            });
+                          } catch (err) {
+                            console.error("Failed to load audit history", err);
+                            setAuditModal({
+                              isOpen: true,
+                              columnName: col.column_heading,
+                              auditData: [],
+                              loading: false,
+                            });
+                          }
+                        }}
+                      >
+                        <BsInfoCircleFill style={{ color: "#2563eb" }} />
+                      </button>
+                    )}
                 </div>
               );
             } catch (err) {
@@ -1563,58 +1625,81 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
             return (
               <div className="d-flex align-items-center gap-1">
-                <select
+                <CustomSelectDropdown
                   value={value}
-                  className={`bg-transparent border-0 w-100 ${optionColor ? '' : 'text-dark'}`}
-                  style={{
-                    color: optionColor ? textColor : 'inherit',
-                    fontWeight: optionColor ? '600' : 'normal',
-                    cursor: 'pointer'
-                  }}
-                  onChange={(e) =>
-                    handleChange(row._id, col.name, e.target.value)
-                  }
+                  options={col.multipleValue || []}
+                  onChange={(newValue) => handleChange(row._id, col.name, newValue)}
                   disabled={!canEdit(col.name, col)}
-                >
-                  <option value="" style={{ backgroundColor: 'white', color: 'black' }}>Select</option>
-                  {(col.multipleValue || []).map((opt) => {
-                    const trimmedOpt = opt.toString().trim();
-                    let optColor = null;
-                    if (optionColors[trimmedOpt]) {
-                      optColor = optionColors[trimmedOpt];
-                    } else if (optionColors.get && optionColors.get(trimmedOpt)) {
-                      optColor = optionColors.get(trimmedOpt);
-                    } else {
-                      const target = trimmedOpt.toLowerCase();
-                      const keys = Object.keys(optionColors);
-                      const match = keys.find(k => k.trim().toLowerCase() === target);
-                      if (match) optColor = optionColors[match];
-                    }
+                  optionColors={optionColors}
+                  optionTextColors={optionTextColors}
+                  getContrastYIQ={getContrastYIQ}
+                  onEditColors={() => {
+                    setSelectedColorCol(col);
+                    setIsColorModalOpen(true);
+                  }}
+                  showEditButton={status?.status === "admin"}
+                />
+                {status.status === "admin" &&
+                  (col.showInfo || (col.hasDefaultValue)) && (
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 small"
+                      title="View change history"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setAuditModal({
+                          isOpen: true,
+                          columnName: col.column_heading,
+                          auditData: [],
+                          loading: true,
+                        });
+                        try {
+                          const res = await fetch(
+                            `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                          );
+                          if (!res.ok) throw new Error("Failed to fetch history");
+                          const history = await res.json();
+                          setAuditModal({
+                            isOpen: true,
+                            columnName: col.column_heading,
+                            auditData: history,
+                            loading: false,
+                          });
+                        } catch (err) {
+                          console.error("Failed to load audit history", err);
+                          setAuditModal({
+                            isOpen: true,
+                            columnName: col.column_heading,
+                            auditData: [],
+                            loading: false,
+                          });
+                        }
+                      }}
+                    >
+                      <BsInfoCircleFill style={{ color: "#2563eb" }} />
+                    </button>
+                  )}
+              </div>
+            );
+          }
 
-                    let optTextColor = getContrastYIQ(optColor);
-                    if (optColor) {
-                      if (optionTextColors[trimmedOpt]) {
-                        optTextColor = optionTextColors[trimmedOpt];
-                      } else if (optionTextColors.get && optionTextColors.get(trimmedOpt)) {
-                        optTextColor = optionTextColors.get(trimmedOpt);
-                      } else {
-                        const target = trimmedOpt.toLowerCase();
-                        const keys = Object.keys(optionTextColors);
-                        const match = keys.find(k => k.trim().toLowerCase() === target);
-                        if (match) optTextColor = optionTextColors[match];
-                      }
-                    }
-                    return (
-                      <option
-                        key={opt}
-                        value={opt}
-                      >
-                        {opt}
-                      </option>
-                    );
-                  })}
-                </select>
-                {(col.showInfo || (col.hasDefaultValue && status?.status === "admin")) && (
+          return (
+            <div className="d-flex align-items-center gap-1">
+              <input
+                type={
+                  col.column_type === "date"
+                    ? "date"
+                    : col.column_type === "number"
+                      ? "number"
+                      : "text"
+                }
+                value={value}
+                className="bg-transparent border-0 w-100 text-dark"
+                onChange={(e) => handleChange(row._id, col.name, e.target.value)}
+                disabled={!canEdit(col.name, col)}
+              />
+              {status.status === "admin" &&
+                (col.showInfo || (col.hasDefaultValue)) && (
                   <button
                     type="button"
                     className="btn btn-link p-0 small"
@@ -1653,64 +1738,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                     <BsInfoCircleFill style={{ color: "#2563eb" }} />
                   </button>
                 )}
-              </div>
-            );
-          }
-
-          return (
-            <div className="d-flex align-items-center gap-1">
-              <input
-                type={
-                  col.column_type === "date"
-                    ? "date"
-                    : col.column_type === "number"
-                      ? "number"
-                      : "text"
-                }
-                value={value}
-                className="bg-transparent border-0 w-100 text-dark"
-                onChange={(e) => handleChange(row._id, col.name, e.target.value)}
-                disabled={!canEdit(col.name, col)}
-              />
-              {(col.showInfo || (col.hasDefaultValue && status?.status === "admin")) && (
-                <button
-                  type="button"
-                  className="btn btn-link p-0 small"
-                  title="View change history"
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    setAuditModal({
-                      isOpen: true,
-                      columnName: col.column_heading,
-                      auditData: [],
-                      loading: true,
-                    });
-                    try {
-                      const res = await fetch(
-                        `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
-                      );
-                      if (!res.ok) throw new Error("Failed to fetch history");
-                      const history = await res.json();
-                      setAuditModal({
-                        isOpen: true,
-                        columnName: col.column_heading,
-                        auditData: history,
-                        loading: false,
-                      });
-                    } catch (err) {
-                      console.error("Failed to load audit history", err);
-                      setAuditModal({
-                        isOpen: true,
-                        columnName: col.column_heading,
-                        auditData: [],
-                        loading: false,
-                      });
-                    }
-                  }}
-                >
-                  <BsInfoCircleFill style={{ color: "#2563eb" }} />
-                </button>
-              )}
             </div>
           );
         },
@@ -1820,6 +1847,18 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             Create Column
           </button>
         ) : null}
+        <div>
+          {status?.user_name == 'Mandasa Technologies' && (
+            <button
+              type="button"
+              className="btn btn-outline-dark"
+              onClick={updateColumnDefaultValue}
+              disabled={loadingUpdater}
+            >
+              {loadingUpdater ? "Updating..." : "Default Value Update"}
+            </button>
+          )}
+        </div>
         <button
           className="btn btn-outline-dark"
           onClick={() => setIsAnalyticsModalOpen(true)}
@@ -1854,7 +1893,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             <div className="saved-filters-row w-100 mb-3">
               <div className="row flex-nowrap w-100 align-items-center">
                 <div className={`filters-list-horizontal align-items-center col-9`}>
-                  {savedFilters.map((filter) => (
+                  {/* {savedFilters.map((filter) => ( */}
+                  {savedFilters.filter(f => !f.showInAnalytics).map((filter) => (
                     <div
                       key={filter._id}
                       className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}

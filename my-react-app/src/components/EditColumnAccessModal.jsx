@@ -10,6 +10,7 @@ const EditColumnAccessModal = ({
   availableUsers = [],
 }) => {
   const [access, setAccess] = useState([]);
+  const [viewAccess, setViewAccess] = useState([]);
   const [columnHeading, setColumnHeading] = useState("");
   const [sorting, setSorting] = useState(false);
   const [equalPrefix, setEqualPrefix] = useState("");
@@ -28,9 +29,13 @@ const EditColumnAccessModal = ({
       const ids = Array.isArray(column.access)
         ? column.access.map((id) => String(id))
         : [];
+      const viewIds = Array.isArray(column.viewAccess)
+        ? column.viewAccess.map((id) => String(id))
+        : [];
       setAccess(ids);
+      setViewAccess(viewIds);
       setColumnHeading(column.column_heading || column.name || "");
-      setSorting(!!column.sorting); // ✅ IMPORTANT
+      setSorting(!!column.sorting);
       setEqualPrefix(column.equalPrefix || "");
       setMorePrefix(column.morePrefix || "");
       setLessPrefix(column.lessPrefix || "");
@@ -49,11 +54,22 @@ const EditColumnAccessModal = ({
     });
   };
 
+  const handleViewAccessToggle = (userId) => {
+    const userIdStr = String(userId);
+    setViewAccess((prev) => {
+      if (prev.some((id) => String(id) === userIdStr)) {
+        return prev.filter((id) => String(id) !== userIdStr);
+      }
+      return [...prev, userIdStr];
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (onSave && column) {
       onSave(column.name, {
         access,
+        viewAccess,
         sorting,
         column_heading: columnHeading.trim(),
         equalPrefix: column.column_type === "condition" ? equalPrefix : undefined,
@@ -92,51 +108,51 @@ const EditColumnAccessModal = ({
                 required
               />
             </div>
+            <div style={{ marginTop: "10px" }}>
+              {showSortable && (
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="sorting"
+                    name="sorting"
+                    checked={sorting}          // ✅ FIX
+                    onChange={handleSortingChange}
+                  />
+                  <label className="form-check-label" htmlFor="sorting">
+                    Sorting and filter options
+                  </label>
+                </div>
+              )}
 
-            {showSortable && (
               <div className="form-check form-check-inline">
                 <input
                   className="form-check-input"
                   type="checkbox"
-                  id="sorting"
-                  name="sorting"
-                  checked={sorting}          // ✅ FIX
-                  onChange={handleSortingChange}
+                  id="showInfo"
+                  name="showInfo"
+                  checked={showInfo}
+                  onChange={(e) => setShowInfo(e.target.checked)}
                 />
-                <label className="form-check-label" htmlFor="sorting">
-                  Sorting and filter options
+                <label className="form-check-label" htmlFor="showInfo">
+                  Show Info
                 </label>
               </div>
-            )}
 
-            <div className="form-check form-check-inline">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="showInfo"
-                name="showInfo"
-                checked={showInfo}
-                onChange={(e) => setShowInfo(e.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="showInfo">
-                Show Info
-              </label>
+              <div className="form-check form-check-inline">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="sticky"
+                  name="sticky"
+                  checked={sticky}
+                  onChange={(e) => setSticky(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="sticky">
+                  Sticky Column
+                </label>
+              </div>
             </div>
-
-            <div className="form-check form-check-inline">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="sticky"
-                name="sticky"
-                checked={sticky}
-                onChange={(e) => setSticky(e.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="sticky">
-                Sticky Column
-              </label>
-            </div>
-
             {column.column_type === "condition" && (
               <div className="options-container" style={{ padding: "10px", border: "1px solid #dee2e6", borderRadius: "6px", marginBottom: "15px" }}>
                 <p className="small text-muted mb-2">Condition Prefixes</p>
@@ -173,60 +189,87 @@ const EditColumnAccessModal = ({
               </div>
             )}
 
+            <hr></hr>
 
-            <div className="form-group" style={{ marginTop: "15px" }}>
-              <label>Access</label>
-              <p className="small text-muted mb-2">
-                Users who can edit or delete this column (Admin always has
-                access)
-              </p>
-              <div
-                className="access-users-list"
-                style={{
-                  maxHeight: "180px",
-                  overflowY: "auto",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "6px",
-                  padding: "10px",
-                }}
-              >
-                {availableUsers.length === 0 ? (
-                  <span className="text-muted small">No users available</span>
-                ) : (
-                  availableUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      className="form-check"
-                      style={{ marginBottom: "6px" }}
-                    >
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id={`edit-access-${column.name}-${user._id}`}
-                        checked={access.some((id) => String(id) === String(user._id))}
-                        onChange={() => handleAccessToggle(user._id)}
-                      />
-                      <label
-                        className="form-check-label text-dark"
-                        htmlFor={`edit-access-${column.name}-${user._id}`}
-                        style={{ fontSize: "14px" }}
+            <div className="row">
+              <div className="col-6 form-group" style={{ marginTop: "5px" }}>
+                <label><b>Who can edit this column :</b></label>
+                {/* <p className="small text-muted mb-2">
+                  Staff members who can edit this column
+                </p> */}
+                <div
+                  className="access-users-list"
+                >
+                  {availableUsers.length > 1 ? (
+                    availableUsers.map((user) => user.status === 'staff' && (
+                      <div
+                        key={user._id}
+                        className="form-check"
+                        style={{ marginBottom: "6px" }}
                       >
-                        {user.user_name || user.email}{" "}
-                        {user.status === "admin" && "(Admin)"}
-                      </label>
-                    </div>
-                  ))
-                )}
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`edit-access-${column.name}-${user._id}`}
+                          checked={access.some((id) => String(id) === String(user._id))}
+                          onChange={() => handleAccessToggle(user._id)}
+                        />
+                        <label
+                          className="form-check-label text-dark"
+                          htmlFor={`edit-access-${column.name}-${user._id}`}
+                          style={{ fontSize: "14px" }}
+                        >
+                          {user.user_name}
+
+                          {/* {user.status === "admin" && "(Admin)"} */}
+                        </label>
+                      </div>
+                    ))
+                  ) : null}
+                </div>
+              </div>
+              <div className="col-6 form-group" style={{ marginTop: "5px" }}>
+                <label><b>Who can't see this column :</b></label>
+                {/* <p className="small text-muted mb-2">
+                  Staff members who can't see this column
+                </p> */}
+                <div
+                  className="access-users-list"
+                >
+                  {availableUsers.length > 1 ? (
+                    availableUsers.map((user) => user.status === 'staff' && (
+                      <div
+                        key={user._id}
+                        className="form-check"
+                        style={{ marginBottom: "2px" }}
+                      >
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`view-access-${column.name}-${user._id}`}
+                          checked={viewAccess.some((id) => String(id) === String(user._id))}
+                          onChange={() => handleViewAccessToggle(user._id)}
+                        />
+                        <label
+                          className="form-check-label text-dark"
+                          htmlFor={`view-access-${column.name}-${user._id}`}
+                          style={{ fontSize: "14px" }}
+                        >
+                          {user.user_name}
+                        </label>
+                      </div>
+                    ))
+                  ) : null}
+                </div>
               </div>
             </div>
-
             <button type="submit" className="submit-btn">
               Save
             </button>
           </form>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

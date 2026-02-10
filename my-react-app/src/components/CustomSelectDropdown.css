@@ -1,0 +1,102 @@
+.custom-select-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0px 12px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: transparent;
+    transition: all 0.2s ease;
+    /* min-height: 38px; */
+}
+
+/* .custom-select-trigger:hover:not(.disabled) {
+    background-color: rgba(0, 0, 0, 0.05);
+} */
+
+.custom-select-trigger.disabled {
+    cursor: auto;
+    /* opacity: 0.6; */
+}
+
+.custom-select-arrow {
+    font-size: 10px;
+    margin-left: 8px;
+    transition: transform 0.2s ease;
+}
+
+.custom-select-trigger.open .custom-select-arrow {
+    transform: rotate(180deg);
+}
+
+.custom-select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 4px;
+}
+
+.custom-select-option {
+    padding: 8px 12px;
+    color: black;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.custom-select-option:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.custom-select-option.selected {
+    font-weight: 600;
+}
+
+.custom-select-edit-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    color: #000;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.custom-select-edit-button:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+/* Scrollbar styling */
+.custom-select-options::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-select-options::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

@@ -38,6 +38,10 @@ const SavedFilterSchema = new mongoose.Schema(
             type: [mongoose.Schema.Types.ObjectId],
             ref: 'User',
             default: []
+        },
+        showInAnalytics: {
+            type: Boolean,
+            default: false
         }
     },
     {

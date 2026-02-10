@@ -4,7 +4,7 @@ require("dotenv").config();
 
 async function checkDuplicates() {
     try {
-        await mongoose.connect(process.env.MONGO_URI || "mongodb://localhost:27017/crm_db");
+        await mongoose.connect(process.env.MONGO_URI);
         console.log("Connected to MongoDB");
 
         const columns = await Column.find({});

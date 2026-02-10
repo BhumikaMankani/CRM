@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 // Add new column
 router.post("/", async (req, res) => {
     try {
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, sticky } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -39,6 +39,7 @@ router.post("/", async (req, res) => {
             hasDefaultValue: hasDefaultValue || false,
             defaultValue: defaultValue || undefined,
             access: Array.isArray(access) ? access : [],
+            viewAccess: Array.isArray(viewAccess) ? viewAccess : [],
             sticky: !!sticky,
             status: 'active'
         });
@@ -133,9 +134,10 @@ router.patch("/deactivate/:name", async (req, res) => {
 // Update column access and/or heading
 router.patch("/:name/access", async (req, res) => {
     try {
-        const { access, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky } = req.body;
+        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky } = req.body;
         const updateData = {};
         if (Array.isArray(access)) updateData.access = access;
+        if (Array.isArray(viewAccess)) updateData.viewAccess = viewAccess;
         if (column_heading && typeof column_heading === "string" && column_heading.trim()) {
             updateData.column_heading = column_heading.trim();
         }

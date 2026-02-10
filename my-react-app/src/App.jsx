@@ -22,18 +22,30 @@ function App() {
   });
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    setStatus(JSON.parse(user));
-  }, []);
+    if (isLoggedIn) {
+      const user = localStorage.getItem("user");
+      if (user) {
+        setStatus(JSON.parse(user));
+      }
+    } else {
+      setStatus(null);
+    }
+  }, [isLoggedIn]);
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
     localStorage.setItem('isLoggedIn', 'true');
+    // Re-read user data from localStorage
+    const user = localStorage.getItem("user");
+    if (user) {
+      setStatus(JSON.parse(user));
+    }
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    sessionStorage.removeItem("isLoggedIn");
+    setStatus(null); // Clear status state
+    localStorage.removeItem("isLoggedIn"); // FIX: was sessionStorage, should be localStorage
     localStorage.removeItem("user");
     localStorage.removeItem("Password");
     navigate("/");

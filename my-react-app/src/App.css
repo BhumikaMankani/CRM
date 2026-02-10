@@ -390,6 +390,14 @@ button.btn[title="Edit Option Colors"] svg.color-icon {
   height: 14px;
 }
 
+.table>:not(caption)>*>* {
+  /* box-shadow: none !important; */
+}
+
+.custom-table tbody tr {
+  border-bottom: 0px !important;
+}
+
 @media screen and (max-width: 768px) {
   button.btn {
     font-size: 14px;

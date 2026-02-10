@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaUsers } from 'react-icons/fa';
+import { FaTimes, FaUsers, FaChartLine } from 'react-icons/fa';
 import { API_URL } from '../../proxy';
 import './SaveFilterModal.css';
 
@@ -8,21 +8,26 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
     const [error, setError] = useState('');
     const [staffList, setStaffList] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState([]);
+    const [showInAnalytics, setShowInAnalytics] = useState(false);
     const [loadingStaff, setLoadingStaff] = useState(false);
 
     useEffect(() => {
-        if (isOpen && userStatus?.status === 'admin') {
-            fetchStaff();
-        }
+        if (isOpen) {
+            if (userStatus?.status === 'admin') {
+                fetchStaff();
+            }
 
-        if (isOpen && editFilter) {
-            setFilterName(editFilter.filterName || '');
-            setSelectedStaff(editFilter.allowedUsers || []);
-        } else if (isOpen) {
-            setFilterName('');
-            setSelectedStaff([]);
+            if (editFilter) {
+                setFilterName(editFilter.filterName || '');
+                setSelectedStaff(editFilter.allowedUsers || []);
+                setShowInAnalytics(editFilter.showInAnalytics || false);
+            } else {
+                setFilterName('');
+                setSelectedStaff([]);
+                setShowInAnalytics(false);
+            }
         }
-    }, [isOpen, userStatus, editFilter]);
+    }, [isOpen]);
 
     const fetchStaff = async () => {
         setLoadingStaff(true);
@@ -57,16 +62,19 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
             return;
         }
 
-        if (Object.keys(filters).length === 0) {
+        // Only validate active filters if we are creating a NEW filter.
+        // When editing, we validly typically keep the existing filterData (handled in onSave call).
+        if (!editFilter && Object.keys(filters).length === 0) {
             setError('No filters applied to save');
             return;
         }
 
         try {
             setError(''); // Clear error before saving
-            await onSave(filterName, editFilter ? editFilter.filterData : filters, selectedStaff, editFilter?._id);
+            await onSave(filterName, editFilter ? editFilter.filterData : filters, selectedStaff, editFilter?._id, showInAnalytics);
             setFilterName('');
             setSelectedStaff([]);
+            setShowInAnalytics(false);
             setError('');
         } catch (err) {
             const errorMsg = err.message || 'Failed to save filter';
@@ -78,6 +86,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
     const handleClose = () => {
         setFilterName('');
         setSelectedStaff([]);
+        setShowInAnalytics(false);
         setError('');
         onClose();
     };
@@ -90,7 +99,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
         <div className="modal-overlay" onClick={handleClose}>
             <div className="save-filter-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h4>{editFilter ? 'Edit Filter' : 'Save & Share Filter'}</h4>
+                    {/* <h4>{editFilter ? 'Edit Filter' : 'Save & Share Filter'}</h4> */}
                     <button className="close-btn" onClick={handleClose}>
                         <FaTimes />
                     </button>
@@ -120,16 +129,17 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                         {error && <div className="text-danger mt-2 small">{error}</div>}
                     </div>
 
+
                     {isAdmin && (
                         <div className="sharing-section mb-3">
                             <label className="form-label fw-bold d-flex align-items-center gap-2">
                                 <FaUsers /> Share with Staff
                             </label>
-                            <div className="staff-selection-box border rounded p-3 bg-light" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                            <div className="staff-selection-box" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                                 {loadingStaff ? (
                                     <p className="text-muted small mb-0">Loading staff members...</p>
                                 ) : staffList.length > 0 ? (
-                                    <div className="row g-2">
+                                    <div className="">
                                         {staffList.map(staff => (
                                             <div key={staff._id} className="col-12">
                                                 <div className="form-check">
@@ -151,11 +161,34 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                                     <p className="text-muted small mb-0">No other staff members found.</p>
                                 )}
                             </div>
-                            <p className="text-muted smallest mt-2" style={{ fontSize: '0.75rem' }}>
+                            {/* <p className="text-muted smallest mt-2" style={{ fontSize: '0.75rem' }}>
                                 Selected staff will be able to see and use this filter.
-                            </p>
+                            </p> */}
                         </div>
                     )}
+                    <div className="mb-3">
+                        <label className="form-label fw-bold d-flex align-items-center gap-2">
+                            <FaChartLine /> Analytics Settings
+                        </label>
+                        <div className="">
+                            <div className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="showInAnalytics"
+                                    checked={showInAnalytics}
+                                    onChange={(e) => setShowInAnalytics(e.target.checked)}
+                                />
+                                <label className="form-check-label small" htmlFor="showInAnalytics">
+                                    Show in Analytics
+                                </label>
+                            </div>
+                            {/* <p className="text-muted smallest mt-1 mb-0" style={{ fontSize: '0.75rem' }}>
+                                If checked, this filter will appear in the Analytics popup for quick access.
+                            </p> */}
+                        </div>
+                    </div>
+
 
                     <div className="filter-preview visually-hidden">
                         <h6 className="mb-2">Applied Filters:</h6>

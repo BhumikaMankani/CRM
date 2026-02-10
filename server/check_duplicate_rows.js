@@ -4,7 +4,7 @@ require("dotenv").config();
 
 async function checkDuplicateRows() {
     try {
-        await mongoose.connect(process.env.MONGO_URI || "mongodb://localhost:27017/crm_db");
+        await mongoose.connect(process.env.MONGO_URI);
         console.log("Connected to MongoDB via checkDuplicateRows");
 
         const rows = await Project.find({ showstatus: { $ne: 'deactivate' } }).sort({ createdAt: -1 });

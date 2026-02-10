@@ -25,6 +25,7 @@ function Form({
     hasDefaultValue: false,
     defaultValue: "",
     access: [],
+    viewAccess: [],
     showInfo: false,
     sticky: false,
   });
@@ -60,15 +61,32 @@ function Form({
   };
 
   const handleAccessToggle = (userId) => {
+    const userIdStr = String(userId);
     setFormData((prev) => {
       const current = prev.access || [];
-      if (current.includes(userId)) {
-        return { ...prev, access: current.filter((id) => id !== userId) };
+      if (current.some((id) => String(id) === userIdStr)) {
+        return {
+          ...prev,
+          access: current.filter((id) => String(id) !== userIdStr),
+        };
       }
-      return { ...prev, access: [...current, userId] };
+      return { ...prev, access: [...current, userIdStr] };
     });
   };
 
+  const handleViewAccessToggle = (userId) => {
+    const userIdStr = String(userId);
+    setFormData((prev) => {
+      const current = prev.viewAccess || [];
+      if (current.some((id) => String(id) === userIdStr)) {
+        return {
+          ...prev,
+          viewAccess: current.filter((id) => String(id) !== userIdStr),
+        };
+      }
+      return { ...prev, viewAccess: [...current, userIdStr] };
+    });
+  };
   const addOption = () => {
     setFormData({
       ...formData,
@@ -132,6 +150,7 @@ function Form({
           ? formData.defaultValue
           : undefined,
       access: Array.isArray(formData.access) ? formData.access : [],
+      viewAccess: Array.isArray(formData.viewAccess) ? formData.viewAccess : [],
       showInfo: !!formData.showInfo,
       sticky: !!formData.sticky,
     };
@@ -159,6 +178,7 @@ function Form({
       hasDefaultValue: false,
       defaultValue: "",
       access: [],
+      viewAccess: [],
       showInfo: false,
       sticky: false,
     });
@@ -263,51 +283,81 @@ function Form({
                 Sticky Column
               </label>
             </div>
-
-            <div className="form-group" style={{ marginTop: "15px" }}>
-              <label>Access</label>
-              <p className="small text-muted mb-2">
+            <hr></hr>
+            <div className="row">
+              <div className="col-6 form-group" style={{ marginTop: "5px" }}>
+                {/* <label>Access</label> */}
+                {/* <p className="small text-muted mb-2">
                 Users who can edit or delete this column (Admin always has access)
-              </p>
-              <div
-                className="access-users-list"
-                style={{
-                  maxHeight: "120px",
-                  overflowY: "auto",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "6px",
-                  padding: "10px",
-                }}
-              >
-                {availableUsers.length === 0 ? (
-                  <span className="text-muted small">No users available</span>
-                ) : (
-                  availableUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      className="form-check"
-                      style={{ marginBottom: "6px" }}
-                    >
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id={`access-${user._id}`}
-                        checked={(formData.access || []).includes(user._id)}
-                        onChange={() => handleAccessToggle(user._id)}
-                      />
-                      <label
-                        className="form-check-label text-dark"
-                        htmlFor={`access-${user._id}`}
-                        style={{ fontSize: "14px" }}
+              </p> */}
+                <label><b>Who can edit this column :</b></label>
+                <div
+                  className="access-users-list"
+                >
+                  {availableUsers.length === 0 ? (
+                    <span className="text-muted small">No users available</span>
+                  ) : (
+                    availableUsers.map((user) => user.status !== "admin" && (
+                      <div
+                        key={user._id}
+                        className="form-check"
+                        style={{ marginBottom: "6px" }}
                       >
-                        {user.user_name || user.email} {user.status === "admin" && "(Admin)"}
-                      </label>
-                    </div>
-                  ))
-                )}
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`access-${user._id}`}
+                          checked={(formData.access || []).some(id => String(id) === String(user._id))}
+                          onChange={() => handleAccessToggle(user._id)}
+                        />
+                        <label
+                          className="form-check-label text-dark"
+                          htmlFor={`access-${user._id}`}
+                          style={{ fontSize: "14px" }}
+                        >
+                          {user.user_name || user.email} {user.status === "admin" && "(Admin)"}
+                        </label>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="col-6 form-group" style={{ marginTop: "5px" }}>
+                <label><b>Who can't see this column :</b></label>
+                {/* <p className="small text-muted mb-2">
+                  Staff members who can't see this column
+                </p> */}
+                <div
+                  className="access-users-list"
+                >
+                  {availableUsers.length > 1 ? (
+                    availableUsers.map((user) => user.status === 'staff' && (
+                      <div
+                        key={user._id}
+                        className="form-check"
+                        style={{ marginBottom: "6px" }}
+                      >
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`view-access-${user._id}`}
+                          checked={(formData.viewAccess || []).some(id => String(id) === String(user._id))}
+                          onChange={() => handleViewAccessToggle(user._id)}
+                        />
+                        <label
+                          className="form-check-label text-dark"
+                          htmlFor={`view-access-${user._id}`}
+                          style={{ fontSize: "14px" }}
+                        >
+                          {user.user_name || user.email} {user.status === "admin" && "(Admin)"}
+                        </label>
+                      </div>
+                    ))
+                  ) : null}
+                </div>
               </div>
             </div>
-
             {formData.type === "select" && (
               <div className="options-container">
                 <label className="options-label">

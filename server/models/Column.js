@@ -28,6 +28,7 @@ const ColumnSchema = new mongoose.Schema({
   hasDefaultValue: { type: Boolean, default: false }, // for select dropdown default value
   defaultValue: { type: String }, // default value for select dropdown
   access: { type: [String], default: [] }, // user IDs who can edit/delete this column
+  viewAccess: { type: [String], default: [] }, // user IDs who CANNOT see this column
   showInfo: { type: Boolean, default: false }, // whether to show change history info icon
   sticky: { type: Boolean, default: false }, // whether the column should be sticky
   status: { type: String, default: "active" }, // active, inactive
