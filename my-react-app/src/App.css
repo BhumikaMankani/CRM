@@ -390,6 +390,12 @@ button.btn[title="Edit Option Colors"] svg.color-icon {
   height: 14px;
 }
 
+.main-parent .card {
+  /* border-color: var(--bs-border-color-translucent) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1); */
+  border-radius: 10px;
+}
+
 .table>:not(caption)>*>* {
   /* box-shadow: none !important; */
 }
