@@ -13,6 +13,10 @@ import { IoPlayCircleOutline } from "react-icons/io5";
 import { FaRegCheckCircle } from "react-icons/fa";
 import { RxCrossCircled } from "react-icons/rx";
 import { CgDanger } from "react-icons/cg";
+import { MdOutlineIncompleteCircle } from "react-icons/md";
+import { MdOutlinePhoneForwarded } from "react-icons/md";
+import { RiChatFollowUpFill } from "react-icons/ri";
+
 
 // Status values that should be treated as "ACTIVE"
 const ACTIVE_STATUSES = [
@@ -20,6 +24,7 @@ const ACTIVE_STATUSES = [
     "OFF TRACK",
     "Forworded to Client ",
     "Offtrack - client",
+    "Forwarded to client",
     "Follow up",
     "ON TRACK",
 ];
@@ -41,7 +46,10 @@ function Departments({ setIsLoggedIn }) {
     const [projectsByStatus, setProjectsByStatus] = useState({
         onTrack: 0,
         offTrack: 0,
-        atRisk: 0
+        atRisk: 0,
+        forwardedToClient: 0,
+        followUp: 0,
+        completed: 0,
     });
     const [statusColumnName, setStatusColumnName] = useState(null);
     const [status, setStatus] = useState(() => {
@@ -198,7 +206,10 @@ function Departments({ setIsLoggedIn }) {
                     const statusCounts = {
                         onTrack: 0,
                         offTrack: 0,
+                        forwardedToClient: 0,
                         atRisk: 0,
+                        followUp: 0,
+                        completed: 0
                     };
                     let activeCount = 0;
 
@@ -217,21 +228,50 @@ function Departments({ setIsLoggedIn }) {
                                 !key.toLowerCase().includes("showstatus")
                         );
 
+                        // if (statusField) {
+                        //     const statusValue = project[statusField];
+                        //     if (statusValue === "ON TRACK") {
+                        //         statusCounts.onTrack++;
+                        //     } else if (statusValue === "OFF TRACK") {
+                        //         statusCounts.offTrack++;
+                        //     } else if (statusValue === "AT RISK") {
+                        //         statusCounts.atRisk++;
+                        //     } else if (statusValue === "FOLLOW UP") {
+                        //         statusCounts.followUp++;
+                        //     }
+
+                        //     // Active projects count - all 6 statuses from filter
+                        //     if (isActiveStatus(statusValue)) {
+                        //         activeCount++;
+                        //     }
+                        // }
                         if (statusField) {
                             const statusValue = project[statusField];
-                            if (statusValue === "ON TRACK") {
-                                statusCounts.onTrack++;
-                            } else if (statusValue === "OFF TRACK") {
-                                statusCounts.offTrack++;
-                            } else if (statusValue === "AT RISK") {
-                                statusCounts.atRisk++;
+
+                            if (!statusValue) return;
+
+                            const normalizedStatus = String(statusValue).trim().toUpperCase();
+
+                            const statusMap = {
+                                "ON TRACK": "onTrack",
+                                "OFF TRACK": "offTrack",
+                                "AT RISK": "atRisk",
+                                "FORWARDED TO CLIENT": "forwardedToClient",
+                                "FOLLOW UP": "followUp",
+                                "COMPLETED": "completed"
+                            };
+
+                            const key = statusMap[normalizedStatus];
+
+                            if (key) {
+                                statusCounts[key]++;
                             }
 
-                            // Active projects count - all 6 statuses from filter
-                            if (isActiveStatus(statusValue)) {
+                            if (isActiveStatus(normalizedStatus)) {
                                 activeCount++;
                             }
                         }
+
                     });
 
                     setProjectsByStatus(statusCounts);
@@ -283,7 +323,7 @@ function Departments({ setIsLoggedIn }) {
     };
 
 
-    console.log("userData", userData);
+    // console.log("userData", userData);
 
     const columns = [
         {
@@ -387,25 +427,25 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Total Projects Card */}
                                     <div className="col-md-3">
                                         <div className="card border-primary">
-                                            <div className="card-body">
-                                                <MdDashboard />
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
+
+                                                <div className="card-body">
+                                                    <MdDashboard />
 
 
-                                                <h6 className="card-title text-muted mb-2">Total Projects</h6>
-                                                <h2 className="mb-0 text-primary">{totalProjects}</h2>
-                                            </div>
+                                                    <h6 className="card-title text-muted mb-2">Total Projects</h6>
+                                                    <h2 className="mb-0 text-primary">{totalProjects}</h2>
+                                                </div>
+                                            </Link>
                                         </div>
                                     </div>
 
                                     {/* ACTIVE Card - click to go to Development with active filter applied */}
                                     <div className="col-md-3">
-                                        <div
-                                            className="card border-danger"
-
-                                        >
+                                        <div className="card border-danger">
                                             <Link
                                                 to={`/development?filter_name=${status.user_name.toLowerCase()}-active-projects`}
-                                                className="text-decoration-none"
+                                                className="text-dark text-decoration-none"
                                             >
                                                 <div className="card-body ">
                                                     <IoPlayCircleOutline />
@@ -424,40 +464,89 @@ function Departments({ setIsLoggedIn }) {
                                     {/* ON TRACK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-success">
-                                            <div className="card-body ">
-                                                <FaRegCheckCircle />
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-on-track-projects`} className="text-dark text-decoration-none">
 
-                                                <h6 className="card-title text-muted mb-2">ON TRACK</h6>
-                                                <h2 className="mb-0 text-success">{projectsByStatus.onTrack}</h2>
-                                            </div>
+                                                <div className="card-body ">
+                                                    <FaRegCheckCircle />
+
+                                                    <h6 className="card-title text-muted mb-2">ON TRACK</h6>
+                                                    <h2 className="mb-0 text-success">{projectsByStatus.onTrack}</h2>
+                                                </div>
+                                            </Link>
                                         </div>
                                     </div>
 
                                     {/* OFF TRACK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-warning">
-                                            <div className="card-body">
-                                                <RxCrossCircled />
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-off-track-projects`} className="text-dark text-decoration-none">
+                                                <div className="card-body">
+                                                    <RxCrossCircled />
 
-                                                <h6 className="card-title text-muted mb-2">OFF TRACK</h6>
-                                                <h2 className="mb-0 text-warning">{projectsByStatus.offTrack}</h2>
-                                            </div>
+                                                    <h6 className="card-title text-muted mb-2">OFF TRACK</h6>
+                                                    <h2 className="mb-0 text-warning">{projectsByStatus.offTrack}</h2>
+                                                </div>
+                                            </Link>
                                         </div>
                                     </div>
 
                                     {/* AT RISK Card */}
                                     <div className="col-md-3">
-                                        <div className="card border-danger">
-                                            <div className="card-body">
-                                                <CgDanger />
+                                        <div className="card border-info">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-at-risk-projects`} className="text-dark text-decoration-none">
+                                                <div className="card-body">
+                                                    <CgDanger />
 
-                                                <h6 className="card-title text-muted mb-2">AT RISK</h6>
-                                                <h2 className="mb-0 text-danger">{projectsByStatus.atRisk}</h2>
-                                            </div>
+                                                    <h6 className="card-title text-muted mb-2">AT RISK</h6>
+                                                    <h2 className="mb-0 text-danger">{projectsByStatus.atRisk}</h2>
+                                                </div>
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    {/* Follow up */}
+
+                                    <div className="col-md-3">
+                                        <div className="card border-dark">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-follow-up-projects`} className="text-dark text-decoration-none">
+                                                <div className="card-body">
+                                                    <RiChatFollowUpFill />
+
+                                                    <h6 className="card-title text-muted mb-2">Follow up</h6>
+                                                    <h2 className="mb-0 text-danger">{projectsByStatus.followUp}</h2>
+                                                </div>
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    {/* Forwarded to client projects */}
+                                    <div className="col-md-3">
+                                        <div className="card border-warning">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-forwarded-to-client-projects`} className="text-dark text-decoration-none">
+                                                <div className="card-body">
+                                                    <MdOutlinePhoneForwarded />
+
+                                                    <h6 className="card-title text-muted mb-2">Forwarded to client</h6>
+                                                    <h2 className="mb-0 text-danger">{projectsByStatus.forwardedToClient}</h2>
+                                                </div>
+                                            </Link>
                                         </div>
                                     </div>
 
 
+                                    {/* Completed projects */}
+                                    <div className="col-md-3">
+                                        <div className="card border-success">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
+                                                <div className="card-body">
+                                                    <MdOutlineIncompleteCircle />
+
+                                                    <h6 className="card-title text-muted mb-2">Completed</h6>
+                                                    <h2 className="mb-0 text-danger">{projectsByStatus.completed}</h2>
+                                                </div>
+                                            </Link>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
