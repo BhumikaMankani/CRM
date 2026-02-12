@@ -22,9 +22,12 @@ import { RiChatFollowUpFill } from "react-icons/ri";
 const ACTIVE_STATUSES = [
     "Not started",
     "OFF TRACK",
-    "Forworded to Client ",
-    "Offtrack - client",
     "Forwarded to client",
+    "Forwarded to Client",
+    "Forworded to Client",
+    "At Risk",
+    "AT RISK",
+    "Offtrack - client",
     "Follow up",
     "ON TRACK",
 ];
@@ -218,63 +221,48 @@ function Departments({ setIsLoggedIn }) {
                     const isActiveStatus = value => {
                         const normalized = (value || "").trim().toLowerCase();
                         return ACTIVE_STATUSES.some(
-                            s => s.trim().toLowerCase() === normalized
+                            s => normalized.includes(s.trim().toLowerCase())
                         );
                     };
 
                     userProjects.forEach(project => {
-                        // Find the status field (it might be named 'status' or have a prefix)
-                        const statusField = Object.keys(project).find(
-                            key =>
-                                key.toLowerCase().includes("status") &&
-                                !key.toLowerCase().includes("showstatus")
-                        );
+                        // Use identified statusColumnName if available, else fallback to search
+                        const fieldToUse = statusColumnName && (statusColumnName in project)
+                            ? statusColumnName
+                            : Object.keys(project).find(
+                                key =>
+                                    key.toLowerCase().includes("status") &&
+                                    !key.toLowerCase().includes("showstatus")
+                            );
 
-                        // if (statusField) {
-                        //     const statusValue = project[statusField];
-                        //     if (statusValue === "ON TRACK") {
-                        //         statusCounts.onTrack++;
-                        //     } else if (statusValue === "OFF TRACK") {
-                        //         statusCounts.offTrack++;
-                        //     } else if (statusValue === "AT RISK") {
-                        //         statusCounts.atRisk++;
-                        //     } else if (statusValue === "FOLLOW UP") {
-                        //         statusCounts.followUp++;
-                        //     }
-
-                        //     // Active projects count - all 6 statuses from filter
-                        //     if (isActiveStatus(statusValue)) {
-                        //         activeCount++;
-                        //     }
-                        // }
-                        if (statusField) {
-                            const statusValue = project[statusField];
+                        if (fieldToUse) {
+                            const statusValue = project[fieldToUse];
 
                             if (!statusValue) return;
 
                             const normalizedStatus = String(statusValue).trim().toUpperCase();
 
-                            const statusMap = {
-                                "ON TRACK": "onTrack",
-                                "OFF TRACK": "offTrack",
-                                "AT RISK": "atRisk",
-                                "NOT STARTED": "notStarted",
-                                "FORWARDED TO CLIENT": "forwardedToClient",
-                                "FOLLOW UP": "followUp",
-                                "COMPLETED": "completed"
-                            };
-
-                            const key = statusMap[normalizedStatus];
-
-                            if (key) {
-                                statusCounts[key]++;
+                            // Use fuzzy matching for status counts to match Development filter behavior
+                            if (normalizedStatus.includes("ON TRACK")) {
+                                statusCounts.onTrack++;
+                            } else if (normalizedStatus.includes("OFF TRACK")) {
+                                statusCounts.offTrack++;
+                            } else if (normalizedStatus.includes("AT RISK")) {
+                                statusCounts.atRisk++;
+                            } else if (normalizedStatus.includes("NOT STARTED")) {
+                                statusCounts.notStarted++;
+                            } else if (normalizedStatus.includes("FORWARDED") || normalizedStatus.includes("FORWORDED")) {
+                                statusCounts.forwardedToClient++;
+                            } else if (normalizedStatus.includes("FOLLOW UP")) {
+                                statusCounts.followUp++;
+                            } else if (normalizedStatus.includes("COMPLETED")) {
+                                statusCounts.completed++;
                             }
 
                             if (isActiveStatus(normalizedStatus)) {
                                 activeCount++;
                             }
                         }
-
                     });
 
                     setProjectsByStatus(statusCounts);
@@ -525,7 +513,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Forwarded to client projects */}
                                     <div className="col-md-3">
                                         <div className="card border-warning">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-forwarded-to-client-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-forwarded-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <MdOutlinePhoneForwarded />
 
