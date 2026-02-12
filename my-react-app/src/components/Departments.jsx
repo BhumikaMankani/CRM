@@ -493,11 +493,11 @@ function Departments({ setIsLoggedIn }) {
                                     {/* AT RISK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-info">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-at-risk-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <CgDanger />
 
-                                                    <h6 className="card-title text-muted mb-2">AT RISK</h6>
+                                                    <h6 className="card-title text-muted mb-2">NOT STARTED</h6>
                                                     <h2 className="mb-0 text-danger">{projectsByStatus.atRisk}</h2>
                                                 </div>
                                             </Link>
@@ -537,7 +537,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Completed projects */}
                                     <div className="col-md-3">
                                         <div className="card border-success">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <MdOutlineIncompleteCircle />
 
