@@ -501,7 +501,7 @@ function Departments({ setIsLoggedIn }) {
                                                     <CgDanger />
 
                                                     <h6 className="card-title text-muted mb-2">NOT STARTED</h6>
-                                                    <h2 className="mb-0 text-danger">{projectsByStatus.atRisk}</h2>
+                                                    <h2 className="mb-0 text-danger">{projectsByStatus.notStarted}</h2>
                                                 </div>
                                             </Link>
                                         </div>
