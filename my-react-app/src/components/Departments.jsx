@@ -47,6 +47,7 @@ function Departments({ setIsLoggedIn }) {
         onTrack: 0,
         offTrack: 0,
         atRisk: 0,
+        notStarted: 0,
         forwardedToClient: 0,
         followUp: 0,
         completed: 0,
@@ -208,6 +209,7 @@ function Departments({ setIsLoggedIn }) {
                         offTrack: 0,
                         forwardedToClient: 0,
                         atRisk: 0,
+                        notStarted: 0,
                         followUp: 0,
                         completed: 0
                     };
@@ -256,6 +258,7 @@ function Departments({ setIsLoggedIn }) {
                                 "ON TRACK": "onTrack",
                                 "OFF TRACK": "offTrack",
                                 "AT RISK": "atRisk",
+                                "NOT STARTED": "notStarted",
                                 "FORWARDED TO CLIENT": "forwardedToClient",
                                 "FOLLOW UP": "followUp",
                                 "COMPLETED": "completed"
@@ -493,12 +496,12 @@ function Departments({ setIsLoggedIn }) {
                                     {/* AT RISK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-info">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-at-risk-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <CgDanger />
 
-                                                    <h6 className="card-title text-muted mb-2">AT RISK</h6>
-                                                    <h2 className="mb-0 text-danger">{projectsByStatus.atRisk}</h2>
+                                                    <h6 className="card-title text-muted mb-2">NOT STARTED</h6>
+                                                    <h2 className="mb-0 text-danger">{projectsByStatus.notStarted}</h2>
                                                 </div>
                                             </Link>
                                         </div>
@@ -508,7 +511,7 @@ function Departments({ setIsLoggedIn }) {
 
                                     <div className="col-md-3">
                                         <div className="card border-dark">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-follow-up-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-follow-up`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <RiChatFollowUpFill />
 

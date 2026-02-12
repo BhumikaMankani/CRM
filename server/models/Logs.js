@@ -1,13 +1,10 @@
 const mongoose = require("mongoose");
 
 const LogsSchema = new mongoose.Schema({
-    level: String,        // log | error | warn | info
+    level: String,
     message: String,
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-});
+    source: String,
+    time: Date
+}, { timestamps: true });
 
-// IMPORTANT: "logs" = your existing collection name
-module.exports = mongoose.model("Logs", LogsSchema, "logs");
+module.exports = mongoose.model("Logs", LogsSchema);
