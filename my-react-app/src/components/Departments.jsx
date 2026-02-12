@@ -47,6 +47,7 @@ function Departments({ setIsLoggedIn }) {
         onTrack: 0,
         offTrack: 0,
         atRisk: 0,
+        notStarted: 0,
         forwardedToClient: 0,
         followUp: 0,
         completed: 0,
@@ -208,6 +209,7 @@ function Departments({ setIsLoggedIn }) {
                         offTrack: 0,
                         forwardedToClient: 0,
                         atRisk: 0,
+                        notStarted: 0,
                         followUp: 0,
                         completed: 0
                     };
@@ -256,6 +258,7 @@ function Departments({ setIsLoggedIn }) {
                                 "ON TRACK": "onTrack",
                                 "OFF TRACK": "offTrack",
                                 "AT RISK": "atRisk",
+                                "NOT STARTED": "notStarted",
                                 "FORWARDED TO CLIENT": "forwardedToClient",
                                 "FOLLOW UP": "followUp",
                                 "COMPLETED": "completed"

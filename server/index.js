@@ -50,7 +50,6 @@ connectDB();
 // Wait for DB connection before starting
 mongoose.connection.once('open', () => {
     startDefaultValueUpdater();
-    updateDefaultValues();
 });
 
 // User.syncIndexes();
