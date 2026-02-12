@@ -508,7 +508,7 @@ function Departments({ setIsLoggedIn }) {
 
                                     <div className="col-md-3">
                                         <div className="card border-dark">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-follow-up-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-follow-up`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <RiChatFollowUpFill />
 
