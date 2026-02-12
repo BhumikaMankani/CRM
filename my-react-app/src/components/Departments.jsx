@@ -537,7 +537,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Completed projects */}
                                     <div className="col-md-3">
                                         <div className="card border-success">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <MdOutlineIncompleteCircle />
 
