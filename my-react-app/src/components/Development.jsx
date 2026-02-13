@@ -7,6 +7,8 @@ import AnalyticsModal from "./AnalyticsModal";
 import ToggleButtonIcon from "./toggle";
 import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
@@ -63,6 +65,10 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     label: "",
   });
 
+  const [resetConfirmation, setResetConfirmation] = useState({
+    isOpen: false,
+  });
+
   const [editAccessModal, setEditAccessModal] = useState({
     isOpen: false,
     column: null,
@@ -97,6 +103,26 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   });
 
   const [loadingUpdater, setLoadingUpdater] = useState(false);
+  const [resetDisabled, setResetDisabled] = useState(false);
+
+  useEffect(() => {
+    const checkResetStatus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/columns/reset/status`);
+        if (res.ok) {
+          const status = await res.json();
+          // If remainingMs > 0, it means blocked
+          setResetDisabled(!status.canReset);
+        }
+      } catch (e) {
+        console.error("Failed to check global reset status", e);
+      }
+    };
+
+    checkResetStatus();
+    const interval = setInterval(checkResetStatus, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
 
   const updateColumnDefaultValue = async () => {
     try {
@@ -318,10 +344,11 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         // Multi-select (array)
         if (Array.isArray(filterValue)) {
           if (filterValue.length === 0) return;
-          const cellValue = String(row[key] ?? "").trim();
-          const matches = filterValue.some(
-            (fv) => String(fv ?? "").trim().toLowerCase() === cellValue.toLowerCase()
-          );
+          const cellValue = String(row[key] ?? "").trim().toLowerCase();
+          const matches = filterValue.some((fv) => {
+            const fvLower = String(fv ?? "").trim().toLowerCase();
+            return cellValue === fvLower || cellValue.startsWith(fvLower + " ");
+          });
           if (!matches) rowMatches = false;
         } else {
           // String or number
@@ -562,13 +589,11 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       if (Array.isArray(filterValue)) {
         if (filterValue.length === 0) return;
         processedData = processedData.filter((row) => {
-          const cellValue = String(row[key] ?? "").trim();
-          return filterValue.some(
-            (fv) =>
-              String(fv ?? "")
-                .trim()
-                .toLowerCase() === cellValue.toLowerCase()
-          );
+          const cellValue = String(row[key] ?? "").trim().toLowerCase();
+          return filterValue.some((fv) => {
+            const fvLower = String(fv ?? "").trim().toLowerCase();
+            return cellValue === fvLower || cellValue.startsWith(fvLower + " ");
+          });
         });
       } else {
         const filterStr = String(filterValue).toLowerCase();
@@ -586,6 +611,36 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       processedData.sort((a, b) => {
         const aValue = a[sortConfig.key] || "";
         const bValue = b[sortConfig.key] || "";
+
+        const col = columnsDef.find((c) => c.name === sortConfig.key);
+        if (col && col.column_type === "monthYear") {
+          const months = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+          ];
+          const getVal = (val) => {
+            const parts = String(val).split(" ");
+            if (parts.length < 2) return 0;
+            const monthIdx = months.indexOf(parts[0]);
+            const year = parseInt(parts[1]);
+            return year * 100 + monthIdx;
+          };
+          const scoreA = getVal(aValue);
+          const scoreB = getVal(bValue);
+          return sortConfig.direction === "asc"
+            ? scoreA - scoreB
+            : scoreB - scoreA;
+        }
 
         if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
@@ -882,9 +937,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky }) => {
+  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear }) => {
     try {
-      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky };
+      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}${dataColumns}/${columnName}/access`,
@@ -912,6 +967,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               lessPrefix: updated.lessPrefix,
               showInfo: updated.showInfo,
               sticky: updated.sticky,
+              showYear: updated.showYear,
               ...(updated.column_heading && { column_heading: updated.column_heading }),
             }
             : col
@@ -979,8 +1035,17 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             newRow[col.name] = "Not started";
           } else if (heading === "start date") {
             newRow[col.name] = todayDate;
+          } else if (col.column_type === "monthYear") {
+            const currentYear = new Date().getFullYear();
+            const monthNamesFull = [
+              "January", "February", "March", "April", "May", "June",
+              "July", "August", "September", "October", "November", "December"
+            ];
+            const currentMonthFull = monthNamesFull[new Date().getMonth()];
+            newRow[col.name] = `${currentMonthFull} ${currentYear}`;
           } else if (heading === "month") {
-            newRow[col.name] = currentMonthName;
+            const currentYear = new Date().getFullYear();
+            newRow[col.name] = col.showYear ? `${currentMonthName} ${currentYear}` : currentMonthName;
           } else {
             // Use the column's configured default value if available
             newRow[col.name] = (col.hasDefaultValue && col.defaultValue) ? col.defaultValue : "";
@@ -1665,8 +1730,102 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             }
           }
 
+          if (col.column_type === "monthYear") {
+            const rowValue = value || "";
+            let selectedDate = null;
+            if (rowValue) {
+              const dateStr = `1 ${rowValue}`; // e.g. "1 January 2026"
+              const parsed = new Date(dateStr);
+              if (!isNaN(parsed.getTime())) {
+                selectedDate = parsed;
+              }
+            }
+
+            return (
+              <div className="d-flex align-items-center gap-1" style={{ minWidth: "140px" }}>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date) => {
+                    if (date) {
+                      const monthNames = [
+                        "January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"
+                      ];
+                      const month = monthNames[date.getMonth()];
+                      const year = date.getFullYear();
+                      const newValue = `${month} ${year}`;
+                      handleChange(row._id, col.name, newValue);
+                    } else {
+                      handleChange(row._id, col.name, "");
+                    }
+                  }}
+                  dateFormat="MMMM yyyy"
+                  showMonthYearPicker
+                  className="form-control form-control-sm border-0 shadow-none bg-transparent p-0"
+                  wrapperClassName="w-100"
+                  placeholderText="Select Month Year"
+                  disabled={!canEdit(col.name, col)}
+                />
+
+                {status.status === "admin" &&
+                  (col.showInfo || col.hasDefaultValue) && (
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 small ms-1"
+                      title="View change history"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setAuditModal({
+                          isOpen: true,
+                          columnName: col.column_heading,
+                          auditData: [],
+                          loading: true,
+                        });
+                        try {
+                          const res = await fetch(
+                            `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                          );
+                          if (!res.ok)
+                            throw new Error("Failed to fetch history");
+                          const history = await res.json();
+                          setAuditModal({
+                            isOpen: true,
+                            columnName: col.column_heading,
+                            auditData: history,
+                            loading: false,
+                          });
+                        } catch (err) {
+                          console.error("Failed to load audit history", err);
+                          setAuditModal({
+                            isOpen: true,
+                            columnName: col.column_heading,
+                            auditData: [],
+                            loading: false,
+                          });
+                        }
+                      }}
+                    >
+                      <BsInfoCircleFill style={{ color: "#2563eb" }} />
+                    </button>
+                  )}
+              </div>
+            );
+          }
+
           if (col.column_type === "select") {
-            const trimmedValue = value.toString().trim();
+            const rowValue = value || "";
+            let displayMonth = rowValue;
+            let displayYear = new Date().getFullYear();
+
+            if (col.showYear && rowValue) {
+              const parts = String(rowValue).split(" ");
+              if (parts.length > 1) {
+                displayMonth = parts[0];
+                displayYear = parts[1];
+              }
+            }
+
+            const trimmedValue = displayMonth.toString().trim();
             const optionColors = col.optionColors || {};
             const optionTextColors = col.optionTextColors || {};
 
@@ -1699,9 +1858,12 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             return (
               <div className="d-flex align-items-center gap-1">
                 <CustomSelectDropdown
-                  value={value}
+                  value={displayMonth}
                   options={col.multipleValue || []}
-                  onChange={(newValue) => handleChange(row._id, col.name, newValue)}
+                  onChange={(newMonth) => {
+                    const newValue = col.showYear ? `${newMonth} ${displayYear}` : newMonth;
+                    handleChange(row._id, col.name, newValue);
+                  }}
                   disabled={!canEdit(col.name, col)}
                   optionColors={optionColors}
                   optionTextColors={optionTextColors}
@@ -1712,6 +1874,20 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   }}
                   showEditButton={status?.status === "admin"}
                 />
+                {col.showYear && (
+                  <input
+                    type="number"
+                    value={displayYear}
+                    onChange={(e) => {
+                      const newYear = e.target.value;
+                      const newValue = `${displayMonth} ${newYear}`;
+                      handleChange(row._id, col.name, newValue);
+                    }}
+                    className="form-control form-control-sm bg-transparent border shadow-none text-dark"
+                    style={{ width: '65px', fontSize: '13px', padding: '2px 4px' }}
+                    disabled={!canEdit(col.name, col)}
+                  />
+                )}
                 {status.status === "admin" &&
                   (col.showInfo || (col.hasDefaultValue)) && (
                     <button
@@ -1939,6 +2115,18 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             </button>
           )}
         </div>
+        <div>
+          {status?.status === 'admin' && (
+            <button
+              type="button"
+              className="btn btn-outline-danger"
+              disabled={resetDisabled}
+              onClick={() => setResetConfirmation({ isOpen: true })}
+            >
+              Reset
+            </button>
+          )}
+        </div>
         {status?.status === "admin" ? (
           <button
             className="btn btn-outline-dark"
@@ -2122,260 +2310,267 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         }}
       />
 
-      {deleteConfirmation.isOpen && (
-        <div
-          className="delete-confirmation-overlay"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-        >
+      {
+        deleteConfirmation.isOpen && (
           <div
-            className="delete-confirmation-modal"
+            className="delete-confirmation-overlay"
             style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              textAlign: "center",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
             }}
           >
-            <h4>Delete Column</h4>
-            <p>
-              Are you sure you want to delete the column "
-              <strong>{deleteConfirmation.label}</strong>"?
-            </p>
-            <div className="d-flex justify-content-center gap-2 mt-3">
-              <button className="btn btn-danger me-2" onClick={confirmDelete}>
-                Yes
-              </button>
-              <button className="btn btn-secondary" onClick={cancelDelete}>
-                No
-              </button>
+            <div
+              className="delete-confirmation-modal"
+              style={{
+                backgroundColor: "white",
+                padding: "20px",
+                borderRadius: "8px",
+                textAlign: "center",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h4>Delete Column</h4>
+              <p>
+                Are you sure you want to delete the column "
+                <strong>{deleteConfirmation.label}</strong>"?
+              </p>
+              <div className="d-flex justify-content-center gap-2 mt-3">
+                <button className="btn btn-danger me-2" onClick={confirmDelete}>
+                  Yes
+                </button>
+                <button className="btn btn-secondary" onClick={cancelDelete}>
+                  No
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {deleteRowConfirmation.isOpen && (
-        <div
-          className="delete-confirmation-overlay"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-        >
+      {
+        deleteRowConfirmation.isOpen && (
           <div
-            className="delete-confirmation-modal"
+            className="delete-confirmation-overlay"
             style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              textAlign: "center",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
             }}
           >
-            <h4>Delete Row</h4>
-            <p>
-              Are you sure you want to delete{" "}
-              {deleteRowConfirmation.label ? (
-                <>
-                  "<strong>{deleteRowConfirmation.label}</strong>"?
-                </>
-              ) : (
-                "this row?"
-              )}
-            </p>
-            <div className="d-flex justify-content-center gap-2 mt-3">
-              <button className="btn btn-danger me-2" onClick={confirmDeleteRow}>
-                Yes
-              </button>
-              <button className="btn btn-secondary" onClick={cancelDeleteRow}>
-                No
-              </button>
+            <div
+              className="delete-confirmation-modal"
+              style={{
+                backgroundColor: "white",
+                padding: "20px",
+                borderRadius: "8px",
+                textAlign: "center",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h4>Delete Row</h4>
+              <p>
+                Are you sure you want to delete{" "}
+                {deleteRowConfirmation.label ? (
+                  <>
+                    "<strong>{deleteRowConfirmation.label}</strong>"?
+                  </>
+                ) : (
+                  "this row?"
+                )}
+              </p>
+              <div className="d-flex justify-content-center gap-2 mt-3">
+                <button className="btn btn-danger me-2" onClick={confirmDeleteRow}>
+                  Yes
+                </button>
+                <button className="btn btn-secondary" onClick={cancelDeleteRow}>
+                  No
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {deleteFilterConfirmation.isOpen && (
-        <div
-          className="delete-confirmation-overlay"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-        >
+      {
+        deleteFilterConfirmation.isOpen && (
           <div
-            className="delete-confirmation-modal"
+            className="delete-confirmation-overlay"
             style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              textAlign: "center",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
             }}
           >
-            <h4>Delete Filter</h4>
-            <p>
-              Are you sure you want to delete the filter "
-              <strong>{deleteFilterConfirmation.filterName}</strong>"?
-            </p>
-            <div className="d-flex justify-content-center gap-2 mt-3">
-              <button className="btn btn-danger me-2" onClick={confirmDeleteFilter}>
-                Yes
-              </button>
-              <button className="btn btn-secondary" onClick={() => setDeleteFilterConfirmation({ isOpen: false, filterId: null, filterName: "" })}>
-                No
-              </button>
+            <div
+              className="delete-confirmation-modal"
+              style={{
+                backgroundColor: "white",
+                padding: "20px",
+                borderRadius: "8px",
+                textAlign: "center",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h4>Delete Filter</h4>
+              <p>
+                Are you sure you want to delete the filter "
+                <strong>{deleteFilterConfirmation.filterName}</strong>"?
+              </p>
+              <div className="d-flex justify-content-center gap-2 mt-3">
+                <button className="btn btn-danger me-2" onClick={confirmDeleteFilter}>
+                  Yes
+                </button>
+                <button className="btn btn-secondary" onClick={() => setDeleteFilterConfirmation({ isOpen: false, filterId: null, filterName: "" })}>
+                  No
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Audit History Modal */}
-      {auditModal.isOpen && (
-        <div
-          className="delete-confirmation-overlay"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-          onClick={() =>
-            setAuditModal({ isOpen: false, columnName: "", auditData: [], loading: false })
-          }
-        >
+      {
+        auditModal.isOpen && (
           <div
-            className="delete-confirmation-modal info_popup_custom"
+            className="delete-confirmation-overlay"
             style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              maxWidth: "600px",
-              width: "90%",
-              maxHeight: "80vh",
-              overflow: "auto",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={() =>
+              setAuditModal({ isOpen: false, columnName: "", auditData: [], loading: false })
+            }
           >
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h4 className="mb-0">{auditModal.columnName}</h4>
-              <button
-                className="btn btn-link p-0"
-                onClick={() =>
-                  setAuditModal({
-                    isOpen: false,
-                    columnName: "",
-                    auditData: [],
-                    loading: false,
-                    createdInfo: null
-                  })
-                }
-              >
-                <FaTimes size={20} />
-              </button>
-            </div>
-            {auditModal.loading ? (
-              <div className="text-center py-4">
-                <div className="spinner-border" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
+            <div
+              className="delete-confirmation-modal info_popup_custom"
+              style={{
+                backgroundColor: "white",
+                padding: "20px",
+                borderRadius: "8px",
+                maxWidth: "600px",
+                width: "90%",
+                maxHeight: "80vh",
+                overflow: "auto",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h4 className="mb-0">{auditModal.columnName}</h4>
+                <button
+                  className="btn btn-link p-0"
+                  onClick={() =>
+                    setAuditModal({
+                      isOpen: false,
+                      columnName: "",
+                      auditData: [],
+                      loading: false,
+                      createdInfo: null
+                    })
+                  }
+                >
+                  <FaTimes size={20} />
+                </button>
               </div>
-            ) : (
-              <div className="d-flex flex-column gap-3">
-                {auditModal.createdInfo && (
-                  <div className="d-flex align-items-center gap-2 justify-content-between p-3 bg-light rounded border">
-                    {/* <h6 className="mb-2 fw-bold">Creation Details</h6> */}
-                    <div className="d-flex gap-2">
-                      <span className="fs-14 letter-spacing_ct">Created By:</span>
-                      <span className="fw-bold fs-14">{auditModal.createdInfo.name}</span>
-                    </div>
-                    <div className="d-flex gap-2">
-                      <span className="fs-14 letter-spacing_ct">Created At:</span>
-                      <span className="fw-bold fs-14">{auditModal.createdInfo.time ? new Date(auditModal.createdInfo.time).toLocaleString() : "Unknown"}</span>
-                    </div>
+              {auditModal.loading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border" role="status">
+                    <span className="visually-hidden">Loading...</span>
                   </div>
-                )}
-
-                <div>
-                  <h6 className="mb-3 fw-bold">Change History</h6>
-                  {auditModal.auditData.length === 0 ? (
-                    <p className="text-muted text-center py-2 border rounded">
-                      No changes recorded.
-                    </p>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="table table-sm table-bordered">
-                        <thead>
-                          <tr>
-                            <th>User</th>
-                            <th>Time</th>
-                            <th>New Value</th>
-                            <th>Old Value</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {auditModal.auditData.map((audit, idx) => (
-                            <tr key={idx}>
-                              <td>{audit.changedByUserName || "Unknown"}</td>
-                              <td>{new Date(audit.changedAt).toLocaleString()}</td>
-                              <td>
-                                {audit.newValue === "" ? (
-                                  <em className="text-muted">Empty</em>
-                                ) : (
-                                  audit.newValue ?? "-"
-                                )}
-                              </td>
-                              <td>
-                                {audit.oldValue === "" ? (
-                                  <em className="text-muted">Empty</em>
-                                ) : (
-                                  audit.oldValue ?? "-"
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-3">
+                  {auditModal.createdInfo && (
+                    <div className="d-flex align-items-center gap-2 justify-content-between p-3 bg-light rounded border">
+                      {/* <h6 className="mb-2 fw-bold">Creation Details</h6> */}
+                      <div className="d-flex gap-2">
+                        <span className="fs-14 letter-spacing_ct">Created By:</span>
+                        <span className="fw-bold fs-14">{auditModal.createdInfo.name}</span>
+                      </div>
+                      <div className="d-flex gap-2">
+                        <span className="fs-14 letter-spacing_ct">Created At:</span>
+                        <span className="fw-bold fs-14">{auditModal.createdInfo.time ? new Date(auditModal.createdInfo.time).toLocaleString() : "Unknown"}</span>
+                      </div>
                     </div>
                   )}
+
+                  <div>
+                    <h6 className="mb-3 fw-bold">Change History</h6>
+                    {auditModal.auditData.length === 0 ? (
+                      <p className="text-muted text-center py-2 border rounded">
+                        No changes recorded.
+                      </p>
+                    ) : (
+                      <div className="table-responsive">
+                        <table className="table table-sm table-bordered">
+                          <thead>
+                            <tr>
+                              <th>User</th>
+                              <th>Time</th>
+                              <th>New Value</th>
+                              <th>Old Value</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {auditModal.auditData.map((audit, idx) => (
+                              <tr key={idx}>
+                                <td>{audit.changedByUserName || "Unknown"}</td>
+                                <td>{new Date(audit.changedAt).toLocaleString()}</td>
+                                <td>
+                                  {audit.newValue === "" ? (
+                                    <em className="text-muted">Empty</em>
+                                  ) : (
+                                    audit.newValue ?? "-"
+                                  )}
+                                </td>
+                                <td>
+                                  {audit.oldValue === "" ? (
+                                    <em className="text-muted">Empty</em>
+                                  ) : (
+                                    audit.oldValue ?? "-"
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-            {/* <div className="d-flex justify-content-end mt-3">
+              )}
+              {/* <div className="d-flex justify-content-end mt-3">
               <button
                 className="btn btn-secondary"
                 onClick={() =>
@@ -2390,9 +2585,10 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                 Close
               </button>
             </div> */}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <ColorPickerModal
         isOpen={isColorModalOpen}
@@ -2427,7 +2623,98 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         onDelete={handleDeleteFilter}
         userStatus={status}
       />
-    </section>
+
+      {resetConfirmation.isOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1060,
+          }}
+        >
+          <div
+            className="bg-white p-4 rounded shadow-lg"
+            style={{ maxWidth: "400px", width: "100%" }}
+          >
+            <h5 className="mb-3 text-danger">Confirm Reset</h5>
+            <p className="mb-4">
+              Are you sure you want to KEY RESET columns to their default values for ALL visible rows?
+            </p>
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setResetConfirmation({ isOpen: false })}
+              >
+                No
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={() => {
+                  const updates = [];
+                  // Iterate through all visible data
+                  data.forEach(row => {
+                    columnsDef.forEach(col => {
+                      if (col.hasDefaultValue && col.defaultValue) {
+                        // Only update if current value is different (optional optimization)
+                        if (row[col.name] !== col.defaultValue) {
+                          updates.push({
+                            rowId: row._id,
+                            field: col.name,
+                            value: col.defaultValue
+                          });
+                        }
+                      }
+                    });
+                  });
+
+                  if (updates.length === 0) {
+                    alert("No applicable columns with default values found to reset."); // Using alert here inside modal for feedback is ok, or could show another state
+                    setResetConfirmation({ isOpen: false });
+                    return;
+                  }
+
+                  // Optimistic UI update
+                  setData(prevData => {
+                    return prevData.map(r => {
+                      const rowUpdates = updates.filter(u => u.rowId === r._id);
+                      if (rowUpdates.length === 0) return r;
+                      const newRow = { ...r };
+                      rowUpdates.forEach(u => {
+                        newRow[u.field] = u.value;
+                      });
+                      return newRow;
+                    });
+                  });
+
+                  // Fire requests
+                  let successCount = 0;
+                  for (const update of updates) {
+                    handleChange(update.rowId, update.field, update.value);
+                    successCount++;
+                  }
+
+                  // Lock via API
+                  fetch(`${API_URL}/api/columns/reset/lock`, { method: "POST" }).catch(e => console.error(e));
+
+                  setResetDisabled(true);
+                  // alert(`Reset initiated for ${successCount} fields across rows.`); // Optional feedback
+                  setResetConfirmation({ isOpen: false });
+                }}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section >
   );
 }
 

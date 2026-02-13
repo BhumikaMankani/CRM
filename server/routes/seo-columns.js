@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 // Add new column
 router.post("/", async (req, res) => {
     try {
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky, showYear } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -41,6 +41,7 @@ router.post("/", async (req, res) => {
             access: Array.isArray(access) ? access : [],
             viewAccess: Array.isArray(viewAccess) ? viewAccess : [],
             sticky: !!sticky,
+            showYear: !!showYear,
             status: 'active',
             order: nextOrder
         });
@@ -135,7 +136,7 @@ router.patch("/deactivate/:name", async (req, res) => {
 // Update column access and/or heading
 router.patch("/:name/access", async (req, res) => {
     try {
-        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky } = req.body;
+        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky, showYear } = req.body;
         const updateData = {};
         if (Array.isArray(access)) updateData.access = access;
         if (Array.isArray(viewAccess)) updateData.viewAccess = viewAccess;
@@ -147,6 +148,9 @@ router.patch("/:name/access", async (req, res) => {
         }
         if (typeof sticky === "boolean") {
             updateData.sticky = sticky;
+        }
+        if (typeof showYear === "boolean") {
+            updateData.showYear = showYear;
         }
         if (typeof req.body.showInfo === "boolean") {
             updateData.showInfo = req.body.showInfo;
