@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 // Add new column
 router.post("/", async (req, res) => {
     try {
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky, showYear } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -41,6 +41,7 @@ router.post("/", async (req, res) => {
             access: Array.isArray(access) ? access : [],
             viewAccess: Array.isArray(viewAccess) ? viewAccess : [],
             sticky: !!sticky,
+            showYear: !!showYear,
             status: 'active'
         });
         await column.save();
@@ -134,7 +135,7 @@ router.patch("/deactivate/:name", async (req, res) => {
 // Update column access and/or heading
 router.patch("/:name/access", async (req, res) => {
     try {
-        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky } = req.body;
+        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky, showYear } = req.body;
         const updateData = {};
         if (Array.isArray(access)) updateData.access = access;
         if (Array.isArray(viewAccess)) updateData.viewAccess = viewAccess;
@@ -146,6 +147,9 @@ router.patch("/:name/access", async (req, res) => {
         }
         if (typeof sticky === "boolean") {
             updateData.sticky = sticky;
+        }
+        if (typeof showYear === "boolean") {
+            updateData.showYear = showYear;
         }
         if (typeof req.body.showInfo === "boolean") {
             updateData.showInfo = req.body.showInfo;
@@ -163,6 +167,53 @@ router.patch("/:name/access", async (req, res) => {
         }
         res.json(updated);
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Global Reset Lock API
+router.get("/reset/status", async (req, res) => {
+    try {
+        const lastResetLog = await require("../models/Logs").findOne({
+            source: "global_column_reset",
+            message: "RESET_EXECUTED"
+        }).sort({ createdAt: -1 });
+
+        if (!lastResetLog) {
+            return res.json({ canReset: true, lastResetTime: null, remainingMs: 0 });
+        }
+
+        const lastResetTime = new Date(lastResetLog.createdAt).getTime();
+        const now = Date.now();
+        const diff = now - lastResetTime;
+        const LOCK_DURATION = 20 * 60 * 60 * 1000; // 20 hours
+
+        if (diff < LOCK_DURATION) {
+            return res.json({
+                canReset: false,
+                lastResetTime,
+                remainingMs: LOCK_DURATION - diff
+            });
+        }
+
+        res.json({ canReset: true, lastResetTime, remainingMs: 0 });
+    } catch (err) {
+        console.error("Error checking reset status:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post("/reset/lock", async (req, res) => {
+    try {
+        await require("../models/Logs").create({
+            level: "INFO",
+            source: "global_column_reset",
+            message: "RESET_EXECUTED",
+            time: new Date()
+        });
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Error locking reset:", err);
         res.status(500).json({ error: err.message });
     }
 });

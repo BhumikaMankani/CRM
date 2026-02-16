@@ -28,6 +28,7 @@ function Form({
     viewAccess: [],
     showInfo: false,
     sticky: false,
+    showYear: false,
   });
 
   const handleChange = (e) => {
@@ -153,6 +154,7 @@ function Form({
       viewAccess: Array.isArray(formData.viewAccess) ? formData.viewAccess : [],
       showInfo: !!formData.showInfo,
       sticky: !!formData.sticky,
+      showYear: !!formData.showYear,
     };
 
     console.log("payload", payload);
@@ -181,6 +183,7 @@ function Form({
       viewAccess: [],
       showInfo: false,
       sticky: false,
+      showYear: false,
     });
   };
 
@@ -227,6 +230,7 @@ function Form({
                   <option value="number">Number</option>
                   <option value="date">Date</option>
                   <option value="select">Select (Dropdown)</option>
+                  <option value="monthYear">Month Year</option>
                   <option value="condition">Condition</option>
                 </select>
               </div>
@@ -281,6 +285,23 @@ function Form({
                 htmlFor="sticky"
               >
                 Sticky Column
+              </label>
+            </div>
+
+            <div className="form-check form-check-inline">
+              <input
+                className="form-check-input"
+                onChange={handleChange}
+                type="checkbox"
+                id="showYear"
+                name="showYear"
+                checked={formData.showYear}
+              />
+              <label
+                className="form-check-label"
+                htmlFor="showYear"
+              >
+                Show Year
               </label>
             </div>
             <hr></hr>
