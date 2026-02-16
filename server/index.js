@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const cron = require("node-cron");
 
 // .Api collections
 // COlumns api
@@ -18,7 +19,7 @@ const Seo = require('./routes/seo');
 const Department = require('./routes/department');
 const User = require('./routes/user');
 const Filters = require('./routes/filters');
-const { startDefaultValueUpdater } = require('./services/defaultValueUpdater');
+const { updateDefaultValues } = require('./services/defaultValueUpdater');
 require('dotenv').config();
 
 const app = express();
@@ -48,8 +49,29 @@ connectDB();
 
 // Start the default value updater service
 // Wait for DB connection before starting
+let isRunning = false;
 mongoose.connection.once('open', () => {
-    startDefaultValueUpdater();
+    cron.schedule(
+        "00 23 * * *",
+        async () => {
+            try {
+                if (isRunning) {
+                    console.log("Previous run still executing — skipped");
+                    return;
+                }
+                isRunning = true;
+                await updateDefaultValues();
+            } catch (err) {
+                console.error("CRON EXECUTION FAILED:", err);
+            } finally {
+                isRunning = false;
+            }
+        },
+        {
+            scheduled: true,
+            timezone: "Asia/Kolkata",
+        }
+    );
 });
 
 // User.syncIndexes();
