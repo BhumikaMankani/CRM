@@ -7,8 +7,8 @@ import AnalyticsModal from "./AnalyticsModal";
 import ToggleButtonIcon from "./toggle";
 import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+// import DatePicker from "react-datepicker";
+// import "react-datepicker/dist/react-datepicker.css";
 
 import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
@@ -105,24 +105,24 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   const [loadingUpdater, setLoadingUpdater] = useState(false);
   const [resetDisabled, setResetDisabled] = useState(false);
 
-  useEffect(() => {
-    const checkResetStatus = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/columns/reset/status`);
-        if (res.ok) {
-          const status = await res.json();
-          // If remainingMs > 0, it means blocked
-          setResetDisabled(!status.canReset);
-        }
-      } catch (e) {
-        console.error("Failed to check global reset status", e);
-      }
-    };
+  // useEffect(() => {
+  //   const checkResetStatus = async () => {
+  //     try {
+  //       const res = await fetch(`${API_URL}/api/columns/reset/status`);
+  //       if (res.ok) {
+  //         const status = await res.json();
+  //         // If remainingMs > 0, it means blocked
+  //         setResetDisabled(!status.canReset);
+  //       }
+  //     } catch (e) {
+  //       console.error("Failed to check global reset status", e);
+  //     }
+  //   };
 
-    checkResetStatus();
-    const interval = setInterval(checkResetStatus, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, []);
+  //   checkResetStatus();
+  //   const interval = setInterval(checkResetStatus, 60000); // Check every minute
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const updateColumnDefaultValue = async () => {
     try {
@@ -1743,7 +1743,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
             return (
               <div className="d-flex align-items-center gap-1" style={{ minWidth: "140px" }}>
-                <DatePicker
+                {/* <DatePicker
                   selected={selectedDate}
                   onChange={(date) => {
                     if (date) {
@@ -1765,7 +1765,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   wrapperClassName="w-100"
                   placeholderText="Select Month Year"
                   disabled={!canEdit(col.name, col)}
-                />
+                /> */}
 
                 {status.status === "admin" &&
                   (col.showInfo || col.hasDefaultValue) && (
@@ -2115,7 +2115,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             </button>
           )}
         </div>
-        <div>
+        {/* <div>
           {status?.status === 'admin' && (
             <button
               type="button"
@@ -2126,7 +2126,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               Reset
             </button>
           )}
-        </div>
+        </div> */}
         {status?.status === "admin" ? (
           <button
             className="btn btn-outline-dark"
