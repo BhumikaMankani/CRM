@@ -7,8 +7,8 @@ import AnalyticsModal from "./AnalyticsModal";
 import ToggleButtonIcon from "./toggle";
 import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
-// import DatePicker from "react-datepicker";
-// import "react-datepicker/dist/react-datepicker.css";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
@@ -1743,7 +1743,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
             return (
               <div className="d-flex align-items-center gap-1" style={{ minWidth: "140px" }}>
-                {/* <DatePicker
+                {<DatePicker
                   selected={selectedDate}
                   onChange={(date) => {
                     if (date) {
@@ -1765,7 +1765,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   wrapperClassName="w-100"
                   placeholderText="Select Month Year"
                   disabled={!canEdit(col.name, col)}
-                /> */}
+                />}
 
                 {status.status === "admin" &&
                   (col.showInfo || col.hasDefaultValue) && (
