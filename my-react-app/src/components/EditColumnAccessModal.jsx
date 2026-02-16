@@ -25,6 +25,7 @@ const EditColumnAccessModal = ({
     setSorting(e.target.checked);
   };
 
+
   useEffect(() => {
     if (column) {
       const ids = Array.isArray(column.access)
