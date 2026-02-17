@@ -15,10 +15,29 @@ function App() {
 
   const [status, setStatus] = useState(null);
 
+
+  const getSessionData = (key) => {
+    const itemString = localStorage.getItem(key);
+    if (!itemString) return null;
+
+    let item;
+    try {
+      item = JSON.parse(itemString);
+    } catch {
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    if (!item?.expiry || Date.now() > item.expiry) {
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return item.value;
+  };
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    // Check if user is already logged in (using sessionStorage for current session)
-    return localStorage.getItem('isLoggedIn') === 'true';
+    return !!getSessionData('isLoggedIn');
   });
 
   useEffect(() => {
@@ -33,9 +52,10 @@ function App() {
   }, [isLoggedIn]);
 
   const handleLoginSuccess = () => {
+    setSessionData('isLoggedIn', true, 24);
     setIsLoggedIn(true);
-    localStorage.setItem('isLoggedIn', 'true');
-    // Re-read user data from localStorage
+
+    console.log("user", user);
     const user = localStorage.getItem("user");
     if (user) {
       setStatus(JSON.parse(user));
@@ -50,6 +70,23 @@ function App() {
     localStorage.removeItem("Password");
     navigate("/");
   }
+
+  useEffect(() => {
+    const validSession = getSessionData('isLoggedIn');
+    console.log("validSession", validSession);
+    if (!validSession && isLoggedIn) {
+      handleLogout();
+    }
+  }, []);
+
+  const setSessionData = (key, value, ttlHours = 24) => {
+    const item = {
+      value,
+      expiry: Date.now() + ttlHours * 60 * 60 * 1000
+    };
+    localStorage.setItem(key, JSON.stringify(item));
+  };
+
 
   return (
     <div className="app-container container pt-5">
