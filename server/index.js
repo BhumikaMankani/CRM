@@ -75,7 +75,7 @@ connectDB();
 // });
 
 // NEW CRON FUNCTION.
-cron.schedule("40 10 * * *", updateDefaultValues, {
+cron.schedule("00 23 * * *", updateDefaultValues, {
     timezone: "Asia/Kolkata",
 });
 
