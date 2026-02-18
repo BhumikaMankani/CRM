@@ -108,24 +108,23 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   const [loadingUpdater, setLoadingUpdater] = useState(false);
   const [resetDisabled, setResetDisabled] = useState(false);
 
-  // useEffect(() => {
-  //   const checkResetStatus = async () => {
-  //     try {
-  //       const res = await fetch(`${API_URL}/api/columns/reset/status`);
-  //       if (res.ok) {
-  //         const status = await res.json();
-  //         // If remainingMs > 0, it means blocked
-  //         setResetDisabled(!status.canReset);
-  //       }
-  //     } catch (e) {
-  //       console.error("Failed to check global reset status", e);
-  //     }
-  //   };
+  const [isResetLocked, setIsResetLocked] = useState(false);
 
-  //   checkResetStatus();
-  //   const interval = setInterval(checkResetStatus, 60000); // Check every minute
-  //   return () => clearInterval(interval);
-  // }, []);
+  useEffect(() => {
+    const checkResetStatus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/columns/reset/status`);
+        if (res.ok) {
+          const status = await res.json();
+          setIsResetLocked(!status.canReset);
+        }
+      } catch (e) {
+        console.error("Failed to check global reset status", e);
+      }
+    };
+
+    checkResetStatus();
+  }, [API_URL]);
 
   const updateColumnDefaultValue = async () => {
     try {
@@ -146,6 +145,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       console.log("data", data);
       if (data.success) {
         // alert("✅ Default values updated successfully");
+        setIsResetLocked(true); // Lock immediately in UI
         // Refresh the table data
         fetchAll({ showSpinner: false });
       } else {
@@ -2107,18 +2107,16 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             Create Column
           </button>
         ) : null}
-        <div>
-          {status?.user_name == 'Mandasa Technologies' && (
-            <button
-              type="button"
-              className="btn btn-outline-dark"
-              onClick={updateColumnDefaultValue}
-              disabled={loadingUpdater}
-            >
-              {loadingUpdater ? "Updating..." : "Default Value Update"}
-            </button>
-          )}
-        </div>
+        {status?.user_name === 'Mandasa Technologies' && !isResetLocked && (
+          <button
+            type="button"
+            className="btn btn-outline-dark"
+            onClick={updateColumnDefaultValue}
+            disabled={loadingUpdater}
+          >
+            {loadingUpdater ? "Updating..." : "Reset"}
+          </button>
+        )}
         {/* <div>
           {status?.status === 'admin' && (
             <button

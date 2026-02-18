@@ -49,32 +49,37 @@ connectDB();
 
 // Start the default value updater service
 // Wait for DB connection before starting
-let isRunning = false;
-mongoose.connection.once('open', () => {
-    cron.schedule(
-        "00 23 * * *",
-        async () => {
-            try {
-                if (isRunning) {
-                    console.log("Previous run still executing — skipped");
-                    return;
-                }
-                isRunning = true;
-                await updateDefaultValues();
-            } catch (err) {
-                console.error("CRON EXECUTION FAILED:", err);
-            } finally {
-                isRunning = false;
-            }
-        },
-        {
-            scheduled: true,
-            timezone: "Asia/Kolkata",
-        }
-    );
-});
+// let isRunning = false;
+// mongoose.connection.once('open', () => {
+//     cron.schedule(
+//         "00 23 * * *",
+//         async () => {
+//             try {
+//                 if (isRunning) {
+//                     console.log("Previous run still executing — skipped");
+//                     return;
+//                 }
+//                 isRunning = true;
+//                 await updateDefaultValues();
+//             } catch (err) {
+//                 console.error("CRON EXECUTION FAILED:", err);
+//             } finally {
+//                 isRunning = false;
+//             }
+//         },
+//         {
+//             scheduled: true,
+//             timezone: "Asia/Kolkata",
+//         }
+//     );
+// });
 
 // User.syncIndexes();
+
+// NEW CRON
+cron.schedule("00 23 * * *", updateDefaultValues, {
+    timezone: "Asia/Kolkata",
+});
 
 // Log all incoming API requests for debugging
 app.use("/api", (req, res, next) => {

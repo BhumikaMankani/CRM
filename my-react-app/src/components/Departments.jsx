@@ -72,6 +72,10 @@ function Departments({ setIsLoggedIn }) {
         }
     };
 
+    const addUser = async (e) => {
+        alert("add user");
+    }
+
     const handleSaveDepartment = async (e) => {
         e.preventDefault();
         if (!newDepartmentName.trim()) return;
@@ -582,7 +586,12 @@ function Departments({ setIsLoggedIn }) {
                         </div>
                     )
                 }
-            </section >
+            </section>
+            {status.status === 'admin' && (
+                <div className="d-flex align-items-center justify-content-end w-100">
+                    <button className="btn btn-primary" onClick={addUser}>Add User</button>
+                </div>
+            )}
         </div >
     );
 }

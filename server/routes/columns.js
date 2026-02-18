@@ -186,7 +186,7 @@ router.get("/reset/status", async (req, res) => {
         const lastResetTime = new Date(lastResetLog.createdAt).getTime();
         const now = Date.now();
         const diff = now - lastResetTime;
-        const LOCK_DURATION = 20 * 60 * 60 * 1000; // 20 hours
+        const LOCK_DURATION = 3 * 60 * 60 * 1000; // 12 hours
 
         if (diff < LOCK_DURATION) {
             return res.json({
