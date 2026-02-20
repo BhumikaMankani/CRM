@@ -332,12 +332,31 @@ button.filter_button svg {
   align-items: center;
 }
 
+.edit_buttons_ct button.btn {
+  height: 45px;
+  display: flex !important;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  justify-content: center;
+  align-items: center;
+}
+
+.delete-confirmation-modal button.btn {
+  padding: 9px 15px;
+  height: auto;
+  line-height: normal;
+  font-size: 13px;
+  margin: 0 !important;
+}
+
 .password-toggle {
   position: absolute;
   right: 12px;
   background: transparent;
   border: none;
   color: #2563eb;
+  z-index: 9;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;

@@ -2111,7 +2111,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           <button
             type="button"
             className="btn btn-outline-dark"
-            onClick={updateColumnDefaultValue}
+            onClick={() => setResetConfirmation({ isOpen: true })}
             disabled={loadingUpdater}
           >
             {loadingUpdater ? "Updating..." : "Reset"}
@@ -2722,80 +2722,41 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           }}
         >
           <div
-            className="bg-white p-4 rounded shadow-lg"
-            style={{ maxWidth: "400px", width: "100%" }}
+            className="delete-confirmation-modal"
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            }}
           >
-            <h5 className="mb-3 text-danger">Confirm Reset</h5>
+            <h5 className="mb-3">Confirm Reset</h5>
             <p className="mb-4">
-              Are you sure you want to KEY RESET columns to their default values for ALL visible rows?
+              Are you sure you want to reset columns to their default values?
             </p>
-            <div className="d-flex justify-content-end gap-2">
+            <div className="d-flex justify-content-center gap-2">
               <button
-                className="btn btn-secondary"
+                className="btn btn-outline-secondary" style={{ background: "transparent", color: "black" }}
                 onClick={() => setResetConfirmation({ isOpen: false })}
               >
                 No
               </button>
               <button
-                className="btn btn-danger"
+                className="btn btn-secondary" style={{ background: "red", color: "white" }}
+                disabled={loadingUpdater}
                 onClick={() => {
-                  const updates = [];
-                  // Iterate through all visible data
-                  data.forEach(row => {
-                    columnsDef.forEach(col => {
-                      if (col.hasDefaultValue && col.defaultValue) {
-                        // Only update if current value is different (optional optimization)
-                        if (row[col.name] !== col.defaultValue) {
-                          updates.push({
-                            rowId: row._id,
-                            field: col.name,
-                            value: col.defaultValue
-                          });
-                        }
-                      }
-                    });
-                  });
-
-                  if (updates.length === 0) {
-                    alert("No applicable columns with default values found to reset."); // Using alert here inside modal for feedback is ok, or could show another state
-                    setResetConfirmation({ isOpen: false });
-                    return;
-                  }
-
-                  // Optimistic UI update
-                  setData(prevData => {
-                    return prevData.map(r => {
-                      const rowUpdates = updates.filter(u => u.rowId === r._id);
-                      if (rowUpdates.length === 0) return r;
-                      const newRow = { ...r };
-                      rowUpdates.forEach(u => {
-                        newRow[u.field] = u.value;
-                      });
-                      return newRow;
-                    });
-                  });
-
-                  // Fire requests
-                  let successCount = 0;
-                  for (const update of updates) {
-                    handleChange(update.rowId, update.field, update.value);
-                    successCount++;
-                  }
-
-                  // Lock via API
-                  fetch(`${API_URL}/api/columns/reset/lock`, { method: "POST" }).catch(e => console.error(e));
-
-                  setResetDisabled(true);
-                  // alert(`Reset initiated for ${successCount} fields across rows.`); // Optional feedback
                   setResetConfirmation({ isOpen: false });
+                  updateColumnDefaultValue();
                 }}
               >
-                Yes
+                {loadingUpdater ? "Updating..." : "Yes"}
               </button>
             </div>
           </div>
         </div>
-      )}
+      )
+      }
     </section >
   );
 }
