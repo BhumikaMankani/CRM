@@ -74,9 +74,7 @@ connectDB();
 //     );
 // });
 
-// User.syncIndexes();
-
-// NEW CRON
+// NEW CRON FUNCTION.
 cron.schedule("00 23 * * *", updateDefaultValues, {
     timezone: "Asia/Kolkata",
 });
