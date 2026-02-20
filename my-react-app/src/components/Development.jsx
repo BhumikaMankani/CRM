@@ -31,6 +31,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     };
   }, []);
 
+  // Add Row
+  const [isRowModel, setIsRowModel] = useState(false);
+
   // Analytics Modal
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
 
@@ -105,24 +108,23 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   const [loadingUpdater, setLoadingUpdater] = useState(false);
   const [resetDisabled, setResetDisabled] = useState(false);
 
-  // useEffect(() => {
-  //   const checkResetStatus = async () => {
-  //     try {
-  //       const res = await fetch(`${API_URL}/api/columns/reset/status`);
-  //       if (res.ok) {
-  //         const status = await res.json();
-  //         // If remainingMs > 0, it means blocked
-  //         setResetDisabled(!status.canReset);
-  //       }
-  //     } catch (e) {
-  //       console.error("Failed to check global reset status", e);
-  //     }
-  //   };
+  const [isResetLocked, setIsResetLocked] = useState(false);
 
-  //   checkResetStatus();
-  //   const interval = setInterval(checkResetStatus, 60000); // Check every minute
-  //   return () => clearInterval(interval);
-  // }, []);
+  useEffect(() => {
+    const checkResetStatus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/columns/reset/status`);
+        if (res.ok) {
+          const status = await res.json();
+          setIsResetLocked(!status.canReset);
+        }
+      } catch (e) {
+        console.error("Failed to check global reset status", e);
+      }
+    };
+
+    checkResetStatus();
+  }, [API_URL]);
 
   const updateColumnDefaultValue = async () => {
     try {
@@ -143,6 +145,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       console.log("data", data);
       if (data.success) {
         // alert("✅ Default values updated successfully");
+        setIsResetLocked(true); // Lock immediately in UI
         // Refresh the table data
         fetchAll({ showSpinner: false });
       } else {
@@ -1013,83 +1016,84 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   /* ---------------- ADD ROW ---------------- */
   const addRow = async (newRowData) => {
+    setIsRowModel(true);
     // Clear sorting and filters to ensure new row is visible at the top
-    setSortConfig({ key: null, direction: "asc" });
-    setFilters({});
+    // setSortConfig({ key: null, direction: "asc" });
+    // setFilters({});
 
-    try {
-      const newRow = { ...newRowData };
+    // try {
+    //   const newRow = { ...newRowData };
 
-      // Calculate derived defaults (Month, Status, Start Date)
-      const monthNames = ["Jan", "Feb", "Mar", "April", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const currentMonthIndex = new Date().getMonth();
-      const currentMonthName = monthNames[currentMonthIndex];
-      const todayDate = new Date().toISOString().split('T')[0];
+    //   // Calculate derived defaults (Month, Status, Start Date)
+    //   const monthNames = ["Jan", "Feb", "Mar", "April", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    //   const currentMonthIndex = new Date().getMonth();
+    //   const currentMonthName = monthNames[currentMonthIndex];
+    //   const todayDate = new Date().toISOString().split('T')[0];
 
-      columnsDef.forEach((col) => {
-        if (!newRow.hasOwnProperty(col.name)) {
-          // Check for specific columns by heading to set dynamic defaults
-          const heading = (col.column_heading || "").toLowerCase().trim();
+    //   columnsDef.forEach((col) => {
+    //     if (!newRow.hasOwnProperty(col.name)) {
+    //       // Check for specific columns by heading to set dynamic defaults
+    //       const heading = (col.column_heading || "").toLowerCase().trim();
 
-          if (heading === "status") {
-            newRow[col.name] = "Not started";
-          } else if (heading === "start date") {
-            newRow[col.name] = todayDate;
-          } else if (col.column_type === "monthYear") {
-            const currentYear = new Date().getFullYear();
-            const monthNamesFull = [
-              "January", "February", "March", "April", "May", "June",
-              "July", "August", "September", "October", "November", "December"
-            ];
-            const currentMonthFull = monthNamesFull[new Date().getMonth()];
-            newRow[col.name] = `${currentMonthFull} ${currentYear}`;
-          } else if (heading === "month") {
-            const currentYear = new Date().getFullYear();
-            newRow[col.name] = col.showYear ? `${currentMonthName} ${currentYear}` : currentMonthName;
-          } else {
-            // Use the column's configured default value if available
-            newRow[col.name] = (col.hasDefaultValue && col.defaultValue) ? col.defaultValue : "";
-          }
-        }
-      });
+    //       if (heading === "status") {
+    //         newRow[col.name] = "Not started";
+    //       } else if (heading === "start date") {
+    //         newRow[col.name] = todayDate;
+    //       } else if (col.column_type === "monthYear") {
+    //         const currentYear = new Date().getFullYear();
+    //         const monthNamesFull = [
+    //           "January", "February", "March", "April", "May", "June",
+    //           "July", "August", "September", "October", "November", "December"
+    //         ];
+    //         const currentMonthFull = monthNamesFull[new Date().getMonth()];
+    //         newRow[col.name] = `${currentMonthFull} ${currentYear}`;
+    //       } else if (heading === "month") {
+    //         const currentYear = new Date().getFullYear();
+    //         newRow[col.name] = col.showYear ? `${currentMonthName} ${currentYear}` : currentMonthName;
+    //       } else {
+    //         // Use the column's configured default value if available
+    //         newRow[col.name] = (col.hasDefaultValue && col.defaultValue) ? col.defaultValue : "";
+    //       }
+    //     }
+    //   });
 
-      let createdByUserName = "Unknown";
-      let createdByUserId = null;
-      try {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const parsed = JSON.parse(storedUser);
-          createdByUserName = parsed.user_name || parsed.email || "Unknown";
-          createdByUserId = parsed.email || null;
-        }
-      } catch (e) {
-        // ignore
-      }
+    //   let createdByUserName = "Unknown";
+    //   let createdByUserId = null;
+    //   try {
+    //     const storedUser = localStorage.getItem("user");
+    //     if (storedUser) {
+    //       const parsed = JSON.parse(storedUser);
+    //       createdByUserName = parsed.user_name || parsed.email || "Unknown";
+    //       createdByUserId = parsed.email || null;
+    //     }
+    //   } catch (e) {
+    //     // ignore
+    //   }
 
-      const res = await fetch(`${API_URL}${dataEndpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newRow,
-          createdByUserId,
-          createdByUserName
-        }),
-      });
+    //   const res = await fetch(`${API_URL}${dataEndpoint}`, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       ...newRow,
+    //       createdByUserId,
+    //       createdByUserName
+    //     }),
+    //   });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to add row");
-      }
+    //   if (!res.ok) {
+    //     const errorData = await res.json();
+    //     throw new Error(errorData.error || "Failed to add row");
+    //   }
 
-      const saved = await res.json();
-      // Add new row to the top of the list
-      setData((prev) => [saved, ...prev]);
-      setIsModalOpen(false); // Close modal after saving
+    //   const saved = await res.json();
+    //   // Add new row to the top of the list
+    //   setData((prev) => [saved, ...prev]);
+    //   setIsModalOpen(false); // Close modal after saving
 
-    } catch (err) {
-      console.error("Error adding row:", err);
-      alert("Error adding row: " + err.message);
-    }
+    // } catch (err) {
+    //   console.error("Error adding row:", err);
+    //   alert("Error adding row: " + err.message);
+    // }
   };
   // const addRow = async (newRowData) => {
   //   // Clear sorting and filters to ensure new row is visible at the top
@@ -2103,18 +2107,16 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             Create Column
           </button>
         ) : null}
-        <div>
-          {status?.user_name == 'Mandasa Technologies' && (
-            <button
-              type="button"
-              className="btn btn-outline-dark"
-              onClick={updateColumnDefaultValue}
-              disabled={loadingUpdater}
-            >
-              {loadingUpdater ? "Updating..." : "Default Value Update"}
-            </button>
-          )}
-        </div>
+        {status?.user_name === 'Mandasa Technologies' && !isResetLocked && (
+          <button
+            type="button"
+            className="btn btn-outline-dark"
+            onClick={() => setResetConfirmation({ isOpen: true })}
+            disabled={loadingUpdater}
+          >
+            {loadingUpdater ? "Updating..." : "Reset"}
+          </button>
+        )}
         {/* <div>
           {status?.status === 'admin' && (
             <button
@@ -2600,6 +2602,86 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         existingTextColors={selectedColorCol?.optionTextColors}
       />
 
+      <AddEntryModal isRowModel={isRowModel} columnsDef={columnsDef} data={data}
+        onSave={async (newRowData) => {
+          setSortConfig({ key: null, direction: "asc" });
+          setFilters({});
+
+          try {
+            const newRow = { ...newRowData };
+
+            // Calculate derived defaults (Month, Status, Start Date)
+            const monthNames = ["Jan", "Feb", "Mar", "April", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const currentMonthIndex = new Date().getMonth();
+            const currentMonthName = monthNames[currentMonthIndex];
+            const todayDate = new Date().toISOString().split('T')[0];
+
+            columnsDef.forEach((col) => {
+              if (!newRow.hasOwnProperty(col.name)) {
+                // Check for specific columns by heading to set dynamic defaults
+                const heading = (col.column_heading || "").toLowerCase().trim();
+
+                if (heading === "status") {
+                  newRow[col.name] = "Not started";
+                } else if (heading === "start date") {
+                  newRow[col.name] = todayDate;
+                } else if (col.column_type === "monthYear") {
+                  const currentYear = new Date().getFullYear();
+                  const monthNamesFull = [
+                    "January", "February", "March", "April", "May", "June",
+                    "July", "August", "September", "October", "November", "December"
+                  ];
+                  const currentMonthFull = monthNamesFull[new Date().getMonth()];
+                  newRow[col.name] = `${currentMonthFull} ${currentYear}`;
+                } else if (heading === "month") {
+                  const currentYear = new Date().getFullYear();
+                  newRow[col.name] = col.showYear ? `${currentMonthName} ${currentYear}` : currentMonthName;
+                } else {
+                  // Use the column's configured default value if available
+                  newRow[col.name] = (col.hasDefaultValue && col.defaultValue) ? col.defaultValue : "";
+                }
+              }
+            });
+
+            let createdByUserName = "Unknown";
+            let createdByUserId = null;
+            try {
+              const storedUser = localStorage.getItem("user");
+              if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                createdByUserName = parsed.user_name || parsed.email || "Unknown";
+                createdByUserId = parsed.email || null;
+              }
+            } catch (e) {
+              // ignore
+            }
+
+            const res = await fetch(`${API_URL}${dataEndpoint}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...newRow,
+                createdByUserId,
+                createdByUserName
+              }),
+            });
+
+            if (!res.ok) {
+              const errorData = await res.json();
+              throw new Error(errorData.error || "Failed to add row");
+            }
+
+            const saved = await res.json();
+            // Add new row to the top of the list
+            setData((prev) => [saved, ...prev]);
+            setIsRowModel(false); // Close modal after saving
+
+          } catch (err) {
+            console.error("Error adding row:", err);
+            alert("Error adding row: " + err.message);
+          }
+        }} onClose={() => setIsRowModel(false)} />
+
       <SaveFilterModal
         isOpen={isSaveFilterModalOpen}
         onClose={() => {
@@ -2640,80 +2722,41 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           }}
         >
           <div
-            className="bg-white p-4 rounded shadow-lg"
-            style={{ maxWidth: "400px", width: "100%" }}
+            className="delete-confirmation-modal"
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            }}
           >
-            <h5 className="mb-3 text-danger">Confirm Reset</h5>
+            <h5 className="mb-3">Confirm Reset</h5>
             <p className="mb-4">
-              Are you sure you want to KEY RESET columns to their default values for ALL visible rows?
+              Are you sure you want to reset columns to their default values?
             </p>
-            <div className="d-flex justify-content-end gap-2">
+            <div className="d-flex justify-content-center gap-2">
               <button
-                className="btn btn-secondary"
+                className="btn btn-outline-secondary" style={{ background: "transparent", color: "black" }}
                 onClick={() => setResetConfirmation({ isOpen: false })}
               >
                 No
               </button>
               <button
-                className="btn btn-danger"
+                className="btn btn-secondary" style={{ background: "red", color: "white" }}
+                disabled={loadingUpdater}
                 onClick={() => {
-                  const updates = [];
-                  // Iterate through all visible data
-                  data.forEach(row => {
-                    columnsDef.forEach(col => {
-                      if (col.hasDefaultValue && col.defaultValue) {
-                        // Only update if current value is different (optional optimization)
-                        if (row[col.name] !== col.defaultValue) {
-                          updates.push({
-                            rowId: row._id,
-                            field: col.name,
-                            value: col.defaultValue
-                          });
-                        }
-                      }
-                    });
-                  });
-
-                  if (updates.length === 0) {
-                    alert("No applicable columns with default values found to reset."); // Using alert here inside modal for feedback is ok, or could show another state
-                    setResetConfirmation({ isOpen: false });
-                    return;
-                  }
-
-                  // Optimistic UI update
-                  setData(prevData => {
-                    return prevData.map(r => {
-                      const rowUpdates = updates.filter(u => u.rowId === r._id);
-                      if (rowUpdates.length === 0) return r;
-                      const newRow = { ...r };
-                      rowUpdates.forEach(u => {
-                        newRow[u.field] = u.value;
-                      });
-                      return newRow;
-                    });
-                  });
-
-                  // Fire requests
-                  let successCount = 0;
-                  for (const update of updates) {
-                    handleChange(update.rowId, update.field, update.value);
-                    successCount++;
-                  }
-
-                  // Lock via API
-                  fetch(`${API_URL}/api/columns/reset/lock`, { method: "POST" }).catch(e => console.error(e));
-
-                  setResetDisabled(true);
-                  // alert(`Reset initiated for ${successCount} fields across rows.`); // Optional feedback
                   setResetConfirmation({ isOpen: false });
+                  updateColumnDefaultValue();
                 }}
               >
-                Yes
+                {loadingUpdater ? "Updating..." : "Yes"}
               </button>
             </div>
           </div>
         </div>
-      )}
+      )
+      }
     </section >
   );
 }

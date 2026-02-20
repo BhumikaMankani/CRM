@@ -1,0 +1,4 @@
+.input-group.password-input-wrapper button.password-toggle {
+    top: 50%;
+    transform: translateY(-50%);
+}

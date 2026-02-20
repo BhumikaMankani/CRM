@@ -2,6 +2,37 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 
+// Create new user
+router.post("/add", async (req, res) => {
+    try {
+        const { user_name, email, password, status } = req.body;
+        console.log("Creating user:", user_name, email, status);
+
+        if (!user_name || !email || !password) {
+            return res.status(400).json({ error: "All fields are required" });
+        }
+
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        if (existingUser) {
+            return res.status(400).json({ error: "User with this email already exists" });
+        }
+
+        const newUser = new User({
+            user_name,
+            email: email.toLowerCase(),
+            password, // Password should be hashed from frontend as requested
+            status: status || "staff"
+        });
+
+        await newUser.save();
+        console.log("✅ User created successfully:", email);
+        res.status(201).json({ message: "User created successfully", user: newUser });
+    } catch (error) {
+        console.error("🔥 User creation error:", error);
+        res.status(500).json({ error: "Internal server error", message: error.message });
+    }
+});
+
 // Check if user exists (for login)
 router.post("/", async (req, res) => {
     try {
@@ -64,14 +95,17 @@ router.put("/columnAccess", async (req, res) => {
     }
 });
 
-// Update user department
+// Update user (department and/or status)
 router.patch("/:id", async (req, res) => {
-    console.log(`Patching user ${req.params.id} with department:`, req.body.department);
+    console.log(`Patching user ${req.params.id} with:`, req.body);
     try {
-        const { department } = req.body;
+        const updateFields = {};
+        if (req.body.department !== undefined) updateFields.department = req.body.department;
+        if (req.body.status !== undefined) updateFields.status = req.body.status;
+
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
-            { department },
+            updateFields,
             { new: true }
         );
         if (!updatedUser) {
@@ -85,45 +119,5 @@ router.patch("/:id", async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
-
-// router.patch("/column-access", async (req, res) => {
-//     const { columnName } = req.body;
-
-//     if (!columnName) {
-//         return res.status(400).json({ error: "columnName is required" });
-//     }
-
-//     try {
-//         const users = await User.find();
-
-//         const bulkOps = users.map(user => {
-//             let existing = user.column_access
-//                 ? user.column_access.split(',').map(c => c.trim())
-//                 : [];
-
-//             if (!existing.includes(columnName)) {
-//                 existing.push(columnName);
-//             }
-
-//             return {
-//                 updateOne: {
-//                     filter: { _id: user._id },
-//                     update: { column_access: existing.join(',') }
-//                 }
-//             };
-//         });
-
-//         if (bulkOps.length > 0) {
-//             await User.bulkWrite(bulkOps);
-//         }
-
-//         res.json({ message: "Column access updated for all staff" });
-
-//     } catch (err) {
-//         console.error("Error updating column access:", err.message);
-//         res.status(500).json({ error: err.message });
-//     }
-// });
-
 
 module.exports = router;

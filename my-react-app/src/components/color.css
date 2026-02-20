@@ -69,12 +69,6 @@ button.btn {
     border-radius: 10px !important;
 }
 
-.main-parent {
-    display: flex;
-    gap: 10px;
-}
-
-
 .card-body svg {
     height: 35px;
     width: 35px;

@@ -59,7 +59,7 @@
 
 .form-control {
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-radius: 4px !important;
     padding: 10px 12px;
     font-size: 0.95rem;
     transition: border-color 0.2s ease;

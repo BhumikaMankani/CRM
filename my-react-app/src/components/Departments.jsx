@@ -16,7 +16,7 @@ import { CgDanger } from "react-icons/cg";
 import { MdOutlineIncompleteCircle } from "react-icons/md";
 import { MdOutlinePhoneForwarded } from "react-icons/md";
 import { RiChatFollowUpFill } from "react-icons/ri";
-
+import UserForm from "../components/User";
 
 // Status values that should be treated as "ACTIVE"
 const ACTIVE_STATUSES = [
@@ -69,6 +69,33 @@ function Departments({ setIsLoggedIn }) {
             setDepartments(data);
         } catch (err) {
             console.error("Failed to fetch departments:", err);
+        }
+    };
+
+    const [isUserFormOpen, setIsUserFormOpen] = useState(false);
+    const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+    const addUser = async (e) => {
+        setIsUserFormOpen(true);
+    }
+
+    const handleStatusChange = async (user, newStatus) => {
+        try {
+            const response = await fetch(`${API_URL}/api/user/${user._id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (response.ok) {
+                const updatedUser = await response.json();
+                setUserData(prevData => prevData.map(u => u._id === user._id ? updatedUser : u));
+            } else {
+                console.error("Failed to update user status");
+            }
+        } catch (err) {
+            console.error("Error updating user status:", err);
         }
     };
 
@@ -304,7 +331,7 @@ function Departments({ setIsLoggedIn }) {
             if (response.ok) {
                 const updatedUser = await response.json();
                 setUserData(prevData => prevData.map(u => u._id === user._id ? updatedUser : u));
-                localStorage.setItem('user', JSON.stringify(updatedUser));
+                // localStorage.setItem('user', JSON.stringify(updatedUser));
             } else {
                 console.error("Failed to update department");
             }
@@ -345,13 +372,15 @@ function Departments({ setIsLoggedIn }) {
                                         {columns.map((column, index) => (
                                             <th className="p-2 w-100 d-flex justify-content-between align-items-center" key={index}>{column.header}
                                                 {status?.status === 'admin' ? (
-                                                    <button
-                                                        className="btn btn-secondary d-inline-flex align-items-center"
-                                                        onClick={() => setIsDepartmentModalOpen(true)}
-                                                    >
-                                                        Create
-                                                    </button>
-                                                ) : null}</th>
+                                                    <div className="d-flex align-items-center justify-content-end gap-2">
+                                                        <button
+                                                            className="btn btn-secondary d-inline-flex align-items-center"
+                                                            onClick={() => setIsDepartmentModalOpen(true)}
+                                                        >
+                                                            Create
+                                                        </button>
+                                                    </div>) : null}
+                                            </th>
                                         ))}
 
                                     </tr>
@@ -545,6 +574,62 @@ function Departments({ setIsLoggedIn }) {
                 )
                 }
 
+                {/* Edit User Status Modal */}
+                {
+                    isEditUserModalOpen && (
+                        <div className="modal-overlay" style={{
+                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+                            justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                        }}>
+                            <div className="modal-content" style={{
+                                backgroundColor: 'white', padding: '20px', borderRadius: '8px',
+                                width: '500px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                            }}>
+                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                    <h4 className="m-0"><strong>Edit User Status</strong></h4>
+                                    <button type="button" className="btn-close" onClick={() => setIsEditUserModalOpen(false)} aria-label="Close"></button>
+                                </div>
+                                <div>
+                                    {userData
+                                        .filter(user => user.user_name !== 'Mandasa Technologies')
+                                        .map((user) => (
+                                            <div key={user._id} className="d-flex justify-content-between align-items-center border-bottom py-2">
+                                                <span className="fw-semibold">{user.user_name}</span>
+                                                <div className="d-flex gap-3">
+                                                    <div className="form-check">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="radio"
+                                                            name={`status-${user._id}`}
+                                                            id={`staff-${user._id}`}
+                                                            value="staff"
+                                                            checked={user.status === 'staff'}
+                                                            onChange={() => handleStatusChange(user, 'staff')}
+                                                        />
+                                                        <label className="form-check-label" htmlFor={`staff-${user._id}`}>Staff</label>
+                                                    </div>
+                                                    <div className="form-check">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="radio"
+                                                            name={`status-${user._id}`}
+                                                            id={`admin-${user._id}`}
+                                                            value="admin"
+                                                            checked={user.status === 'admin'}
+                                                            onChange={() => handleStatusChange(user, 'admin')}
+                                                        />
+                                                        <label className="form-check-label" htmlFor={`admin-${user._id}`}>Admin</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
                 {
                     isDepartmentModalOpen && (
                         <div className="modal-overlay" style={{
@@ -582,7 +667,16 @@ function Departments({ setIsLoggedIn }) {
                         </div>
                     )
                 }
-            </section >
+            </section>
+            {status?.status === 'admin' && (
+                <div className="edit_buttons_ct d-flex align-items-center justify-content-end gap-2">
+                    <button className="btn btn-primary" onClick={addUser}>Add User</button>
+                    {status?.user_name === 'Mandasa Technologies' && (
+                        <button className="btn btn-outline-dark" onClick={() => setIsEditUserModalOpen(true)}>Edit User</button>
+                    )}
+                </div>)}
+
+            <UserForm isUserFormOpen={isUserFormOpen} onClose={() => setIsUserFormOpen(false)} onUserCreated={fetchUsers} />
         </div >
     );
 }

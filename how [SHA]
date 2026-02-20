@@ -1,0 +1,167 @@
+[33mcommit 27691717fbbb97aafd6229eceff683585f617274[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mBhumika[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Mon Feb 16 11:45:46 2026 +0530
+
+    Update Development.jsx
+
+[33mcommit d117bc57651dcb0c7538e14a0685106aa3c04651[m
+Merge: f5f6c69 75972a6
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Mon Feb 16 11:35:52 2026 +0530
+
+    Merge pull request #25 from mandasatechnologies/Bhumika
+    
+    Updated default value updater..
+
+[33mcommit 75972a67eaed2a0e04593792771046f102680ee9[m[33m ([m[1;31morigin/Bhumika[m[33m)[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Mon Feb 16 11:30:56 2026 +0530
+
+    Updated default value updator..
+
+[33mcommit d3cc1a63e494cda2d930fc2c5097fd7233e81e50[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Mon Feb 16 11:25:30 2026 +0530
+
+    Env file updated..
+
+[33mcommit 032bc9b022590386fdb1538cc7ab53c6816db859[m
+Merge: 6c2c32d d77b26e
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Mon Feb 16 11:24:39 2026 +0530
+
+    Env file updated
+
+[33mcommit d77b26e4eb1b278c25009cde2350bc22076eaa10[m[33m ([m[1;32mmain[m[33m)[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Mon Feb 16 11:23:22 2026 +0530
+
+    Updated default value function..
+
+[33mcommit f5f6c69079c6cae5c8aacd4872eee2a815d5c396[m
+Merge: d974ae9 e2f1c98
+Author: khushi-dev <khushi.namdev@mandasadevelopment.com>
+Date:   Fri Feb 13 18:42:54 2026 +0530
+
+    added reset button for daily check
+    
+    added reset button for daily check
+
+[33mcommit e2f1c98aad70d456b34a5516f6183301daec58a6[m
+Author: khushi developer <khushi.namdev@mandasadevelopment.com>
+Date:   Fri Feb 13 18:42:01 2026 +0530
+
+    added reset button for daily check
+
+[33mcommit d974ae9229d4663f683c13fd42aff0e4e6475ff9[m
+Merge: 8a15b03 9ee8ee8
+Author: khushi-dev <khushi.namdev@mandasadevelopment.com>
+Date:   Thu Feb 12 16:59:50 2026 +0530
+
+    updated filter url and made new filters
+    
+    updated filter url and made new filters
+
+[33mcommit 9ee8ee80093b6f6b806f2824221e4a340ee38dd2[m
+Author: khushi developer <khushi.namdev@mandasadevelopment.com>
+Date:   Thu Feb 12 16:57:33 2026 +0530
+
+    updated filter url and made new filters
+
+[33mcommit 8a15b03484d0994c7767972af7e9e94f78751120[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 13:03:23 2026 +0530
+
+    Update Departments.jsx
+
+[33mcommit 6c2c32da33c49650fc3c2f4b0d25c58ece7a22a0[m
+Merge: f6aa868 490da97
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 13:01:27 2026 +0530
+
+    Filter url fixed
+
+[33mcommit f6aa868f9b1355147a0abbec2d31ac86f09ff950[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 12:57:04 2026 +0530
+
+    Filter url fixed
+
+[33mcommit 134382388c41688ce1d9fb40a697c2a92d8bc033[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 12:55:12 2026 +0530
+
+    Filter Url's fixed
+
+[33mcommit ef2ebfa9eb531a11c50ff2d4035795f48517998c[m
+Merge: b37788a 490da97
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 12:33:42 2026 +0530
+
+    Merge pull request #22 from mandasatechnologies/Bhumika
+    
+    Fixed filter URL'S..
+
+[33mcommit 490da97170fc0b044f30f686951af69fa4fa39a6[m
+Merge: 8dcd014 b37788a
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 12:33:33 2026 +0530
+
+    Merge branch 'main' into Bhumika
+
+[33mcommit 8dcd01496d5616a06837614f2ab22e9766f044bc[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 12:31:15 2026 +0530
+
+    Fixed filter URL'S..
+
+[33mcommit b37788a79d6e197cf59b08248f840b9e14868c3a[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 11:53:33 2026 +0530
+
+    At risk changed to not-started-projects
+
+[33mcommit ab383eb268458711ac30ef11506cf9e18245ed8d[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 11:43:44 2026 +0530
+
+    Completed url changed to not-started-projects
+
+[33mcommit 600ccdcf45ab18a0d4c450900aa75f1f26e2cd65[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 11:40:45 2026 +0530
+
+    Follow up filter url fixed
+
+[33mcommit 1e077fdf976e2cfc52010724defe5e40d598af1f[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Thu Feb 12 11:09:12 2026 +0530
+
+    Update defaultValueUpdater.js
+
+[33mcommit f426c57568816df2292eee9770776ecb8e0f70de[m
+Merge: b912621 ab95649
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Wed Feb 11 18:17:43 2026 +0530
+
+    Merge pull request #21 from mandasatechnologies/Bhumika
+    
+    Shown staff filter and admin filters seprate, saved all console log t…
+
+[33mcommit ab956490bf1be62a5c32f83ebd30f2e7b9544821[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Wed Feb 11 18:16:17 2026 +0530
+
+    Shown staff filter and admin filters seprate, saved all console log to database for error handling of default value updator, added filter to staff dashboard.
+
+[33mcommit b9126216ed8172905ca36020919650871ec8808d[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Tue Feb 10 14:15:11 2026 +0530
+
+    Update vite.config.js
+
+[33mcommit ea82b5638e3871c0759e6e1cb21f8f8482f23807[m
+Author: bhumika-m-mandasa <bhumika.mankani@mandasadevelopment.com>
+Date:   Tue Feb 10 14:14:54 2026 +0530
+
+    Update proxy.js

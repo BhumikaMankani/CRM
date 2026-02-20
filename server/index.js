@@ -79,8 +79,6 @@ cron.schedule("00 23 * * *", updateDefaultValues, {
     timezone: "Asia/Kolkata",
 });
 
-// User.syncIndexes();
-
 // Log all incoming API requests for debugging
 app.use("/api", (req, res, next) => {
     console.log(`[API Request] ${req.method} ${req.originalUrl}`);
