@@ -78,16 +78,10 @@ connectDB();
 //     );
 // });
 
-<<<<<<< HEAD
 // NEW CRON FUNCTION.
 cron.schedule("00 23 * * *", updateDefaultValues, {
     timezone: "Asia/Kolkata",
 });
-=======
-// User.syncIndexes();
-
-// NEW CRON
->>>>>>> fc50aa3 (update default value function has been updated now 11 PM this function will run else all the error save to database.)
 
 // Log all incoming API requests for debugging
 app.use("/api", (req, res, next) => {
