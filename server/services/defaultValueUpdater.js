@@ -1,66 +1,10 @@
 const Column = require("../models/Column");
 const Project = require("../models/Development");
 const Audit = require("../models/Audit");
-const Logs = require("../models/Logs");
-
-// ================= CONSOLE OVERRIDE LOGGER =================
-
-// Save original console
-const originalLog = console.log;
-const originalError = console.error;
-
-// Safe serializer (prevents circular crash)
-function serialize(args) {
-  return args.map(a => {
-
-    if (a instanceof Error) {
-      return `${a.message}\n${a.stack}`;
-    }
-
-    if (typeof a === "object") {
-      try {
-        return JSON.stringify(a);
-      } catch {
-        return "[Circular Object]";
-      }
-    }
-
-    return a;
-
-  }).join(" ");
-}
-
-// Override console.log
-console.log = (...args) => {
-
-  originalLog(...args);
-
-  Logs.create({
-    level: "log",
-    message: serialize(args),
-    source: "default-value-cron",
-    pid: process.pid
-  }).catch(() => { });
-};
-
-// Override console.error
-console.error = (...args) => {
-
-  originalError(...args);
-
-  Logs.create({
-    level: "error",
-    message: serialize(args),
-    source: "default-value-cron",
-    pid: process.pid
-  }).catch(() => { });
-};
-
-// ============================================================
+const logError = require("../utils/logError");
 
 const updateDefaultValues = async () => {
   try {
-
     const columnsWithDefaults = await Column.find({
       status: { $ne: "deactive" },
       column_type: "select",
@@ -70,16 +14,15 @@ const updateDefaultValues = async () => {
 
     console.log("columnsWithDefaults count:", columnsWithDefaults.length);
 
-    if (columnsWithDefaults.length === 0) {
+    if (!columnsWithDefaults.length) {
       console.log("No columns with default values found.");
       return;
     }
 
-    console.log(`Found ${columnsWithDefaults.length} column(s) with default values`);
+    console.log(`Found ${columnsWithDefaults.length} column(s)`);
 
     for (const column of columnsWithDefaults) {
       try {
-
         const projectsNeedingReset = await Project.find({
           showstatus: { $ne: "deactivate" },
           [column.name]: { $ne: column.defaultValue },
@@ -93,18 +36,14 @@ const updateDefaultValues = async () => {
         if (!projectsNeedingReset.length) continue;
 
         for (const project of projectsNeedingReset) {
-
           const fieldName = column.name;
           const oldValue = project[fieldName];
           const newValue = column.defaultValue;
 
-          console.log("Updating field:", fieldName);
-          console.log("Old value:", oldValue);
-          console.log("New value:", newValue);
+          console.log("Updating:", fieldName);
 
           // ===== AUDIT WRITE =====
           try {
-
             await Audit.create({
               recordId: project._id,
               columnId: column._id,
@@ -115,52 +54,44 @@ const updateDefaultValues = async () => {
               changedByUserId: "system",
               changedByUserName: "System Reset",
             });
-
           } catch (auditErr) {
-
-            console.error("Audit write failed:", auditErr);
-
+            await logError("Audit write failed", auditErr, {
+              projectId: project._id,
+              column: column.column_heading,
+            });
           }
 
-          // ===== SAVE UPDATE =====
+          // ===== SAVE UPDATE (ALWAYS RUNS) =====
           try {
-
             project.set(fieldName, newValue);
             project.markModified(fieldName);
             await project.save();
 
             console.log(
-              `Saved default for project ${project._id} field ${fieldName}`
+              `Saved default for project ${project._id}`
             );
-
           } catch (saveErr) {
-
-            console.error(
-              `Failed saving project ${project._id}`,
-              saveErr
-            );
-
+            await logError("Project save failed", saveErr, {
+              projectId: project._id,
+              field: fieldName,
+            });
           }
         }
 
         console.log(`Completed column: ${column.column_heading}`);
 
       } catch (err) {
-
-        console.error(`Error processing column ${column.column_heading}`, err);
-
+        await logError("Column processing failed", err, {
+          column: column.column_heading,
+        });
       }
     }
 
     console.log("Default value update cycle completed.");
 
   } catch (err) {
-
-    console.error("Cycle error:", err);
-
+    await logError("Cycle error", err);
   }
 };
 
-module.exports = {
-  updateDefaultValues
-};
+module.exports = { updateDefaultValues };
