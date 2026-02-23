@@ -29,8 +29,11 @@ const AddEntryModal = ({
 
     const projectCol = getColByName("Project");
     const startDateCol = getColByName("Start Date");
+    const dailyCheckCol = getColByName("Daily Check");
     const endDateCol = getColByName("End Date");
     const categoryCol = getColByName("Category");
+    const salesDiscussionCol = getColByName("Sales Discussion");
+    const teamLeaderCol = getColByName("Team Lead");
     const pmCol = getColByName("Project Manager");
     const groupCol = getColByName("Group");
 
@@ -54,53 +57,20 @@ const AddEntryModal = ({
         delete latestRow.updatedAt;
         delete latestRow.__v;
 
-        // Apply overrides
+        // Clear all select-type column values so user must pick the correct option
+        columnsDef.forEach(col => {
+            if (col.column_type === "select" || col.column_type === "date") {
+                latestRow[col.name] = "";
+            }
+        });
+
+        // Apply overrides for text fields
         if (projectCol) latestRow[projectCol.name] = "";
         if (startDateCol) latestRow[startDateCol.name] = todayDate;
-
-        // Ensure we have a clean state for PM and Category if they don't exist in latestRow
-        if (categoryCol && !latestRow[categoryCol.name]) latestRow[categoryCol.name] = categoryCol.defaultValue || "";
-        if (groupCol && !latestRow[groupCol.name]) groupCol[pmCol.name] = groupCol.defaultValue || "";
-        if (pmCol && !latestRow[pmCol.name]) latestRow[pmCol.name] = pmCol.defaultValue || "";
+        if (dailyCheckCol) latestRow[dailyCheckCol.name] = "No";
 
         setFormData(latestRow);
     }, [isRowModel, projectCol, groupCol, startDateCol, data]);
-
-    // ----------------------------
-    // INPUT HANDLER
-    // ----------------------------
-    // const handleChange = (e) => {
-    //     setTimeout(() => {
-    //         setIsLoading(true);
-    //     }, 200);
-    //     setIsLoading(false);
-    //     if (isLoading) return;
-    //     const { name, value } = e.target;
-
-    //     setFormData(prev => ({
-    //         ...prev,
-    //         [name]: value
-    //     }));
-
-    //     if (errors[name]) {
-    //         setErrors(prev => ({ ...prev, [name]: null }));
-    //     }
-
-    //     // Project Name Suggestions
-    //     if (projectCol && name === projectCol.name) {
-    //         if (value.trim()) {
-    //             const uniqueProjects = [...new Set(data.map(row => row[projectCol.name]).filter(p => p))];
-    //             const filtered = uniqueProjects.filter(p =>
-    //                 p.toLowerCase().includes(value.toLowerCase())
-    //             );
-    //             setSuggestions(filtered.slice(0, 10)); // Limit to 10
-    //             setShowSuggestions(true);
-    //         } else {
-    //             setSuggestions([]);
-    //             setShowSuggestions(false);
-    //         }
-    //     }
-    // };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -140,6 +110,14 @@ const AddEntryModal = ({
                 } else {
                     setSuggestions([]);
                     setShowSuggestions(false);
+
+                    // Reset dates when project name is cleared
+                    setFormData(prev => ({
+                        ...prev,
+                        ...(dailyCheckCol ? { [dailyCheckCol.name]: "No" } : {}),
+                        ...(startDateCol ? { [startDateCol.name]: new Date().toISOString().split('T')[0] } : {}),
+                        ...(endDateCol ? { [endDateCol.name]: "" } : {})
+                    }));
                 }
 
                 // Hide loader
@@ -165,13 +143,15 @@ const AddEntryModal = ({
             delete updatedForm.updatedAt;
             delete updatedForm.__v;
 
+            // Clear all select-type column values so user must pick the correct option
+            columnsDef.forEach(col => {
+                if (col.column_type === "select") {
+                    updatedForm[col.name] = "";
+                }
+            });
+
             // Preserve current project name selection
             updatedForm[projectCol.name] = projName;
-
-            // Keep current date for start date as requested
-            if (startDateCol) {
-                updatedForm[startDateCol.name] = new Date().toISOString().split('T')[0];
-            }
 
             setFormData(updatedForm);
         }
@@ -205,7 +185,7 @@ const AddEntryModal = ({
     return (
         <div className="modal-overlay" onClick={() => setShowSuggestions(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="form-container">
+                <div className="form-container" style={{ padding: '0px' }}>
                     <button type="button" className="close-btn" onClick={onClose}><IoCloseSharp /></button>
                     <div className="form-header"><h2 className="modal-title">Create New Project</h2></div>
 
@@ -243,15 +223,15 @@ const AddEntryModal = ({
                                 </div>
                             )}
                             {groupCol && (
-                                <div className="col-6 form-group">
-                                    <label className="modal-label">Category</label>
+                                <div className="col-6 form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="modal-label">Group</label>
                                     <select
                                         name={groupCol.name}
                                         value={formData[groupCol.name] || ""}
                                         onChange={handleChange}
                                         className={`form-select text-dark ${errors[groupCol.name] ? 'error' : ''}`}
                                     >
-                                        <option value="">Select Category</option>
+                                        <option value="">Select group</option>
                                         {(groupCol.multipleValue || []).map(opt => (
                                             <option key={opt} value={opt}>{opt}</option>
                                         ))}
@@ -262,7 +242,7 @@ const AddEntryModal = ({
                         </div>
                         <div className="row">
                             {startDateCol && (
-                                <div className="col-6 form-group">
+                                <div className="col-6 form-group" style={{ marginBottom: '12px' }}>
                                     <label className="modal-label">Start Date *</label>
                                     <input
                                         type="date"
@@ -275,7 +255,7 @@ const AddEntryModal = ({
                                 </div>
                             )}
                             {endDateCol && (
-                                <div className="col-6 form-group">
+                                <div className="col-6 form-group" style={{ marginBottom: '12px' }}>
                                     <label className="modal-label">End Date *</label>
                                     <input
                                         type="date"
@@ -290,7 +270,7 @@ const AddEntryModal = ({
                         </div>
                         <div className="row">
                             {categoryCol && (
-                                <div className="col-6 form-group">
+                                <div className="col-6 form-group" style={{ marginBottom: '12px' }}>
                                     <label className="modal-label">Category</label>
                                     <select
                                         name={categoryCol.name}
@@ -308,7 +288,7 @@ const AddEntryModal = ({
                             )}
 
                             {pmCol && (
-                                <div className="col-6 form-group">
+                                <div className="col-6 form-group" style={{ marginBottom: '12px' }}>
                                     <label className="modal-label">Project Manager</label>
                                     <select
                                         name={pmCol.name}
@@ -325,7 +305,44 @@ const AddEntryModal = ({
                                 </div>
                             )}
                         </div>
-                        <div className="modal-actions">
+                        <div className="row">
+                            {teamLeaderCol && (
+                                <div className="col-6 form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="modal-label">Team Lead</label>
+                                    <select
+                                        name={teamLeaderCol.name}
+                                        value={formData[teamLeaderCol.name] || ""}
+                                        onChange={handleChange}
+                                        className={`form-select text-dark ${errors[teamLeaderCol.name] ? 'error' : ''}`}
+                                    >
+                                        <option value="">Select team lead</option>
+                                        {(teamLeaderCol.multipleValue || []).map(opt => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                    {errors[teamLeaderCol.name] && <span className="error-text">{errors[teamLeaderCol.name]}</span>}
+                                </div>
+                            )}
+
+                            {salesDiscussionCol && (
+                                <div className="col-6 form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="modal-label">Sales discussion on</label>
+                                    <select
+                                        name={salesDiscussionCol.name}
+                                        value={formData[salesDiscussionCol.name] || ""}
+                                        onChange={handleChange}
+                                        className={`form-select text-dark ${errors[salesDiscussionCol.name] ? 'error' : ''}`}
+                                    >
+                                        <option value="">Select Sales discussion</option>
+                                        {(salesDiscussionCol.multipleValue || []).map(opt => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                    {errors[salesDiscussionCol.name] && <span className="error-text">{errors[salesDiscussionCol.name]}</span>}
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-actions" style={{ paddingTop: "0px", marginTop: "16px" }}>
                             {/* <button type="button" className="btn-secondary" onClick={onClose}>
                                 Cancel
                             </button> */}

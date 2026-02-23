@@ -4,7 +4,6 @@ const cors = require('cors');
 const path = require('path');
 const cron = require("node-cron");
 
-// .Api collections
 // COlumns api
 const Columns = require('./routes/columns');
 const MarketingColumns = require('./routes/marketing-columns');
@@ -24,6 +23,10 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+cron.schedule("00 23 * * *", updateDefaultValues, {
+    timezone: "Asia/Kolkata",
+});
 
 app.use(cors());
 app.use(express.json());
@@ -46,38 +49,6 @@ const connectDB = async (retryCount = 5) => {
     }
 };
 connectDB();
-
-// Start the default value updater service
-// Wait for DB connection before starting
-// let isRunning = false;
-// mongoose.connection.once('open', () => {
-//     cron.schedule(
-//         "00 23 * * *",
-//         async () => {
-//             try {
-//                 if (isRunning) {
-//                     console.log("Previous run still executing — skipped");
-//                     return;
-//                 }
-//                 isRunning = true;
-//                 await updateDefaultValues();
-//             } catch (err) {
-//                 console.error("CRON EXECUTION FAILED:", err);
-//             } finally {
-//                 isRunning = false;
-//             }
-//         },
-//         {
-//             scheduled: true,
-//             timezone: "Asia/Kolkata",
-//         }
-//     );
-// });
-
-// NEW CRON FUNCTION.
-cron.schedule("00 23 * * *", updateDefaultValues, {
-    timezone: "Asia/Kolkata",
-});
 
 // Log all incoming API requests for debugging
 app.use("/api", (req, res, next) => {
