@@ -2107,16 +2107,16 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             Create Column
           </button>
         ) : null}
-        {status?.user_name === 'Mandasa Technologies' && !isResetLocked && (
-          <button
-            type="button"
-            className="btn btn-outline-dark"
-            onClick={() => setResetConfirmation({ isOpen: true })}
-            disabled={loadingUpdater}
-          >
-            {loadingUpdater ? "Updating..." : "Reset"}
-          </button>
-        )}
+        {status?.user_name === 'Mandasa Technologies' && !isResetLocked && ( 
+        <button
+          type="button"
+          className="btn btn-outline-dark"
+          onClick={() => setResetConfirmation({ isOpen: true })}
+          disabled={loadingUpdater}
+        >
+          {loadingUpdater ? "Updating..." : "Reset"}
+        </button>
+         )} 
         {/* <div>
           {status?.status === 'admin' && (
             <button
