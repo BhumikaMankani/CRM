@@ -24,7 +24,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-cron.schedule("00 23 * * *", updateDefaultValues, {
+cron.schedule("30 7 * * *", updateDefaultValues, {
     timezone: "Asia/Kolkata",
 });
 

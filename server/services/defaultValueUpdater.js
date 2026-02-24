@@ -1,7 +1,7 @@
 const Column = require("../models/Column");
 const Project = require("../models/Development");
 const Audit = require("../models/Audit");
-const logError = require("../utils/logError");
+const { logError, logInfo } = require("../utils/logError");
 
 const updateDefaultValues = async () => {
   try {
@@ -12,6 +12,10 @@ const updateDefaultValues = async () => {
       defaultValue: { $exists: true, $ne: "" },
     });
 
+    await logInfo(
+      "Default Value Job",
+      `columnsWithDefaults count: ${columnsWithDefaults.length}`
+    );
     console.log("columnsWithDefaults count:", columnsWithDefaults.length);
 
     if (!columnsWithDefaults.length) {
@@ -20,6 +24,10 @@ const updateDefaultValues = async () => {
     }
 
     console.log(`Found ${columnsWithDefaults.length} column(s)`);
+    await logInfo(
+      "Default Value Job",
+      `Found ${columnsWithDefaults.length} column(s)`
+    );
 
     for (const column of columnsWithDefaults) {
       try {
@@ -27,6 +35,11 @@ const updateDefaultValues = async () => {
           showstatus: { $ne: "deactivate" },
           [column.name]: { $ne: column.defaultValue },
         });
+
+        await logInfo(
+          "Default Value Job",
+          `projectsNeedingReset count: ${projectsNeedingReset.length}`
+        );
 
         console.log(
           `Column ${column.column_heading} -> projects needing reset:`,
@@ -40,6 +53,11 @@ const updateDefaultValues = async () => {
           const oldValue = project[fieldName];
           const newValue = column.defaultValue;
 
+          await logInfo(
+            "Project Reset",
+            `Updating field ${fieldName}`,
+            { projectId: project._id }
+          );
           console.log("Updating:", fieldName);
 
           // ===== AUDIT WRITE =====
@@ -67,6 +85,11 @@ const updateDefaultValues = async () => {
             project.markModified(fieldName);
             await project.save();
 
+            await logInfo(
+              "Project Reset",
+              `Saved default for project ${project._id}`,
+              { projectId: project._id }
+            );
             console.log(
               `Saved default for project ${project._id}`
             );
@@ -78,6 +101,12 @@ const updateDefaultValues = async () => {
           }
         }
 
+        await logInfo(
+          "Column Reset",
+          `Completed column: ${column.column_heading}`,
+          { column: column.column_heading }
+        );
+
         console.log(`Completed column: ${column.column_heading}`);
 
       } catch (err) {
@@ -87,6 +116,10 @@ const updateDefaultValues = async () => {
       }
     }
 
+    await logInfo(
+      "Default Value Job",
+      "Default value update cycle completed."
+    );
     console.log("Default value update cycle completed.");
 
   } catch (err) {
