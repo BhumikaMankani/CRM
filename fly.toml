@@ -2,7 +2,7 @@ app = "crm-app-mandasatechnologies"
 primary_region = "lax"
 
 [http_service]
-  internal_port = 8081
+  internal_port = 5000
   force_https = true
   auto_stop_machines = false
   auto_start_machines = true
