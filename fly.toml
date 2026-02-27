@@ -1,8 +1,8 @@
 app = "crm-app-mandasatechnologies"
-primary_region = "bom"
+primary_region = "lax"
 
 [http_service]
-  internal_port = 5000
+  internal_port = 8081
   force_https = true
   auto_stop_machines = false
   auto_start_machines = true
@@ -10,6 +10,11 @@ primary_region = "bom"
   processes = ["app"]
 
 [[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
-  cpus = 1
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+[[vm]]
+  memory = '1gb'
+  cpus = 1
+  memory_mb = 1024
+  processes = ['app']

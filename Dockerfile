@@ -17,7 +17,7 @@ RUN cd server && npm install --production
 COPY server/ ./server/
 COPY --from=build /app/frontend/dist ./my-react-app/dist
 
-EXPOSE 5000
+EXPOSE 8081
 
 ENV NODE_ENV=production
 

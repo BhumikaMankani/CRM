@@ -5,7 +5,6 @@ const { updateDefaultValues } = require("../services/defaultValueUpdater");
 router.post("/run-default-updater", async (req, res) => {
     try {
         await updateDefaultValues();
-
         // Log manual reset execution to trigger 12-hour lock
         try {
             const Logs = require("../models/Logs");
