@@ -24,10 +24,6 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-cron.schedule("30 7 * * *", updateDefaultValues, {
-    timezone: "Asia/Kolkata",
-});
-
 app.use(cors());
 app.use(express.json());
 
@@ -49,6 +45,10 @@ const connectDB = async (retryCount = 5) => {
     }
 };
 connectDB();
+
+cron.schedule("30 07 * * *", updateDefaultValues, {
+    timezone: "Asia/Kolkata",
+});
 
 // Log all incoming API requests for debugging
 app.use("/api", (req, res, next) => {
