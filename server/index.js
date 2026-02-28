@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const cron = require("node-cron");
-const { logError, logInfo } = require("../utils/logError");
+const { logError, logInfo } = require("./utils/logError");
 
 // COlumns api
 const Columns = require('./routes/columns');
@@ -51,10 +51,10 @@ connectDB();
 //     timezone: "Asia/Kolkata",
 // });
 
-cron.schedule("42 11 * * *", () => {
-    logError("Audit write failed", auditErr, {
-        projectId: project._id,
-        column: column.column_heading,
+cron.schedule("48 11 * * *", () => {
+    logError("Cron not working", "", {
+        projectId: "123",
+        column: "test",
     });
     logInfo("Cron is running:", new Date().toISOString());
 }, {
