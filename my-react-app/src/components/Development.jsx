@@ -1017,138 +1017,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   /* ---------------- ADD ROW ---------------- */
   const addRow = async (newRowData) => {
     setIsRowModel(true);
-    // Clear sorting and filters to ensure new row is visible at the top
-    // setSortConfig({ key: null, direction: "asc" });
-    // setFilters({});
-
-    // try {
-    //   const newRow = { ...newRowData };
-
-    //   // Calculate derived defaults (Month, Status, Start Date)
-    //   const monthNames = ["Jan", "Feb", "Mar", "April", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    //   const currentMonthIndex = new Date().getMonth();
-    //   const currentMonthName = monthNames[currentMonthIndex];
-    //   const todayDate = new Date().toISOString().split('T')[0];
-
-    //   columnsDef.forEach((col) => {
-    //     if (!newRow.hasOwnProperty(col.name)) {
-    //       // Check for specific columns by heading to set dynamic defaults
-    //       const heading = (col.column_heading || "").toLowerCase().trim();
-
-    //       if (heading === "status") {
-    //         newRow[col.name] = "Not started";
-    //       } else if (heading === "start date") {
-    //         newRow[col.name] = todayDate;
-    //       } else if (col.column_type === "monthYear") {
-    //         const currentYear = new Date().getFullYear();
-    //         const monthNamesFull = [
-    //           "January", "February", "March", "April", "May", "June",
-    //           "July", "August", "September", "October", "November", "December"
-    //         ];
-    //         const currentMonthFull = monthNamesFull[new Date().getMonth()];
-    //         newRow[col.name] = `${currentMonthFull} ${currentYear}`;
-    //       } else if (heading === "month") {
-    //         const currentYear = new Date().getFullYear();
-    //         newRow[col.name] = col.showYear ? `${currentMonthName} ${currentYear}` : currentMonthName;
-    //       } else {
-    //         // Use the column's configured default value if available
-    //         newRow[col.name] = (col.hasDefaultValue && col.defaultValue) ? col.defaultValue : "";
-    //       }
-    //     }
-    //   });
-
-    //   let createdByUserName = "Unknown";
-    //   let createdByUserId = null;
-    //   try {
-    //     const storedUser = localStorage.getItem("user");
-    //     if (storedUser) {
-    //       const parsed = JSON.parse(storedUser);
-    //       createdByUserName = parsed.user_name || parsed.email || "Unknown";
-    //       createdByUserId = parsed.email || null;
-    //     }
-    //   } catch (e) {
-    //     // ignore
-    //   }
-
-    //   const res = await fetch(`${API_URL}${dataEndpoint}`, {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({
-    //       ...newRow,
-    //       createdByUserId,
-    //       createdByUserName
-    //     }),
-    //   });
-
-    //   if (!res.ok) {
-    //     const errorData = await res.json();
-    //     throw new Error(errorData.error || "Failed to add row");
-    //   }
-
-    //   const saved = await res.json();
-    //   // Add new row to the top of the list
-    //   setData((prev) => [saved, ...prev]);
-    //   setIsModalOpen(false); // Close modal after saving
-
-    // } catch (err) {
-    //   console.error("Error adding row:", err);
-    //   alert("Error adding row: " + err.message);
-    // }
   };
-  // const addRow = async (newRowData) => {
-  //   // Clear sorting and filters to ensure new row is visible at the top
-  //   setSortConfig({ key: null, direction: "asc" });
-  //   setFilters({});
-
-  //   try {
-  //     const newRow = { ...newRowData };
-  //     columnsDef.forEach((col) => {
-  //       if (!newRow.hasOwnProperty(col.name)) {
-  //         // Use the column's default value if it has one set, otherwise empty string
-
-  //         newRow[col.name] = (col.hasDefaultValue && col.defaultValue) ? col.defaultValue : "";
-  //       }
-  //     });
-
-  //     let createdByUserName = "Unknown";
-  //     let createdByUserId = null;
-  //     try {
-  //       const storedUser = localStorage.getItem("user");
-  //       if (storedUser) {
-  //         const parsed = JSON.parse(storedUser);
-  //         createdByUserName = parsed.user_name || parsed.email || "Unknown";
-  //         createdByUserId = parsed.email || null;
-  //       }
-  //     } catch (e) {
-  //       // ignore
-  //     }
-
-  //     const res = await fetch(`${API_URL}${dataEndpoint}`, {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({
-  //         ...newRow,
-  //         createdByUserId,
-  //         createdByUserName
-  //       }),
-  //     });
-
-  //     if (!res.ok) {
-  //       const errorData = await res.json();
-  //       throw new Error(errorData.error || "Failed to add row");
-  //     }
-
-  //     const saved = await res.json();
-  //     // Add new row to the top of the list
-  //     setData((prev) => [saved, ...prev]);
-  //     setIsModalOpen(false); // Close modal after saving
-
-  //   } catch (err) {
-  //     console.error("Error adding row:", err);
-  //     alert("Error adding row: " + err.message);
-  //   }
-  // };
-
   const [userData, setUserData] = useState([]);
 
   useEffect(() => {
@@ -2107,16 +1976,16 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             Create Column
           </button>
         ) : null}
-        {status?.user_name === 'Mandasa Technologies' && !isResetLocked && ( 
-        <button
-          type="button"
-          className="btn btn-outline-dark"
-          onClick={() => setResetConfirmation({ isOpen: true })}
-          disabled={loadingUpdater}
-        >
-          {loadingUpdater ? "Updating..." : "Reset"}
-        </button>
-         )} 
+        {status?.user_name === 'Mandasa Technologies' && !isResetLocked && (
+          <button
+            type="button"
+            className="btn btn-outline-dark"
+            onClick={() => setResetConfirmation({ isOpen: true })}
+            disabled={loadingUpdater}
+          >
+            {loadingUpdater ? "Updating..." : "Reset"}
+          </button>
+        )}
         {/* <div>
           {status?.status === 'admin' && (
             <button
