@@ -48,29 +48,20 @@ const AddEntryModal = ({
 
         const todayDate = new Date().toISOString().split('T')[0];
 
-        // Clone the latest row data if available
-        let latestRow = data.length > 0 ? { ...data[0] } : {};
+        let initialRow = {};
 
-        // Remove system fields that shouldn't be copied
-        delete latestRow._id;
-        delete latestRow.createdAt;
-        delete latestRow.updatedAt;
-        delete latestRow.__v;
-
-        // Clear all select-type column values so user must pick the correct option
+        // Initialize all columns as empty
         columnsDef.forEach(col => {
-            if (col.column_type === "select" || col.column_type === "date") {
-                latestRow[col.name] = "";
-            }
+            initialRow[col.name] = "";
         });
 
-        // Apply overrides for text fields
-        if (projectCol) latestRow[projectCol.name] = "";
-        if (startDateCol) latestRow[startDateCol.name] = todayDate;
-        if (dailyCheckCol) latestRow[dailyCheckCol.name] = "No";
+        // Apply overrides for specific fields
+        if (projectCol) initialRow[projectCol.name] = "";
+        if (startDateCol) initialRow[startDateCol.name] = todayDate;
+        if (dailyCheckCol) initialRow[dailyCheckCol.name] = "No";
 
-        setFormData(latestRow);
-    }, [isRowModel, projectCol, groupCol, startDateCol, data]);
+        setFormData(initialRow);
+    }, [isRowModel, projectCol, groupCol, startDateCol, data, columnsDef]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -149,9 +140,12 @@ const AddEntryModal = ({
                     updatedForm[col.name] = "";
                 }
             });
+            const todayDate = new Date().toISOString().split('T')[0];
 
             // Preserve current project name selection
             updatedForm[projectCol.name] = projName;
+            updatedForm[startDateCol.name] = todayDate;
+            updatedForm[dailyCheckCol.name] = "No";
 
             setFormData(updatedForm);
         }
