@@ -51,7 +51,7 @@ connectDB();
 //     timezone: "Asia/Kolkata",
 // });
 
-cron.schedule("35 11 * * *", () => {
+cron.schedule("42 11 * * *", () => {
     logError("Audit write failed", auditErr, {
         projectId: project._id,
         column: column.column_heading,
