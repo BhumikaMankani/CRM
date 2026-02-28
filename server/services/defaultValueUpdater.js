@@ -4,6 +4,8 @@ const Audit = require("../models/Audit");
 const { logError, logInfo } = require("../utils/logError");
 
 const updateDefaultValues = async () => {
+  await logInfo("TEST", "Cron reached updateDefaultValues");
+  console.log("Cron reached updateDefaultValues");
   try {
     const columnsWithDefaults = await Column.find({
       status: { $ne: "deactive" },

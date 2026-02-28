@@ -47,16 +47,26 @@ const connectDB = async (retryCount = 5) => {
 };
 connectDB();
 
-// cron.schedule("3 11 * * *", updateDefaultValues, {
+// // cron.schedule("3 11 * * *", updateDefaultValues, {
+// //     timezone: "Asia/Kolkata",
+// // });
+
+// cron.schedule("55 11 * * *", updateDefaultValues, {
 //     timezone: "Asia/Kolkata",
 // });
 
-cron.schedule("48 11 * * *", () => {
-    logError("Cron not working", "", {
-        projectId: "123",
-        column: "test",
-    });
-    logInfo("Cron is running:", new Date().toISOString());
+cron.schedule("0 23 * * *", async () => {
+    try {
+        logInfo("Cron started", new Date().toISOString());
+
+        await updateDefaultValues();
+
+        logInfo("Cron completed successfully", new Date().toISOString());
+    } catch (error) {
+        logError("Cron failed", error.message, {
+            stack: error.stack,
+        });
+    }
 }, {
     timezone: "Asia/Kolkata",
 });
