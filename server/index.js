@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const cron = require("node-cron");
+const { logError, logInfo } = require("../utils/logError");
 
 // COlumns api
 const Columns = require('./routes/columns');
@@ -46,7 +47,17 @@ const connectDB = async (retryCount = 5) => {
 };
 connectDB();
 
-cron.schedule("30 07 * * *", updateDefaultValues, {
+// cron.schedule("3 11 * * *", updateDefaultValues, {
+//     timezone: "Asia/Kolkata",
+// });
+
+cron.schedule("35 11 * * *", () => {
+    logError("Audit write failed", auditErr, {
+        projectId: project._id,
+        column: column.column_heading,
+    });
+    logInfo("Cron is running:", new Date().toISOString());
+}, {
     timezone: "Asia/Kolkata",
 });
 
