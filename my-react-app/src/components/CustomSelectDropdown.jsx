@@ -109,7 +109,7 @@ const CustomSelectDropdown = ({
                 <div className="custom-select-options">
                     <div
                         className="custom-select-option"
-                        onClick={() => handleOptionClick('')}
+                        onMouseDown={(e) => { e.preventDefault(); handleOptionClick(''); }}
                     >
                         Select
                     </div>
@@ -121,7 +121,7 @@ const CustomSelectDropdown = ({
                             <div
                                 key={opt}
                                 className={`custom-select-option ${value === opt ? 'selected' : ''}`}
-                                onClick={() => handleOptionClick(opt)}
+                                onMouseDown={(e) => { e.preventDefault(); handleOptionClick(opt); }}
                                 style={{
                                     color: 'black',
                                     fontWeight: 'normal',
@@ -137,7 +137,7 @@ const CustomSelectDropdown = ({
                             {/* <div className="custom-select-divider"></div> */}
                             <div
                                 className="custom-select-edit-button"
-                                onClick={handleEditClick}
+                                onMouseDown={(e) => { e.preventDefault(); handleEditClick(e); }}
                             >
                                 <svg
                                     fill="currentColor"

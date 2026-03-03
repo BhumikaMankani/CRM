@@ -55,7 +55,7 @@ connectDB();
 //     timezone: "Asia/Kolkata",
 // });
 
-cron.schedule("0 23 * * *", async () => {
+cron.schedule("00 08 * * *", async () => {
     try {
         logInfo("Cron started", new Date().toISOString());
 
