@@ -20,7 +20,9 @@ const Department = require('./routes/department');
 const User = require('./routes/user');
 const Filters = require('./routes/filters');
 const { updateDefaultValues } = require('./services/defaultValueUpdater');
-require('dotenv').config();
+// require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,33 +30,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const connectDB = async (retryCount = 5) => {
-    const mongoURI = process.env.MONGO_URI;
-    try {
-        await mongoose.connect(mongoURI, {
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
-        });
-        console.log("✅ Mongo connected successfully");
-    } catch (err) {
-        console.error(`❌ Mongo connection error (Retries left: ${retryCount}):`, err.message);
-        if (retryCount > 0) {
-            setTimeout(() => connectDB(retryCount - 1), 5000);
-        } else {
-            console.error("💀 Max retries reached. Please check your connection or MongoDB server.");
-        }
-    }
-};
-connectDB();
-
-// // cron.schedule("3 11 * * *", updateDefaultValues, {
-// //     timezone: "Asia/Kolkata",
-// // });
-
-// cron.schedule("55 11 * * *", updateDefaultValues, {
-//     timezone: "Asia/Kolkata",
-// });
-
+// CRON SCHEDULED erros or logs will save to errorlogs database.....
 cron.schedule("00 08 * * *", async () => {
     try {
         logInfo("Cron started", new Date().toISOString());
@@ -70,6 +46,18 @@ cron.schedule("00 08 * * *", async () => {
 }, {
     timezone: "Asia/Kolkata",
 });
+
+
+const connectDB = () => {
+    const mongoURI = process.env.MONGO_URI;
+    try {
+        mongoose.connect(mongoURI);
+        console.log("✅ Mongo connected successfully");
+    } catch (err) {
+        console.error(`❌ Mongo connection error :`, err.message);
+    }
+};
+connectDB();
 
 // Log all incoming API requests for debugging
 app.use("/api", (req, res, next) => {
