@@ -30,31 +30,53 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// CRON SCHEDULED erros or logs will save to errorlogs database.....
-cron.schedule("00 08 * * *", async () => {
-    try {
-        logInfo("Cron started", new Date().toISOString());
+const CronStatus = require('./models/CronStatus');
 
-        await updateDefaultValues();
+// Run lazy cron to check if daily default update missed
+async function runLazyCron() {
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
-        logInfo("Cron completed successfully", new Date().toISOString());
-    } catch (error) {
-        logError("Cron failed", error.message, {
-            stack: error.stack,
-        });
+    console.log("today", today);
+    // 1. Fetch the last time it successfully ran
+    const status = await CronStatus.findOne({ taskName: "dailyUpdate" });
+    console.log("status", status);
+    console.log("Last run update", status.lastRunDate);
+    // 2. Check if we already ran it today
+    if (!status || status.lastRunDate < today) {
+        try {
+            console.log("Missed run detected or first run of the day. Starting...");
+            logInfo("Lazy Cron started", today);
+
+            await updateDefaultValues();
+
+            // 3. Mark as finished for today
+            await CronStatus.findOneAndUpdate(
+                { taskName: "dailyUpdate" },
+                { lastRunDate: today },
+                { upsert: true }
+            );
+
+            console.log("Lazy Cron completed for today.");
+            logInfo("Lazy Cron completed", today);
+        } catch (error) {
+            console.error("Lazy Cron failed", error.message);
+            logError("Lazy Cron failed", error.message);
+        }
+    } else {
+        console.log("Daily task already completed for today.");
     }
-}, {
-    timezone: "Asia/Kolkata",
-});
-
+}
 
 const connectDB = () => {
     const mongoURI = process.env.MONGO_URI;
     try {
-        mongoose.connect(mongoURI);
-        console.log("✅ Mongo connected successfully");
+        mongoose.connect(mongoURI).then(() => {
+            console.log(":white_check_mark: Mongo connected successfully");
+            // Run lazy cron after successful DB connection
+            runLazyCron();
+        });
     } catch (err) {
-        console.error(`❌ Mongo connection error :`, err.message);
+        console.error(`:x: Mongo connection error :`, err.message);
     }
 };
 connectDB();
