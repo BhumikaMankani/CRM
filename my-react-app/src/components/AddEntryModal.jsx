@@ -30,6 +30,7 @@ const AddEntryModal = ({
     const projectCol = getColByName("Project");
     const startDateCol = getColByName("Start Date");
     const dailyCheckCol = getColByName("Daily Check");
+    const statusCol = getColByName("Status");
     const endDateCol = getColByName("End Date");
     const categoryCol = getColByName("Category");
     const salesDiscussionCol = getColByName("Sales Discussion");
@@ -57,11 +58,12 @@ const AddEntryModal = ({
 
         // Apply overrides for specific fields
         if (projectCol) initialRow[projectCol.name] = "";
+        if (statusCol) initialRow[statusCol.name] = "Not started";
         if (startDateCol) initialRow[startDateCol.name] = todayDate;
         if (dailyCheckCol) initialRow[dailyCheckCol.name] = "No";
 
         setFormData(initialRow);
-    }, [isRowModel, projectCol, groupCol, startDateCol, data, columnsDef]);
+    }, [isRowModel, projectCol, groupCol, statusCol, startDateCol, data, columnsDef]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -146,6 +148,7 @@ const AddEntryModal = ({
             updatedForm[projectCol.name] = projName;
             updatedForm[startDateCol.name] = todayDate;
             updatedForm[dailyCheckCol.name] = "No";
+            updatedForm[statusCol.name] = "Not started";
 
             setFormData(updatedForm);
         }
