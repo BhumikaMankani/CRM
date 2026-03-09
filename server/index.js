@@ -40,7 +40,6 @@ async function runLazyCron() {
     // 1. Fetch the last time it successfully ran
     const status = await CronStatus.findOne({ taskName: "dailyUpdate" });
     console.log("status", status);
-    console.log("Last run update", status.lastRunDate);
     // 2. Check if we already ran it today
     if (!status || status.lastRunDate < today) {
         try {
@@ -71,7 +70,7 @@ const connectDB = () => {
     const mongoURI = process.env.MONGO_URI;
     try {
         mongoose.connect(mongoURI).then(() => {
-            console.log(":white_check_mark: Mongo connected successfully");
+            console.log("Mongo connected successfully");
             // Run lazy cron after successful DB connection
             runLazyCron();
         });
