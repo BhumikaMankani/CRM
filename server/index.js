@@ -35,15 +35,14 @@ const CronStatus = require('./models/CronStatus');
 // Run lazy cron to check if daily default update missed
 async function runLazyCron() {
     const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-
-    console.log("today", today);
+    logInfo("Lazy Cron today date", today);
     // 1. Fetch the last time it successfully ran
     const status = await CronStatus.findOne({ taskName: "dailyUpdate" });
-    console.log("status", status);
+    logInfo("Lazy Cron status", status);
     // 2. Check if we already ran it today
     if (!status || status.lastRunDate < today) {
         try {
-            console.log("Missed run detected or first run of the day. Starting...");
+            logInfo("First run of the day", "Missed run detected or first run of the day. Starting...");
             logInfo("Lazy Cron started", today);
 
             await updateDefaultValues();
@@ -55,14 +54,12 @@ async function runLazyCron() {
                 { upsert: true }
             );
 
-            console.log("Lazy Cron completed for today.");
-            logInfo("Lazy Cron completed", today);
+            logInfo("Lazy Cron completed once.", today);
         } catch (error) {
-            console.error("Lazy Cron failed", error.message);
             logError("Lazy Cron failed", error.message);
         }
     } else {
-        console.log("Daily task already completed for today.");
+        logInfo("Lazy cron completed", today);
     }
 }
 
