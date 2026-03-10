@@ -147,6 +147,7 @@ const AddEntryModal = ({
             // Preserve current project name selection
             updatedForm[projectCol.name] = projName;
             updatedForm[startDateCol.name] = todayDate;
+            updatedForm[endDateCol.name] = "";
             updatedForm[dailyCheckCol.name] = "No";
             updatedForm[statusCol.name] = "Not started";
 

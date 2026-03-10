@@ -32,34 +32,40 @@ app.use(express.json());
 
 const CronStatus = require('./models/CronStatus');
 
-// Run lazy cron to check if daily default update missed
 async function runLazyCron() {
-    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    logInfo("Lazy Cron today date", today);
-    // 1. Fetch the last time it successfully ran
-    const status = await CronStatus.findOne({ taskName: "dailyUpdate" });
-    logInfo("Lazy Cron status", status);
-    // 2. Check if we already ran it today
-    if (!status || status.lastRunDate < today) {
-        try {
-            logInfo("First run of the day", "Missed run detected or first run of the day. Starting...");
-            logInfo("Lazy Cron started", today);
+    try {
+        const today = new Date().toLocaleDateString('en-CA');
+        logInfo("Lazy Cron Check", `Today's date: ${today}`);
 
-            await updateDefaultValues();
+        const status = await CronStatus.findOne({ taskName: "dailyUpdate" });
+        logInfo("Lazy Cron Status", status);
 
-            // 3. Mark as finished for today
+        if (!status || status.lastRunDate !== today) {
+
+            logInfo("Running Daily Update", `Last ran: ${status?.lastRunDate || 'Never'}, Today: ${today}`);
+
+            try {
+                await updateDefaultValues();
+                logInfo("updateDefaultValues completed successfully", today);
+            } catch (updateError) {
+                logError("updateDefaultValues failed", updateError);
+                throw updateError;
+            }
+
             await CronStatus.findOneAndUpdate(
                 { taskName: "dailyUpdate" },
-                { lastRunDate: today },
+                { $set: { lastRunDate: today } },
                 { upsert: true }
             );
 
-            logInfo("Lazy Cron completed once.", today);
-        } catch (error) {
-            logError("Lazy Cron failed", error.message);
+            logInfo("Lazy Cron Completed", today);
+
+        } else {
+            logInfo("Lazy Cron Already Ran Today", `Last ran: ${status.lastRunDate}`);
         }
-    } else {
-        logInfo("Lazy cron completed", today);
+
+    } catch (error) {
+        logError("Lazy Cron Failed", error.message);
     }
 }
 
