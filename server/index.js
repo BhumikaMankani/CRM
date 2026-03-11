@@ -29,53 +29,11 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-
-const CronStatus = require('./models/CronStatus');
-
-async function runLazyCron() {
-    try {
-        const today = new Date().toLocaleDateString('en-CA');
-        logInfo("Lazy Cron Check", `Today's date: ${today}`);
-
-        const status = await CronStatus.findOne({ taskName: "dailyUpdate" });
-        logInfo("Lazy Cron Status", status);
-
-        if (!status || status.lastRunDate !== today) {
-
-            logInfo("Running Daily Update", `Last ran: ${status?.lastRunDate || 'Never'}, Today: ${today}`);
-
-            try {
-                await updateDefaultValues();
-                logInfo("updateDefaultValues completed successfully", today);
-            } catch (updateError) {
-                logError("updateDefaultValues failed", updateError);
-                throw updateError;
-            }
-
-            await CronStatus.findOneAndUpdate(
-                { taskName: "dailyUpdate" },
-                { $set: { lastRunDate: today } },
-                { upsert: true }
-            );
-
-            logInfo("Lazy Cron Completed", today);
-
-        } else {
-            logInfo("Lazy Cron Already Ran Today", `Last ran: ${status.lastRunDate}`);
-        }
-
-    } catch (error) {
-        logError("Lazy Cron Failed", error.message);
-    }
-}
-
 const connectDB = () => {
     const mongoURI = process.env.MONGO_URI;
     try {
         mongoose.connect(mongoURI).then(() => {
             console.log("Mongo connected successfully");
-            // Run lazy cron after successful DB connection
-            runLazyCron();
         });
     } catch (err) {
         console.error(`:x: Mongo connection error :`, err.message);

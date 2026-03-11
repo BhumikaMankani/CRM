@@ -232,6 +232,7 @@ function Form({
                   <option value="select">Select (Dropdown)</option>
                   <option value="monthYear">Month Year</option>
                   <option value="condition">Condition</option>
+                  <option value="link">Link</option>
                 </select>
               </div>
             )}
