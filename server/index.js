@@ -74,8 +74,6 @@ const connectDB = () => {
     try {
         mongoose.connect(mongoURI).then(() => {
             console.log("Mongo connected successfully");
-            // Run lazy cron after successful DB connection
-            runLazyCron();
         });
     } catch (err) {
         console.error(`:x: Mongo connection error :`, err.message);
