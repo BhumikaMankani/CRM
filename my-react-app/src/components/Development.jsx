@@ -34,7 +34,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   const [isRowModel, setIsRowModel] = useState(false);
 
   // cron status
-  const [cronStatus, setCronStatus] = useState([]);
+  const [cronStatus, setCronStatus] = useState(null);
 
   // Analytics Modal
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
@@ -136,25 +136,36 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     checkResetStatus();
   }, [API_URL]);
 
-  // const FetchDate = async () => {
-  //   const response = await fetch(`${API_URL}/api/cron-status`, {
-  //     method: "GET",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   });
+  const todayDate = new Date().toISOString().split("T")[0];
+  const FetchDate = async () => {
+    const response = await fetch(`${API_URL}/api/cron-status`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-  //   const data = await response.json();
+    const data = await response.json();
+    setCronStatus(data.lastRunDate);
+  };
 
-  //   console.log("API Data:", data);
+  useEffect(() => {
+    FetchDate();
+  }, []);
 
-  //   setCronStatus(data);
-  // };
+  useEffect(() => {
+    if (cronStatus) {
+      console.log("Updated cronStatus:", cronStatus);
+      console.log("Today date", todayDate);
+      if (cronStatus !== todayDate) {
+        console.log("Dates do not match → running updater");
+        updateColumnDefaultValue();
+      } else {
+        console.log("Dates match → no update needed");
+      }
 
-  // useEffect(() => {
-  //   FetchDate();
-  //   console.log("Updated cronStatus:", cronStatus);
-  // }, []);
+    }
+  }, [cronStatus]);
 
   const updateColumnDefaultValue = async () => {
     try {

@@ -6,6 +6,7 @@ const cron = require("node-cron");
 const { logError, logInfo } = require("./utils/logError");
 
 // COlumns api
+const CronStatus = require('./routes/CronStatus');
 const Columns = require('./routes/columns');
 const MarketingColumns = require('./routes/marketing-columns');
 const Seo_Column = require('./routes/seo-columns');
@@ -49,7 +50,7 @@ app.use("/api", (req, res, next) => {
 
 // default value updater route
 app.use("/api", defaultUpdaterRoute);
-
+app.use("/api/cron-status", CronStatus);
 // app.use('/api/projects', projectRoutes);
 app.use("/api/columns", Columns);
 app.use("/api/development", Development);
