@@ -19,6 +19,7 @@ const EditColumnAccessModal = ({
   const [showInfo, setShowInfo] = useState(false);
   const [sticky, setSticky] = useState(false);
   const [showYear, setShowYear] = useState(false);
+  const [rowpopup_column, setRowpopup_column] = useState(false);
 
 
   const handleSortingChange = (e) => {
@@ -43,6 +44,7 @@ const EditColumnAccessModal = ({
       setLessPrefix(column.lessPrefix || "");
       setShowInfo(!!column.showInfo);
       setSticky(!!column.sticky);
+      setRowpopup_column(!!column.rowpopup_column);
       setShowYear(!!column.showYear);
     }
   }, [column]);
@@ -80,6 +82,7 @@ const EditColumnAccessModal = ({
         lessPrefix: column.column_type === "condition" ? lessPrefix : undefined,
         showInfo,
         sticky,
+        rowpopup_column,
         showYear,
       });
     }
@@ -167,6 +170,20 @@ const EditColumnAccessModal = ({
                 />
                 <label className="form-check-label" htmlFor="showYear">
                   Show Year
+                </label>
+              </div>
+
+              <div className="form-check form-check-inline">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="rowpopup"
+                  name="rowpopup_column"
+                  checked={rowpopup_column}
+                  onChange={(e) => setRowpopup_column(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="rowpopup">
+                  Show in row popup
                 </label>
               </div>
             </div>

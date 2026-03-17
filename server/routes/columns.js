@@ -135,7 +135,7 @@ router.patch("/deactivate/:name", async (req, res) => {
 // Update column access and/or heading
 router.patch("/:name/access", async (req, res) => {
     try {
-        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky, showYear } = req.body;
+        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky, showYear, rowpopup_column } = req.body;
         const updateData = {};
         if (Array.isArray(access)) updateData.access = access;
         if (Array.isArray(viewAccess)) updateData.viewAccess = viewAccess;
@@ -153,6 +153,9 @@ router.patch("/:name/access", async (req, res) => {
         }
         if (typeof req.body.showInfo === "boolean") {
             updateData.showInfo = req.body.showInfo;
+        }
+        if (typeof rowpopup_column === "boolean") {
+            updateData.rowpopup_column = rowpopup_column;
         }
         if (equalPrefix !== undefined) updateData.equalPrefix = equalPrefix;
         if (morePrefix !== undefined) updateData.morePrefix = morePrefix;

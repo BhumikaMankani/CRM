@@ -33,6 +33,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Add Row
   const [isRowModel, setIsRowModel] = useState(false);
 
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
   // cron status
   const [cronStatus, setCronStatus] = useState(null);
 
@@ -188,7 +190,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         // alert("✅ Default values updated successfully");
         setIsResetLocked(true); // Lock immediately in UI
         // Refresh the table data
-        fetchAll({ showSpinner: false });
+        await fetchAll({ showSpinner: false });
       } else {
         alert("❌ Update failed");
       }
@@ -981,9 +983,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear }) => {
+  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column }) => {
     try {
-      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear };
+      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}${dataColumns}/${columnName}/access`,
@@ -1011,6 +1013,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               lessPrefix: updated.lessPrefix,
               showInfo: updated.showInfo,
               sticky: updated.sticky,
+              rowpopup_column: updated.rowpopup_column,
               showYear: updated.showYear,
               ...(updated.column_heading && { column_heading: updated.column_heading }),
             }
@@ -1652,6 +1655,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               const parsed = new Date(dateStr);
               if (!isNaN(parsed.getTime())) {
                 selectedDate = parsed;
+                // setSelectedDate(parsed);
               }
             }
 
@@ -2586,7 +2590,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         existingTextColors={selectedColorCol?.optionTextColors}
       />
 
-      <AddEntryModal isRowModel={isRowModel} columnsDef={columnsDef} data={data}
+      <AddEntryModal selectedDate={selectedDate} canEdit={canEdit} isRowModel={isRowModel} columnsDef={columnsDef} data={data}
         onSave={async (newRowData) => {
           setSortConfig({ key: null, direction: "asc" });
           setFilters({});

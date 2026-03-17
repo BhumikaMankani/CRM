@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { IoCloseSharp } from "react-icons/io5";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import "./AddEntryModal.css";
+
 
 const AddEntryModal = ({
     isRowModel,
     onClose,
     onSave,
+    canEdit,
+    selectedDate,
+    dateStr,
     columnsDef = [],
     data = []
 }) => {
@@ -21,11 +27,19 @@ const AddEntryModal = ({
     // ----------------------------
     // HELPER: FIND COLUMN BY HEADING
     // ----------------------------
-    const getColByName = (heading) => {
+    const getColByName = (column_heading) => {
         return columnsDef.find(col =>
-            (col.column_heading || "").toLowerCase().trim() === heading.toLowerCase().trim()
+            (col.column_heading || "").toLowerCase().trim() === column_heading.toLowerCase().trim()
         );
     };
+    const getRowPopupColumns = () => {
+        return (columnsDef || []).filter(col =>
+            (col.rowpopup_column || "") === true
+        );
+    };
+
+    const rowPopupColumns = getRowPopupColumns();
+    console.log("rowPopupColumns", rowPopupColumns);
 
     const projectCol = getColByName("Project");
     const startDateCol = getColByName("Start Date");
@@ -162,18 +176,6 @@ const AddEntryModal = ({
     // ----------------------------
     const handleSubmit = (e) => {
         e.preventDefault();
-
-        // Simple Validation
-        const newErrors = {};
-        if (projectCol && !formData[projectCol.name]) newErrors[projectCol.name] = "Project Name is required";
-        if (startDateCol && !formData[startDateCol.name]) newErrors[startDateCol.name] = "Start Date is required";
-        if (endDateCol && !formData[endDateCol.name]) newErrors[endDateCol.name] = "End Date is required";
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
-
         onSave?.(formData);
         onClose?.();
     };
@@ -188,7 +190,89 @@ const AddEntryModal = ({
                     <div className="form-header"><h2 className="modal-title">Create New Project</h2></div>
 
                     <form onSubmit={handleSubmit} className="modal-scroll-form">
-                        <div className="row">
+                        {Array.from({ length: Math.ceil(rowPopupColumns.length / 2) }, (_, rowIndex) => {
+                            const cols = rowPopupColumns.slice(rowIndex * 2, rowIndex * 2 + 2);
+
+                            return (
+                                <div className="row" key={rowIndex}>
+                                    {cols.map((col, index) => (
+                                        <div className="col-6" key={index}>
+                                            <div className="form-group" style={{ position: 'relative' }}>
+                                                <label className="modal-label">
+                                                    {col.column_heading} {col.is_required ? "*" : ""}
+                                                </label>
+
+                                                {col.column_type === 'text' && (
+                                                    <input
+                                                        type="text"
+                                                        name={col.name}
+                                                        value={formData[col.name] || ""}
+                                                        onChange={handleChange}
+                                                        className="modal-input"
+                                                        placeholder={`Enter ${col.column_heading}`}
+                                                    />
+                                                )}
+
+                                                {col.column_type === 'date' && (
+                                                    <input
+                                                        type="date"
+                                                        name={col.name}
+                                                        value={formData[col.name] || ""}
+                                                        onChange={handleChange}
+                                                        className="modal-input"
+                                                    />
+                                                )}
+
+                                                {col.column_type === 'select' && (
+                                                    <select
+                                                        name={col.name}
+                                                        value={formData[col.name] || ""}
+                                                        onChange={handleChange}
+                                                        className="modal-input"
+                                                    >
+                                                        <option value="">Select {col.column_heading}</option>
+                                                        {((col.options || col.multipleValue) || []).map((option, i) => (
+                                                            <option key={i} value={option}>{option}</option>
+                                                        ))}
+                                                    </select>
+                                                )}
+
+                                                {col.column_type === 'monthYear' && (
+                                                    <DatePicker
+                                                        selected={formData[col.name] ? new Date(formData[col.name]) : null}
+                                                        onChange={(date) => {
+                                                            if (date) {
+                                                                const monthNames = [
+                                                                    "January", "February", "March", "April", "May", "June",
+                                                                    "July", "August", "September", "October", "November", "December"
+                                                                ];
+
+                                                                const newValue = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    [col.name]: newValue
+                                                                }));
+                                                            } else {
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    [col.name]: ""
+                                                                }));
+                                                            }
+                                                        }}
+                                                        dateFormat="MMMM yyyy"
+                                                        showMonthYearPicker
+                                                        className="form-control"
+                                                        placeholderText="Select Month Year"
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })}
+                        {/* <div className="row">
                             {projectCol && (
                                 <div className="col-6">
                                     <div className="form-group" style={{ position: 'relative' }}>
@@ -339,7 +423,7 @@ const AddEntryModal = ({
                                     {errors[salesDiscussionCol.name] && <span className="error-text">{errors[salesDiscussionCol.name]}</span>}
                                 </div>
                             )}
-                        </div>
+                        </div> */}
                         <div className="modal-actions" style={{ paddingTop: "0px", marginTop: "16px" }}>
                             {/* <button type="button" className="btn-secondary" onClick={onClose}>
                                 Cancel
