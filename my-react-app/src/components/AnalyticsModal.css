@@ -130,8 +130,12 @@
 }
 
 .action-btn-mini:hover {
-    border-color: #94a3b8;
-    color: #333;
+    border: none;
+    /* color: #333; */
+}
+
+.action-btn-mini {
+    border: none !important;
 }
 
 .action-btn-mini.delete:hover {

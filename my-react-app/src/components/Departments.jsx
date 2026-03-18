@@ -4,8 +4,10 @@ import Marketing from "../pages/marketing";
 import Seo from "../pages/seo";
 import Form from "../components/Form";
 import Header from "./header";
+import { FaTimes, FaChartBar, FaEdit, FaArchive, FaTrash, FaBars } from 'react-icons/fa';
 // import Md5Hasher from "../components/Password";
 import Development from "../pages/development";
+import EditDepartment from "./EditDepartment";
 import { API_URL } from "../../proxy";
 import Sidebar from "./sidebar";
 import { MdDashboard } from "react-icons/md";
@@ -17,7 +19,7 @@ import { MdOutlineIncompleteCircle } from "react-icons/md";
 import { MdOutlinePhoneForwarded } from "react-icons/md";
 import { RiChatFollowUpFill } from "react-icons/ri";
 import UserForm from "../components/User";
-
+import "./custom.css";
 
 // Status values that should be treated as "ACTIVE"
 const ACTIVE_STATUSES = [
@@ -51,10 +53,16 @@ function Departments({ setIsLoggedIn }) {
 
     const [audits, setAudits] = useState([]);
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
+    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [selectedArchivedDepartments, setSelectedArchivedDepartments] = useState([]);
     const [newDepartmentName, setNewDepartmentName] = useState("");
     const [isEditing, setIsEditing] = useState(false);
     const [isDepartment, setIsDepartment] = useState(false);
+    const [editingDepartment, setEditingDepartment] = useState({});
     const [userData, setUserData] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [projects, setProjects] = useState([]);
@@ -144,6 +152,25 @@ function Departments({ setIsLoggedIn }) {
             }
         } catch (err) {
             console.error("Error adding department:", err);
+        }
+    };
+
+    const handleUnarchiveDepartments = async () => {
+        try {
+            await Promise.all(
+                selectedArchivedDepartments.map(id =>
+                    fetch(`${API_URL}/api/department/${id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: "Active" }),
+                    })
+                )
+            );
+            setIsArchiveModalOpen(false);
+            setSelectedArchivedDepartments([]);
+            fetchDepartments();
+        } catch (err) {
+            console.error("Failed to unarchive departments:", err);
         }
     };
 
@@ -329,6 +356,7 @@ function Departments({ setIsLoggedIn }) {
         }
     }, [status]);
 
+
     const handleCheckboxChange = async (event, user, deptName) => {
         const { checked } = event.target;
         let updatedDepartments = user.department || [];
@@ -362,7 +390,6 @@ function Departments({ setIsLoggedIn }) {
         }
     };
 
-
     // console.log("userData", userData);
 
     const columns = [
@@ -371,7 +398,8 @@ function Departments({ setIsLoggedIn }) {
             accessor: 'department',
             render: (row) => (
                 <div className="cell-input-wrapper">
-                    <Link to={row.link || `/${row.department.toLowerCase()}`} className="text-dark">{row.department}</Link>
+                    <Link to={`/${row.name.replace(/\d+/g, "")}`}
+                        className="text-dark">{row.department}</Link>
                 </div>
             )
         },
@@ -385,19 +413,52 @@ function Departments({ setIsLoggedIn }) {
                     <div className="row">
 
                         <div className="col-md-12">
-                            <table className="table">
+                            <table className="table" style={{ 'marginBottom': "0" }}>
                                 <thead className="thead-primary">
                                     <tr>
                                         {columns.map((column, index) => (
                                             <th className="p-2 w-100 d-flex justify-content-between align-items-center" key={index}>{column.header}
                                                 {status?.status === 'admin' ? (
-                                                    <div className="d-flex align-items-center justify-content-end gap-2">
-                                                        <button
-                                                            className="btn btn-secondary d-inline-flex align-items-center"
-                                                            onClick={() => setIsDepartmentModalOpen(true)}
-                                                        >
-                                                            Create
-                                                        </button>
+                                                    <div className="d-flex align-items-center justify-content-end gap-2 position-relative">
+                                                        <div className="dropdown">
+                                                            <button
+                                                                className="btn btn-secondary d-inline-flex align-items-center p-2"
+                                                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                                            >
+                                                                <FaBars />
+                                                            </button>
+                                                            {isDropdownOpen && (
+                                                                <div className="dropdown-menu show dropdown-menu-end position-absolute" style={{ top: "100%", right: 0, zIndex: 10 }}>
+                                                                    <button
+                                                                        className="dropdown-item"
+                                                                        onClick={() => {
+                                                                            setIsDropdownOpen(false);
+                                                                            setIsDepartmentModalOpen(true);
+                                                                        }}
+                                                                    >
+                                                                        Create
+                                                                    </button>
+                                                                    {departments.filter(d => d.status === 'archived').length > 0 && (
+                                                                        <button
+                                                                            className="dropdown-item"
+                                                                            onClick={() => {
+                                                                                setIsDropdownOpen(false);
+                                                                                setSelectedArchivedDepartments([]);
+                                                                                setIsArchiveModalOpen(true);
+                                                                            }}
+                                                                        >
+                                                                            Archived
+                                                                        </button>
+                                                                    )}
+                                                                    {status?.status === 'admin' && (
+                                                                        <>
+                                                                            <button className="dropdown-item" onClick={addUser}>Add User</button>
+                                                                            <button className="dropdown-item" onClick={() => setIsEditUserModalOpen(true)}>Edit User</button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>) : null}
                                             </th>
                                         ))}
@@ -405,7 +466,7 @@ function Departments({ setIsLoggedIn }) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {departments.map((row, rowIndex) => (
+                                    {departments.map((row, rowIndex) => row.status !== 'archived' && (
                                         (status?.status === 'admin' || status?.department?.includes(row.department)) && (
                                             <tr className="w-100" key={rowIndex}>
                                                 {columns.map((column, colIndex) => (
@@ -414,8 +475,8 @@ function Departments({ setIsLoggedIn }) {
                                                             ? column.render(row, rowIndex)
                                                             : row[column.accessor]}
                                                         {status?.status === 'admin' && column.accessor === 'department' && (
-                                                            <div className="d-flex gap-2">
-                                                                {userData
+                                                            <div className="d-flex gap-2 align-items-center">
+                                                                {/* {userData
                                                                     .filter(user => user.status === 'staff')
                                                                     .map((user, index) => (
                                                                         <div key={user._id || index} className="form-check">
@@ -435,7 +496,17 @@ function Departments({ setIsLoggedIn }) {
                                                                             </label>
                                                                         </div>
                                                                     ))
-                                                                }
+                                                                } */}
+                                                                <button
+                                                                    className="action-btn-mini action-btn-mini_ct"
+                                                                    title="Edit"
+                                                                    onClick={() => {
+                                                                        setEditingDepartment(row);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <FaEdit size={12} />
+                                                                </button>
                                                             </div>
                                                         )}
                                                     </td>
@@ -705,14 +776,67 @@ function Departments({ setIsLoggedIn }) {
                         </div>
                     )
                 }
+
+                {
+                    isArchiveModalOpen && (
+                        <div className="modal-overlay" style={{
+                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+                            justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                        }}>
+                            <div className="modal-content" style={{
+                                backgroundColor: 'white', padding: '20px', borderRadius: '8px',
+                                width: '400px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', maxHeight: '80vh', overflowY: 'auto'
+                            }}>
+                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                    <h4 className="m-0">Archived Departments</h4>
+                                    <button type="button" className="btn-close" onClick={() => setIsArchiveModalOpen(false)} aria-label="Close"></button>
+                                </div>
+                                <div className="mb-3">
+                                    {departments.filter(d => d.status === 'archived').length === 0 ? (
+                                        <p className="text-muted">No archived departments.</p>
+                                    ) : (
+                                        <div className="list-group">
+                                            {departments.filter(d => d.status === 'archived').map(dept => (
+                                                <label key={dept._id} className="list-group-item d-flex gap-2 align-items-center" style={{ cursor: "pointer" }}>
+                                                    <input
+                                                        className="form-check-input flex-shrink-0 m-0"
+                                                        type="checkbox"
+                                                        value={dept._id}
+                                                        checked={selectedArchivedDepartments.includes(dept._id)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedArchivedDepartments(prev => [...prev, dept._id]);
+                                                            } else {
+                                                                setSelectedArchivedDepartments(prev => prev.filter(id => id !== dept._id));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <span>
+                                                        {dept.department}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="d-flex justify-content-end gap-2">
+                                    <button type="button" className="btn btn-secondary" onClick={() => setIsArchiveModalOpen(false)}>Close</button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        onClick={handleUnarchiveDepartments}
+                                        disabled={selectedArchivedDepartments.length === 0}
+                                    >
+                                        Unarchive Selected
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
             </section>
-            {status?.status === 'admin' && (
-                <div className="edit_buttons_ct d-flex align-items-center justify-content-end gap-2">
-                    <button className="btn btn-primary" onClick={addUser}>Add User</button>
-                    {status?.user_name === 'Mandasa Technologies' && (
-                        <button className="btn btn-outline-dark" onClick={() => setIsEditUserModalOpen(true)}>Edit User</button>
-                    )}
-                </div>)}
+            <EditDepartment handleCheckboxChange={handleCheckboxChange} userData={userData} isModalOpen={isModalOpen} onClose={() => setIsModalOpen(false)} department={editingDepartment} fetchDepartments={fetchDepartments} />
 
             <UserForm isUserFormOpen={isUserFormOpen} onClose={() => setIsUserFormOpen(false)} onUserCreated={fetchUsers} />
         </div >

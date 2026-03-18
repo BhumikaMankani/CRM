@@ -4,16 +4,16 @@ const Audit = require("../models/Audit");
 const CronStatus = require("../models/CronStatus");
 const { logError, logInfo } = require("../utils/logError");
 
-const updateDefaultValues = async () => {
+const updateDefaultValues = async (force = false) => {
   await logInfo("TEST", "Cron reached updateDefaultValues");
-  console.log("Cron reached updateDefaultValues");
+  console.log("Cron reached updateDefaultValues (force: " + force + ")");
   try {
 
     const today = new Date().toISOString().split("T")[0];
 
     const cron = await CronStatus.findOne({ taskName: "dailyUpdate" });
 
-    if (cron && cron.lastRunDate === today) {
+    if (!force && cron && cron.lastRunDate === today) {
       console.log("Already updated today");
       return;
     }

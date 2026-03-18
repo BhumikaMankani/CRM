@@ -272,25 +272,34 @@ button.close_button:hover img {
     font-family: inherit;
 }
 
-.btn-primary {
+.btn.disabled,
+.btn:disabled,
+fieldset:disabled .btn {
+    opacity: 0.5;
+    cursor: not-allowed;
     background: #e87c00;
     color: white;
+}
+
+.btn-primary {
+    background: #e87c00 !important;
+    color: white !important;
     box-shadow:
         0 4px 6px -1px rgba(37, 99, 235, 0.2),
-        0 2px 4px -1px rgba(37, 99, 235, 0.1);
+        0 2px 4px -1px rgba(37, 99, 235, 0.1) !important;
 }
 
 .btn-primary:hover {
-    transform: translateY(-1px);
+    transform: translateY(-1px) !important;
     box-shadow:
         0 10px 15px -3px rgba(37, 99, 235, 0.3),
-        0 4px 6px -2px rgba(37, 99, 235, 0.15);
-    background-color: #e87c00;
+        0 4px 6px -2px rgba(37, 99, 235, 0.15) !important;
+    background-color: #e87c00 !important;
 }
 
 .btn-primary:active {
-    transform: translateY(0);
-    opacity: 0.95;
+    transform: translateY(0) !important;
+    opacity: 0.95 !important;
 }
 
 .btn-secondary {
@@ -387,4 +396,67 @@ button.close_button:hover img {
 .suggestions-dropdown li:hover {
     background-color: #f3f4f6;
     color: #e87c00;
+}
+
+/* Custom Dropdown Styling for Orange Theme */
+.dept-dropdown-menu {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    min-width: 200px;
+    padding: 8px 0;
+    margin-top: 8px;
+    z-index: 1050;
+    top: 100%;
+    right: 0;
+    animation: slideDownDropdown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownDropdown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dept-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 18px;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #1e293b;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.dept-dropdown-item:hover {
+    background-color: #fff7ed;
+    color: #e87c00;
+}
+
+.dept-dropdown-item svg {
+    font-size: 1.1rem;
+    color: #64748b;
+    transition: color 0.2s ease;
+}
+
+.dept-dropdown-item:hover svg {
+    color: #e87c00;
+}
+
+.dept-dropdown-divider {
+    height: 1px;
+    background-color: #e2e8f0;
+    margin: 6px 0;
 }

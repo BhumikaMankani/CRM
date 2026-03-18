@@ -175,50 +175,50 @@ router.patch("/:name/access", async (req, res) => {
 });
 
 // Global Reset Lock API
-router.get("/reset/status", async (req, res) => {
-    try {
-        const lastResetLog = await require("../models/Logs").findOne({
-            source: "global_column_reset",
-            message: "RESET_EXECUTED"
-        }).sort({ createdAt: -1 });
+// router.get("/reset/status", async (req, res) => {
+//     try {
+//         const lastResetLog = await require("../models/Logs").findOne({
+//             source: "global_column_reset",
+//             message: "RESET_EXECUTED"
+//         }).sort({ createdAt: -1 });
 
-        if (!lastResetLog) {
-            return res.json({ canReset: true, lastResetTime: null, remainingMs: 0 });
-        }
+//         if (!lastResetLog) {
+//             return res.json({ canReset: true, lastResetTime: null, remainingMs: 0 });
+//         }
 
-        const lastResetTime = new Date(lastResetLog.createdAt).getTime();
-        const now = Date.now();
-        const diff = now - lastResetTime;
-        const LOCK_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+//         const lastResetTime = new Date(lastResetLog.createdAt).getTime();
+//         const now = Date.now();
+//         const diff = now - lastResetTime;
+//         const LOCK_DURATION = 12 * 60 * 60 * 1000; // 12 hours
 
-        if (diff < LOCK_DURATION) {
-            return res.json({
-                canReset: false,
-                lastResetTime,
-                remainingMs: LOCK_DURATION - diff
-            });
-        }
+//         if (diff < LOCK_DURATION) {
+//             return res.json({
+//                 canReset: false,
+//                 lastResetTime,
+//                 remainingMs: LOCK_DURATION - diff
+//             });
+//         }
 
-        res.json({ canReset: true, lastResetTime, remainingMs: 0 });
-    } catch (err) {
-        console.error("Error checking reset status:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
+//         res.json({ canReset: true, lastResetTime, remainingMs: 0 });
+//     } catch (err) {
+//         console.error("Error checking reset status:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
 
-router.post("/reset/lock", async (req, res) => {
-    try {
-        await require("../models/Logs").create({
-            level: "INFO",
-            source: "global_column_reset",
-            message: "RESET_EXECUTED",
-            time: new Date()
-        });
-        res.json({ success: true });
-    } catch (err) {
-        console.error("Error locking reset:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
+// router.post("/reset/lock", async (req, res) => {
+//     try {
+//         await require("../models/Logs").create({
+//             level: "INFO",
+//             source: "global_column_reset",
+//             message: "RESET_EXECUTED",
+//             time: new Date()
+//         });
+//         res.json({ success: true });
+//     } catch (err) {
+//         console.error("Error locking reset:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
 
 module.exports = router;
