@@ -18,6 +18,7 @@ import { MdOutlinePhoneForwarded } from "react-icons/md";
 import { RiChatFollowUpFill } from "react-icons/ri";
 import UserForm from "../components/User";
 
+
 // Status values that should be treated as "ACTIVE"
 const ACTIVE_STATUSES = [
     "Not started",
@@ -33,6 +34,20 @@ const ACTIVE_STATUSES = [
 ];
 
 function Departments({ setIsLoggedIn }) {
+    const APIS = {
+        development: {
+            dataEndpoint: '/api/development',
+            dataColumns: '/api/columns',
+        },
+        marketing: {
+            dataEndpoint: '/api/marketing',
+            dataColumns: '/api/marketing-columns',
+        },
+        seo: {
+            dataEndpoint: '/api/seo',
+            dataColumns: '/api/seo-columns',
+        },
+    };
 
     const [audits, setAudits] = useState([]);
 
@@ -59,6 +74,11 @@ function Departments({ setIsLoggedIn }) {
     const [status, setStatus] = useState(() => {
         const savedData = localStorage.getItem('user');
         return savedData ? JSON.parse(savedData) : null;
+    });
+    const [selectedDepartment, setSelectedDepartment] = useState(() => {
+        const savedData = localStorage.getItem('user');
+        const parsed = savedData ? JSON.parse(savedData) : null;
+        return parsed?.department?.[0] || "";
     });
     const navigate = useNavigate();
 
@@ -166,20 +186,24 @@ function Departments({ setIsLoggedIn }) {
 
         const isAnyDepartmentTrue = status.department.some(dept => dept === true);
         setIsDepartment(isAnyDepartmentTrue);
-    }, [status]);
+
+        if (status.department.length > 0 && !selectedDepartment) {
+            setSelectedDepartment(status.department[0]);
+        }
+    }, [status, selectedDepartment]);
 
     useEffect(() => {
+
         const fetchProjectsAndCount = async () => {
             try {
                 // Fetch projects and columns together (same as Development page)
                 const [projectsRes, columnsRes] = await Promise.all([
-                    fetch(`${API_URL}/api/development`),
-                    fetch(`${API_URL}/api/columns`),
+                    fetch(`${API_URL}${APIS[selectedDepartment.toLowerCase()].dataEndpoint}`),
+                    fetch(`${API_URL}${APIS[selectedDepartment.toLowerCase()].dataColumns}`),
                 ]);
                 const data = await projectsRes.json();
                 const columns = await columnsRes.json();
                 setProjects(data);
-
                 // Find Status column for active filter (used when clicking ACTIVE card)
                 const statusCol = Array.isArray(columns) && columns.find(col => {
                     const h = (col.column_heading || "").toLowerCase();
@@ -305,8 +329,6 @@ function Departments({ setIsLoggedIn }) {
         }
     }, [status]);
 
-
-
     const handleCheckboxChange = async (event, user, deptName) => {
         const { checked } = event.target;
         let updatedDepartments = user.department || [];
@@ -357,9 +379,6 @@ function Departments({ setIsLoggedIn }) {
 
     return (
         < div className="main-parent" >
-            {/* {status?.status === 'staff' &&
-                <Sidebar />
-            } */}
             <section className="w-100">
 
                 {status?.status === 'admin' &&
@@ -404,12 +423,12 @@ function Departments({ setIsLoggedIn }) {
                                                                                 className="form-check-input"
                                                                                 type="checkbox"
                                                                                 value={user.user_name}
-                                                                                id={`${user._id}-${row.department}`}
+                                                                                id={`${user._id} - ${row.department}`}
                                                                                 checked={user.department?.includes(row.department)}
                                                                                 onChange={(e) => handleCheckboxChange(e, user, row.department)}
                                                                             />
                                                                             <label
-                                                                                htmlFor={`${user._id}-${row.department}`}
+                                                                                htmlFor={`${user._id} - ${row.department}`}
                                                                                 className="form-check-label"
                                                                             >
                                                                                 {user.user_name}
@@ -434,20 +453,39 @@ function Departments({ setIsLoggedIn }) {
                     <div className="row ">
                         <div className="col-md-12">
                             <div className="alert alert-light border">
-                                <div className="d-flex justify-content-between align-items-center">
+                                <div className="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h2 className="mb-3"> <strong> Welcome back, {status.user_name}!</strong></h2>
                                         <p>Here's what happening with your project's today</p>
                                     </div>
-                                    <div className="d-flex gap-2">
-                                        <a href="/development" className="btn btn-primary btn-sm">View All Projects</a>
+                                    <div className="staff__analytics d-flex flex-column align-items-end gap-2">
+                                        {status?.department?.length > 1 ? (
+                                            <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
+                                                {status.department.map(dept => (
+                                                    <li className="nav-item" key={dept}>
+                                                        <button
+                                                            className={`btn btn-sm btn-outline-primary ${selectedDepartment === dept ? 'active' : ''} `}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setSelectedDepartment(dept);
+                                                            }}
+                                                            style={{ cursor: 'pointer', border: '1px solid transparent' }}
+                                                        >
+                                                            {dept.charAt(0).toUpperCase() + dept.slice(1)}
+                                                        </button>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <a href={`/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</a>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="row g-3">
                                     {/* Total Projects Card */}
                                     <div className="col-md-3">
                                         <div className="card border-primary">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
 
                                                 <div className="card-body">
                                                     <MdDashboard />
@@ -464,7 +502,7 @@ function Departments({ setIsLoggedIn }) {
                                     <div className="col-md-3">
                                         <div className="card border-danger">
                                             <Link
-                                                to={`/development?filter_name=${status.user_name.toLowerCase()}-active-projects`}
+                                                to={`/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-active-projects`}
                                                 className="text-dark text-decoration-none"
                                             >
                                                 <div className="card-body ">
@@ -484,7 +522,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* ON TRACK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-success">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-on-track-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-on-track-projects`} className="text-dark text-decoration-none">
 
                                                 <div className="card-body ">
                                                     <FaRegCheckCircle />
@@ -499,7 +537,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* OFF TRACK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-warning">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-off-track-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-off-track-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <RxCrossCircled />
 
@@ -513,7 +551,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* AT RISK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-info">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <CgDanger />
 
@@ -528,7 +566,7 @@ function Departments({ setIsLoggedIn }) {
 
                                     <div className="col-md-3">
                                         <div className="card border-dark">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-follow-up`} className="text-dark text-decoration-none">
+                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-follow-up`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <RiChatFollowUpFill />
 
@@ -542,7 +580,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Forwarded to client projects */}
                                     <div className="col-md-3">
                                         <div className="card border-warning">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-forwarded-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-forwarded-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <MdOutlinePhoneForwarded />
 
@@ -557,7 +595,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Completed projects */}
                                     <div className="col-md-3">
                                         <div className="card border-success">
-                                            <Link to={`/development?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <MdOutlineIncompleteCircle />
 
@@ -601,25 +639,25 @@ function Departments({ setIsLoggedIn }) {
                                                         <input
                                                             className="form-check-input"
                                                             type="radio"
-                                                            name={`status-${user._id}`}
-                                                            id={`staff-${user._id}`}
+                                                            name={`status - ${user._id} `}
+                                                            id={`staff - ${user._id} `}
                                                             value="staff"
                                                             checked={user.status === 'staff'}
                                                             onChange={() => handleStatusChange(user, 'staff')}
                                                         />
-                                                        <label className="form-check-label" htmlFor={`staff-${user._id}`}>Staff</label>
+                                                        <label className="form-check-label" htmlFor={`staff - ${user._id} `}>Staff</label>
                                                     </div>
                                                     <div className="form-check">
                                                         <input
                                                             className="form-check-input"
                                                             type="radio"
-                                                            name={`status-${user._id}`}
-                                                            id={`admin-${user._id}`}
+                                                            name={`status - ${user._id} `}
+                                                            id={`admin - ${user._id} `}
                                                             value="admin"
                                                             checked={user.status === 'admin'}
                                                             onChange={() => handleStatusChange(user, 'admin')}
                                                         />
-                                                        <label className="form-check-label" htmlFor={`admin-${user._id}`}>Admin</label>
+                                                        <label className="form-check-label" htmlFor={`admin - ${user._id} `}>Admin</label>
                                                     </div>
                                                 </div>
                                             </div>

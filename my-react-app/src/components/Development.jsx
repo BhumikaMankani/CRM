@@ -16,7 +16,6 @@ import { FaTrash, FaTimes, FaUserCog, FaEdit } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
 import ColorPickerModal from "./ColorPickerModal";
 import CustomSelectDropdown from "./CustomSelectDropdown";
-import { FaPalette } from "react-icons/fa";
 
 
 function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
@@ -33,6 +32,11 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   // Add Row
   const [isRowModel, setIsRowModel] = useState(false);
+
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // cron status
+  const [cronStatus, setCronStatus] = useState(null);
 
   // Analytics Modal
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
@@ -105,6 +109,14 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     createdInfo: null,
   });
 
+  const [linkModal, setLinkModal] = useState({
+    isOpen: false,
+    rowId: null,
+    colName: "",
+    label: "",
+    link: "",
+  });
+
   const [loadingUpdater, setLoadingUpdater] = useState(false);
   const [resetDisabled, setResetDisabled] = useState(false);
 
@@ -125,6 +137,37 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
     checkResetStatus();
   }, [API_URL]);
+
+  const todayDate = new Date().toISOString().split("T")[0];
+  const FetchDate = async () => {
+    const response = await fetch(`${API_URL}/api/cron-status`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+    setCronStatus(data.lastRunDate);
+  };
+
+  useEffect(() => {
+    FetchDate();
+  }, []);
+
+  useEffect(() => {
+    if (cronStatus) {
+      console.log("Updated cronStatus:", cronStatus);
+      console.log("Today date", todayDate);
+      if (cronStatus !== todayDate) {
+        console.log("Dates do not match → running updater");
+        updateColumnDefaultValue();
+      } else {
+        console.log("Dates match → no update needed");
+      }
+
+    }
+  }, [cronStatus]);
 
   const updateColumnDefaultValue = async () => {
     try {
@@ -147,7 +190,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         // alert("✅ Default values updated successfully");
         setIsResetLocked(true); // Lock immediately in UI
         // Refresh the table data
-        fetchAll({ showSpinner: false });
+        await fetchAll({ showSpinner: false });
       } else {
         alert("❌ Update failed");
       }
@@ -940,9 +983,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear }) => {
+  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column }) => {
     try {
-      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear };
+      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}${dataColumns}/${columnName}/access`,
@@ -970,6 +1013,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               lessPrefix: updated.lessPrefix,
               showInfo: updated.showInfo,
               sticky: updated.sticky,
+              rowpopup_column: updated.rowpopup_column,
               showYear: updated.showYear,
               ...(updated.column_heading && { column_heading: updated.column_heading }),
             }
@@ -1611,6 +1655,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               const parsed = new Date(dateStr);
               if (!isNaN(parsed.getTime())) {
                 selectedDate = parsed;
+                // setSelectedDate(parsed);
               }
             }
 
@@ -1685,6 +1730,81 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             );
           }
 
+          if (col.column_type === "link") {
+            let linkData = { label: "", link: "" };
+            try {
+              if (value && typeof value === "string") {
+                if (value.startsWith("{")) {
+                  linkData = JSON.parse(value);
+                } else {
+                  linkData = { label: value, link: value };
+                }
+              } else if (value && typeof value === "object") {
+                linkData = value;
+              }
+            } catch (e) {
+              linkData = { label: value, link: value };
+            }
+
+            const isEmpty = !linkData.label && !linkData.link;
+
+            return (
+              <div className="d-flex align-items-center justify-content-between w-100 gap-2 px-2">
+                {isEmpty ? (
+                  <span
+                    className="text-muted cursor-pointer flex-grow-1"
+                    style={{ fontSize: "12px", fontStyle: "italic" }}
+                    onClick={() =>
+                      setLinkModal({
+                        isOpen: true,
+                        rowId: row._id,
+                        colName: col.name,
+                        label: "",
+                        link: "",
+                      })
+                    }
+                  >
+                    Add Link
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-link p-0 text-primary text-truncate flex-grow-1 text-start"
+                    style={{ fontSize: "13px", textDecoration: "none", maxWidth: "calc(100% - 20px)" }}
+                    onClick={() => {
+                      if (linkData.link) {
+                        const url =
+                          linkData.link.startsWith("http") ||
+                            linkData.link.startsWith("//")
+                            ? linkData.link
+                            : `https://${linkData.link}`;
+                        window.open(url, "_blank");
+                      }
+                    }}
+                  >
+                    {linkData.label || linkData.link}
+                  </button>
+                )}
+                {canEdit(col.name, col) && (
+                  <button
+                    className="btn btn-link p-0 text-muted"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLinkModal({
+                        isOpen: true,
+                        rowId: row._id,
+                        colName: col.name,
+                        label: linkData.label || "",
+                        link: linkData.link || "",
+                      });
+                    }}
+                  >
+                    <FaEdit size={12} />
+                  </button>
+                )}
+              </div>
+            );
+          }
           if (col.column_type === "select") {
             const rowValue = value || "";
             let displayMonth = rowValue;
@@ -2030,41 +2150,60 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
         <div className="">
           {/* Saved Filters List above the table */}
-          {savedFilters.length > 0 && (
-            <div className="saved-filters-row w-100 mb-3">
-              <div className="row flex-nowrap w-100 align-items-center">
-                <div className={`filters-list-horizontal align-items-center col-9`}>
-                  {status?.status === 'staff' ? (
-                    <button
-                      onClick={handleFilterClick}
-                      className={`btn ${isFilterOpen ? "btn-dark" : "btn-outline-dark"}`}
-                      title="Toggle Filters"
+
+          <div className="saved-filters-row w-100 mb-3">
+            <div className="row flex-nowrap w-100 align-items-center">
+              <div className={`filters-list-horizontal align-items-center col-9`}>
+                {status?.status === 'staff' ? (
+                  <button
+                    onClick={handleFilterClick}
+                    className={`btn ${isFilterOpen ? "btn-dark" : "btn-outline-dark"}`}
+                    title="Toggle Filters"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      style={{ width: "16px", height: "16px" }}
+                      xmlnsXlink="http://www.w3.org/2000/svg"
                     >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        style={{ width: "16px", height: "16px" }}
-                        xmlnsXlink="http://www.w3.org/2000/svg"
-                      >
-                        <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                        <g
-                          id="SVGRepo_tracerCarrier"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        ></g>
-                        <g id="SVGRepo_iconCarrier">
-                          <path
-                            fillRule="evenodd"
-                            clipRule="evenodd"
-                            d="M15 10.5A3.502 3.502 0 0 0 18.355 8H21a1 1 0 1 0 0-2h-2.645a3.502 3.502 0 0 0-6.71 0H3a1 1 0 0 0 0 2h8.645A3.502 3.502 0 0 0 15 10.5zM3 16a1 1 0 1 0 0 2h2.145a3.502 3.502 0 0 0 6.71 0H21a1 1 0 1 0 0-2h-9.145a3.502 3.502 0 0 0-6.71 0H3z"
-                            fill="currentColor"
-                          ></path>
-                        </g>
-                      </svg>
-                    </button>
-                  ) : null}
-                  {status.status === "admin" ? (
-                    savedFilters.filter(f => !f.showInAnalytics).map((filter) => (
+                      <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                      <g
+                        id="SVGRepo_tracerCarrier"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      ></g>
+                      <g id="SVGRepo_iconCarrier">
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M15 10.5A3.502 3.502 0 0 0 18.355 8H21a1 1 0 1 0 0-2h-2.645a3.502 3.502 0 0 0-6.71 0H3a1 1 0 0 0 0 2h8.645A3.502 3.502 0 0 0 15 10.5zM3 16a1 1 0 1 0 0 2h2.145a3.502 3.502 0 0 0 6.71 0H21a1 1 0 1 0 0-2h-9.145a3.502 3.502 0 0 0-6.71 0H3z"
+                          fill="currentColor"
+                        ></path>
+                      </g>
+                    </svg>
+                  </button>
+                ) : null}
+                {status.status === "admin" && savedFilters.length > 0 ? (
+                  savedFilters.filter(f => !f.showInAnalytics).map((filter) => (
+                    <div
+                      key={filter._id}
+                      className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
+                      onClick={() => handleFilterSelect(filter)}
+                      title="Click to toggle (apply/deactivate)"
+                    >
+                      <span className="filter-name">{filter.filterName}                       <span className="">({countMatchingRows(filter.filterData)})</span>
+                      </span>
+                      {status.status === 'admin' && (
+                        <div className="filter-actions-group">
+                          <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><FaEdit size={12} /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn"><FaTrash size={12} /></button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) :
+                  (
+                    savedFilters.map((filter) => (
                       <div
                         key={filter._id}
                         className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
@@ -2081,51 +2220,31 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                         )}
                       </div>
                     ))
-                  ) :
-                    (
-                      savedFilters.map((filter) => (
-                        <div
-                          key={filter._id}
-                          className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
-                          onClick={() => handleFilterSelect(filter)}
-                          title="Click to toggle (apply/deactivate)"
-                        >
-                          <span className="filter-name">{filter.filterName}                       <span className="">({countMatchingRows(filter.filterData)})</span>
-                          </span>
-                          {status.status === 'admin' && (
-                            <div className="filter-actions-group">
-                              <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><FaEdit size={12} /></button>
-                              <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn"><FaTrash size={12} /></button>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-                </div>
-                <div className="filters-actions col-3 d-flex gap-2 justify-content-end align-items-center">
-                  {status?.status === 'admin' && isFilterOpen && (
-                    <button
-                      onClick={() => setIsSaveFilterModalOpen(true)}
-                      className="btn save_as btn-sm"
-                      title="Save current filter configuration"
-                    >
-                      Save As
-                    </button>
                   )}
-                  {showClearFilterButton && (
-                    <button
-                      onClick={clearFilters}
-                      className="btn clear_all btn-sm"
-                      title="Clear all active filters"
-                    >
-                      Clear All
-                    </button>
-                  )}
-                  <span className="filter-count" style={{ fontSize: '14px' }}><b>{filterCount} Projects</b></span>
-                </div>
+              </div>
+              <div className="filters-actions col-3 d-flex gap-2 justify-content-end align-items-center">
+                {status?.status === 'admin' && isFilterOpen && (
+                  <button
+                    onClick={() => setIsSaveFilterModalOpen(true)}
+                    className="btn save_as btn-sm"
+                    title="Save current filter configuration"
+                  >
+                    Save As
+                  </button>
+                )}
+                {showClearFilterButton && (
+                  <button
+                    onClick={clearFilters}
+                    className="btn clear_all btn-sm"
+                    title="Clear all active filters"
+                  >
+                    Clear All
+                  </button>
+                )}
+                <span className="filter-count" style={{ fontSize: '14px' }}><b>{filterCount} Projects</b></span>
               </div>
             </div>
-          )}
+          </div>
           {loading ? (
             <div className="loading-spinner">
               <div className="spinner"></div>
@@ -2471,7 +2590,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         existingTextColors={selectedColorCol?.optionTextColors}
       />
 
-      <AddEntryModal isRowModel={isRowModel} columnsDef={columnsDef} data={data}
+      <AddEntryModal selectedDate={selectedDate} canEdit={canEdit} isRowModel={isRowModel} columnsDef={columnsDef} data={data}
         onSave={async (newRowData) => {
           setSortConfig({ key: null, direction: "asc" });
           setFilters({});
@@ -2626,6 +2745,92 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         </div>
       )
       }
+
+      {/* Link Edit Modal */}
+      {linkModal.isOpen && (
+        <div
+          className="modal-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1100,
+          }}
+          onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
+        >
+          <div
+            className="modal-content"
+            style={{
+              backgroundColor: "white",
+              padding: "24px",
+              borderRadius: "12px",
+              width: "400px",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h5 className="mb-0 fw-bold">Edit Link</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
+              ></button>
+            </div>
+            <div className="mb-3">
+              <label className="form-label fw-semibold">Label</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter label (e.g. Website)"
+                value={linkModal.label}
+                onChange={(e) =>
+                  setLinkModal((prev) => ({ ...prev, label: e.target.value }))
+                }
+              />
+            </div>
+            <div className="mb-4">
+              <label className="form-label fw-semibold">Link URL</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter URL (e.g. google.com)"
+                value={linkModal.link}
+                onChange={(e) =>
+                  setLinkModal((prev) => ({ ...prev, link: e.target.value }))
+                }
+              />
+            </div>
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                className="btn btn-light px-4"
+                onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary px-4"
+                onClick={() => {
+                  const payload = JSON.stringify({
+                    label: linkModal.label.trim(),
+                    link: linkModal.link.trim(),
+                  });
+                  handleChange(linkModal.rowId, linkModal.colName, payload);
+                  setLinkModal((prev) => ({ ...prev, isOpen: false }));
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section >
   );
 }

@@ -10,6 +10,22 @@
     sans-serif;
 }
 
+ul.nav.nav-pills button.active {
+  --bs-btn-active-bg: #e87c00 !important;
+  --bs-btn-active-border-color: #e87c00 !important;
+  --bs-btn-active-color: #fff !important;
+}
+
+ul.nav.nav-pills .btn-outline-primary {
+  --bs-btn-color: #000;
+  --bs-btn-border-color: #e87c00;
+  --bs-btn-hover-bg: #e87c00;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: #e87c00;
+  --bs-btn-active-border-color: #e87c00;
+  --bs-btn-active-color: #fff;
+}
+
 td.has-option-color select option {
   color: black;
 }

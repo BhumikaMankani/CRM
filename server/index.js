@@ -5,6 +5,7 @@ const path = require('path');
 const { logError, logInfo } = require("./utils/logError");
 
 // COlumns api
+const CronStatus = require('./routes/CronStatus');
 const Columns = require('./routes/columns');
 const MarketingColumns = require('./routes/marketing-columns');
 const Seo_Column = require('./routes/seo-columns');
@@ -72,7 +73,7 @@ const connectDB = () => {
             runLazyCron();
         });
     } catch (err) {
-        console.error(`❌ Mongo connection error :`, err.message);
+        console.error(`:x: Mongo connection error :`, err.message);
     }
 };
 connectDB();
