@@ -10,6 +10,22 @@
     sans-serif;
 }
 
+.action-btn-mini_ct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-item:focus,
+.dropdown-item:hover {
+  background-color: transparent !Important;
+}
+
+.dropdown button.btn {
+  border: 0 !important;
+  background: transparent !important;
+}
+
 ul.nav.nav-pills button.active {
   --bs-btn-active-bg: #e87c00 !important;
   --bs-btn-active-border-color: #e87c00 !important;
@@ -650,4 +666,12 @@ table td select {
   height: 35px;
   padding: 0;
   flex-shrink: 0;
+}
+
+table tr:last-child td {
+  border-bottom: none;
+}
+
+button.action-btn-mini.action-btn-mini_ct {
+  padding: 0 10px;
 }
