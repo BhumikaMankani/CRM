@@ -39,7 +39,7 @@ const AddEntryModal = ({
     };
 
     const rowPopupColumns = getRowPopupColumns();
-    console.log("rowPopupColumns", rowPopupColumns);
+    // console.log("rowPopupColumns", rowPopupColumns);
 
     const projectCol = getColByName("Project");
     const startDateCol = getColByName("Start Date");

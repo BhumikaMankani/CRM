@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 // Add new column
 router.post("/", async (req, res) => {
     try {
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky, showYear } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, rowpopup_column, showInMainProject, sticky, showYear } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -30,6 +30,8 @@ router.post("/", async (req, res) => {
             column_type: column_type || 'text',
             sorting: !!sorting,
             showInfo: !!req.body.showInfo,
+            showInMainProject: !!req.body.showInMainProject,
+            rowpopup_column: !!req.body.rowpopup_column,
             multipleValue: multipleValue || [],
             conditionColumn1: conditionColumn1 || undefined,
             conditionColumn2: conditionColumn2 || undefined,
@@ -154,6 +156,12 @@ router.patch("/:name/access", async (req, res) => {
         }
         if (typeof req.body.showInfo === "boolean") {
             updateData.showInfo = req.body.showInfo;
+        }
+        if (typeof req.body.showInMainProject === "boolean") {
+            updateData.showInMainProject = req.body.showInMainProject;
+        }
+        if (typeof req.body.rowpopup_column === "boolean") {
+            updateData.rowpopup_column = req.body.rowpopup_column;
         }
         if (equalPrefix !== undefined) updateData.equalPrefix = equalPrefix;
         if (morePrefix !== undefined) updateData.morePrefix = morePrefix;

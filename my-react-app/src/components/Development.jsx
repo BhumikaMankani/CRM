@@ -1,26 +1,30 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { LiaEditSolid } from "react-icons/lia";
 import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
 import AnalyticsModal from "./AnalyticsModal";
+import { RiLogoutCircleRLine } from "react-icons/ri";
+
 import ToggleButtonIcon from "./toggle";
 import SaveFilterModal from "./SaveFilterModal";
 import FilterSidebar from "./FilterSidebar";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
 import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
 import { FaTrash, FaTimes, FaUserCog, FaEdit } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
 import ColorPickerModal from "./ColorPickerModal";
 import CustomSelectDropdown from "./CustomSelectDropdown";
-
+import { IoMailUnreadSharp } from "react-icons/io5";
 
 function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Create a ref for FilterSidebar
   const filterSidebarRef = useRef(null);
+  const navigate = useNavigate();
+
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -32,7 +36,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   // Add Row
   const [isRowModel, setIsRowModel] = useState(false);
-
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   // cron status
@@ -45,6 +48,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   const [filterCount, setFilterCount] = useState([]);
 
   const [showClearFilterButton, setShowClearFilterButton] = useState(false);
+
+  // Set tasks of the mainproject
+  const [tasks, setTasks] = useState([]);
 
   // Column states
   const [columnsDef, setColumnsDef] = useState([]);
@@ -110,6 +116,14 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   });
 
   const [linkModal, setLinkModal] = useState({
+    isOpen: false,
+    rowId: null,
+    colName: "",
+    label: "",
+    link: "",
+  });
+
+  const [mainProjectModal, setMainProjectModal] = useState({
     isOpen: false,
     rowId: null,
     colName: "",
@@ -229,6 +243,29 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   const handleColumnEditClick = () => {
     setIsDelete(!isDelete);
+  };
+
+  const getMainprojects = async (projectName) => {
+    // try {
+    //   const res = await fetch(`${API_URL}/api/mainProject`);
+    //   const mainProjects = await res.json();
+    //   console.log("mainProjects", mainProjects);
+    //   // ✅ Find clicked project
+    //   const selectedProject = mainProjects.find(
+    //     p => p.mainProjectName === projectName
+    //   );
+
+    //   console.log("selectedProject", selectedProject);
+
+    //   // 👉 tasks of that project
+    //   const tasks = selectedProject?.tasks || [];
+    //   console.log("Tasks:", tasks);
+    //   setTasks(tasks);
+
+    // } catch (err) {
+    //   console.error(err);
+    // }
+    navigate(`/tasks?project=${encodeURIComponent(projectName)}`);
   };
 
   // Helper for overdue calculation
@@ -736,6 +773,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     }
   }, [API_URL, dataColumns, dataEndpoint]);
 
+  const mainProjectId = columnsDef?.find(c => c.showInMainProject)?.name;
+  const taskNameId = "project1768984734240";
+
   useEffect(() => {
     // initial load
     fetchAll({ showSpinner: true });
@@ -802,6 +842,30 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   const updateTimeoutRef = useRef({});
 
+  const handleBlur = (rowId, field, value) => {
+    console.log("value", value);
+    console.log("field", field);
+    console.log("mainProjectId", mainProjectId);
+    if (field === mainProjectId) {
+      const projectName = data.find(r => r._id === rowId)?.[mainProjectId];
+      const taskName = data.find(r => r._id === rowId)?.[taskNameId];
+      try {
+        fetch(`${API_URL}/api/mainProject`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId: rowId,
+            projectName: projectName,
+            taskName: taskName
+          }),
+        });
+      } catch (err) {
+        console.error("MainProject sync failed", err);
+      }
+      // }
+    }
+  }
+
   /* ---------------- UPDATE CELL ---------------- */
   const handleChange = (rowId, field, value) => {
     // Update local UI state immediately
@@ -849,7 +913,26 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             }),
           }).then(response => {
             if (response.ok) {
-              // Dispatch custom event to notify header to refresh audit data
+              // if (field === mainProjectId) {
+              //   const oldValue = data.find(r => r._id === rowId)?.[field];
+              //   console.log("oldValue", oldValue);
+              //   console.log("value", value);
+              //   if (oldValue !== value && value) {
+              //     try {
+              //       fetch(`${API_URL}/api/mainProject`, {
+              //         method: "POST",
+              //         headers: { "Content-Type": "application/json" },
+              //         body: JSON.stringify({
+              //           projectId: rowId,
+              //           projectName: value,
+              //           taskName: value
+              //         }),
+              //       });
+              //     } catch (err) {
+              //       console.error("MainProject sync failed", err);
+              //     }
+              //   }
+              // }
               window.dispatchEvent(new CustomEvent('dataUpdated'));
             }
           });
@@ -983,9 +1066,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column }) => {
+  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column, showInMainProject }) => {
     try {
-      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column };
+      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column, showInMainProject };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}${dataColumns}/${columnName}/access`,
@@ -1014,6 +1097,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               showInfo: updated.showInfo,
               sticky: updated.sticky,
               rowpopup_column: updated.rowpopup_column,
+              showInMainProject: updated.showInMainProject,
               showYear: updated.showYear,
               ...(updated.column_heading && { column_heading: updated.column_heading }),
             }
@@ -1076,29 +1160,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     };
     fetchUsers();
   }, []);
-
-  const [columnAccess, setColumnAccess] = useState([]);
-
-  const handleColumnAccess = async (columnName) => {
-    // try {
-    //     const response = await fetch(`${aPI_URL}/api/user/column-access`, {
-    //         method: "PATCH",
-    //         headers: {
-    //             "Content-Type": "application/json",
-    //         },
-    //         body: JSON.stringify({ columnName }),
-    //     });
-    //     if (response.ok) {
-    //         const data = await response.json();
-    //         console.log(data.message);
-    //         alert(`Access for "${columnName}" granted to all staff`);
-    //     } else {
-    //         console.error("Failed to update column access");
-    //     }
-    // } catch (err) {
-    //     console.error("Error updating column access:", err);
-    // }
-  };
 
   // Define allowed columns for staff
   const valuesToMatch = useMemo(() => {
@@ -1252,11 +1313,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                     }
                     : { readOnly: true })}
                 />
-                {/* {status.status === 'admin' && (
-                                    // <button type="button" onClick={() => handleColumnAccess(col.name)}>
-                                    //     Toggle
-                                    // </button>
-                                )} */}
                 {col.sorting && (
                   <button
                     className="btn btn-link p-0 text-dark"
@@ -1930,20 +1986,67 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
           return (
             <div className="d-flex align-items-center gap-1">
-              <input
-                type={
-                  col.column_type === "date"
-                    ? "date"
-                    : col.column_type === "number"
-                      ? "number"
-                      : "text"
-                }
-                value={value}
-                className="bg-transparent border-0 w-100 text-dark"
-                onChange={(e) => handleChange(row._id, col.name, e.target.value)}
-                disabled={!canEdit(col.name, col)}
-              />
-              {status.status === "admin" &&
+              {col.name === mainProjectId ? (
+                <>
+                  <input
+                    type={
+                      col.column_type === "date"
+                        ? "date"
+                        : col.column_type === "number"
+                          ? "number"
+                          : "text"
+                    }
+                    value={value}
+                    data-column={col.name}
+                    data-row={row._id}
+                    className="bg-transparent border-0 w-100 text-dark"
+                    onChange={(e) => handleChange(row._id, col.name, e.target.value)}
+                    onBlur={(e) => handleBlur(row._id, col.name, e.target.value)}
+                    disabled={!canEdit(col.name, col)}
+                  />
+                  {/* <button
+                    type="button"
+                    className="btn project___mainproject"
+                    title={`Main project ${value}`}
+                    onClick={() => getMainprojects(value)}
+                  >
+                    <RiLogoutCircleRLine />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn project___mainproject"
+                    title={`Edit main project ${value}`}
+                    onClick={() =>
+                      setMainProjectModal({
+                        isOpen: true,
+                        rowId: row._id,
+                        colName: col.name,
+                      })
+                    }
+                  >
+                    <LiaEditSolid />
+                  </button> */}
+                </>
+              ) : (
+                <input
+                  type={
+                    col.column_type === "date"
+                      ? "date"
+                      : col.column_type === "number"
+                        ? "number"
+                        : "text"
+                  }
+                  value={value}
+                  data-column={col.name}
+                  data-row={row._id}
+                  className="bg-transparent border-0 w-100 text-dark"
+                  onChange={(e) => handleChange(row._id, col.name, e.target.value)}
+                  disabled={!canEdit(col.name, col)}
+                />
+              )
+              }
+              {
+                status.status === "admin" &&
                 (col.showInfo || (col.hasDefaultValue)) && (
                   <button
                     type="button"
@@ -1984,8 +2087,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   >
                     <BsInfoCircleFill style={{ color: "#2563eb" }} />
                   </button>
-                )}
-            </div>
+                )
+              }
+            </div >
           );
         },
       })),
@@ -2658,8 +2762,24 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               const errorData = await res.json();
               throw new Error(errorData.error || "Failed to add row");
             }
-
             const saved = await res.json();
+
+            // New mainProject added...
+            console.log("New row data", newRow);
+            const projectName = newRow[mainProjectId];
+            const taskName = newRow[taskNameId];
+            console.log("projectName", projectName);
+            if (projectName) {
+              await fetch(`${API_URL}/api/mainProject`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  projectId: saved._id,        // row id
+                  projectName: projectName,    // matched value
+                  taskName: taskName        // optional
+                }),
+              });
+            }
             // Add new row to the top of the list
             setData((prev) => [saved, ...prev]);
             setIsRowModel(false); // Close modal after saving
@@ -2745,7 +2865,91 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         </div>
       )
       }
-
+      {/* Main task edit popup */}
+      {mainProjectModal.isOpen && (
+        <div
+          className="modal-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1100,
+          }}
+          onClick={() => setMainProjectModal((prev) => ({ ...prev, isOpen: false }))}
+        >
+          <div
+            className="modal-content"
+            style={{
+              backgroundColor: "white",
+              padding: "24px",
+              borderRadius: "12px",
+              width: "400px",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h5 className="mb-0 fw-bold">Edit Link</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setMainProjectModal((prev) => ({ ...prev, isOpen: false }))}
+              ></button>
+            </div>
+            <div className="mb-3">
+              <label className="form-label fw-semibold">Label</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter label (e.g. Website)"
+                value={linkModal.label}
+                onChange={(e) =>
+                  setLinkModal((prev) => ({ ...prev, label: e.target.value }))
+                }
+              />
+            </div>
+            <div className="mb-4">
+              <label className="form-label fw-semibold">Link URL</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter URL (e.g. google.com)"
+                value={linkModal.link}
+                onChange={(e) =>
+                  setLinkModal((prev) => ({ ...prev, link: e.target.value }))
+                }
+              />
+            </div>
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                className="btn btn-light px-4"
+                onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary px-4"
+                onClick={() => {
+                  const payload = JSON.stringify({
+                    label: linkModal.label.trim(),
+                    link: linkModal.link.trim(),
+                  });
+                  handleChange(linkModal.rowId, linkModal.colName, payload);
+                  setLinkModal((prev) => ({ ...prev, isOpen: false }));
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Link Edit Modal */}
       {linkModal.isOpen && (
         <div

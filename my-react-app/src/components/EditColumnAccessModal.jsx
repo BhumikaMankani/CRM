@@ -20,6 +20,7 @@ const EditColumnAccessModal = ({
   const [sticky, setSticky] = useState(false);
   const [showYear, setShowYear] = useState(false);
   const [rowpopup_column, setRowpopup_column] = useState(false);
+  const [showInMainProject, setShowInMainProject] = useState(false);
 
 
   const handleSortingChange = (e) => {
@@ -45,6 +46,7 @@ const EditColumnAccessModal = ({
       setShowInfo(!!column.showInfo);
       setSticky(!!column.sticky);
       setRowpopup_column(!!column.rowpopup_column);
+      setShowInMainProject(!!column.showInMainProject);
       setShowYear(!!column.showYear);
     }
   }, [column]);
@@ -83,6 +85,7 @@ const EditColumnAccessModal = ({
         showInfo,
         sticky,
         rowpopup_column,
+        showInMainProject,
         showYear,
       });
     }
@@ -184,6 +187,20 @@ const EditColumnAccessModal = ({
                 />
                 <label className="form-check-label" htmlFor="rowpopup">
                   Show in row popup
+                </label>
+              </div>
+
+              <div className="form-check form-check-inline">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="showInMainProject"
+                  name="showInMainProject"
+                  checked={showInMainProject}
+                  onChange={(e) => setShowInMainProject(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="showInMainProject">
+                  Show column as a main project
                 </label>
               </div>
             </div>
