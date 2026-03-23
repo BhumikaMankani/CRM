@@ -13,22 +13,24 @@ router.get("/", async (req, res) => {
 });
 
 // Get single project by name
-router.get("/by-name/:name", async (req, res) => {
+router.get("/names", async (req, res) => {
     try {
-        const { name } = req.params;
-        const project = await mainProject.findOne({ mainProjectName: name, showstatus: { $ne: 'deactivate' } });
-        if (!project) return res.status(404).json({ error: "Project not found" });
-        res.json(project);
+        const projects = await mainProject.find(
+            { showstatus: { $ne: "deactivate" } }, // filter
+            { mainProjectName: 1, _id: 0 } // ✅ return only name
+        );
+
+        res.json({
+            mainProjectNames: projects.map(p => p.mainProjectName)
+        });
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Add/Update row with task consolidation
 router.post("/", async (req, res) => {
     try {
-        console.log("SYNC BODY:", req.body);
-
         const dataArr = Array.isArray(req.body) ? req.body : [req.body];
         const results = [];
 
@@ -37,28 +39,27 @@ router.post("/", async (req, res) => {
 
             if (!projectName) continue;
 
-            // 1) Find the project by name
+            // 1️⃣ Try to find project by name
             let project = await mainProject.findOne({ mainProjectName: projectName });
 
             if (project) {
-                // 2a) Project exists. Check if this rowId is already a task here.
-                const existingTaskIndex = project.tasks.findIndex(t => t.rowId === String(projectId));
+                // ✅ Existing project → DO NOT change mainProject
+
+                const existingTaskIndex = project.tasks.findIndex(
+                    t => t.rowId === String(projectId)
+                );
 
                 if (existingTaskIndex > -1) {
-                    // Update existing task identifier if needed
                     if (taskName) {
                         project.tasks[existingTaskIndex].taskName = taskName;
                     }
                 } else {
-                    // Add new task to existing project
                     project.tasks.push({
                         rowId: String(projectId),
                         taskName: taskName || "Untitled Task"
                     });
                 }
 
-                // 3) (Optional but recommended) Remove this rowId from other projects
-                // to ensure a row only belongs to ONE main project at a time
                 await mainProject.updateMany(
                     { mainProjectName: { $ne: projectName }, "tasks.rowId": String(projectId) },
                     { $pull: { tasks: { rowId: String(projectId) } } }
@@ -66,22 +67,29 @@ router.post("/", async (req, res) => {
 
                 await project.save();
                 results.push(project);
-            } else {
-                // 2b) Project doesn't exist. Create it.
 
-                // First, remove this rowId from ANY other project it might be in
+            } else {
+                // 🆕 Create new project
+
+                // 🔥 Generate UNIQUE permanent key
+                const generatedMainProject = projectName
+                    .toLowerCase()
+                    .replace(/\s+/g, "_") + "_" + Date.now();
+
                 await mainProject.updateMany(
                     { "tasks.rowId": String(projectId) },
                     { $pull: { tasks: { rowId: String(projectId) } } }
                 );
 
                 const newProject = new mainProject({
-                    mainProjectName: projectName,
+                    mainProject: generatedMainProject, // 🔒 permanent
+                    mainProjectName: projectName, // ✏️ editable
                     tasks: [{
                         rowId: String(projectId),
                         taskName: taskName || "Untitled Task"
                     }]
                 });
+
                 await newProject.save();
                 results.push(newProject);
             }
@@ -89,7 +97,8 @@ router.post("/", async (req, res) => {
 
         res.status(200).json({
             message: "Sync successful",
-            count: results.length
+            count: results.length,
+            data: results
         });
 
     } catch (error) {

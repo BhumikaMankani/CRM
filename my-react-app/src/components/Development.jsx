@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { LiaEditSolid } from "react-icons/lia";
+import { LiaEditSolid, LiaFilterSolid, LiaSortUpSolid, LiaSortDownSolid, LiaUniversalAccessSolid, LiaSortSolid } from "react-icons/lia";
 import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
@@ -23,6 +23,9 @@ import { IoMailUnreadSharp } from "react-icons/io5";
 function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   // Create a ref for FilterSidebar
   const filterSidebarRef = useRef(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupContent, setPopupContent] = useState('');
+
   const navigate = useNavigate();
 
   const isMounted = useRef(true);
@@ -40,6 +43,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   // cron status
   const [cronStatus, setCronStatus] = useState(null);
+
+  // Locked fields
+  const [lockedFields, setLockedFields] = useState([]);
 
   // Analytics Modal
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
@@ -196,7 +202,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           },
         }
       );
-
 
       const data = await response.json();
       console.log("data", data);
@@ -842,27 +847,57 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   const updateTimeoutRef = useRef({});
 
-  const handleBlur = (rowId, field, value) => {
-    console.log("value", value);
-    console.log("field", field);
-    console.log("mainProjectId", mainProjectId);
-    if (field === mainProjectId) {
-      const projectName = data.find(r => r._id === rowId)?.[mainProjectId];
-      const taskName = data.find(r => r._id === rowId)?.[taskNameId];
-      try {
-        fetch(`${API_URL}/api/mainProject`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            projectId: rowId,
-            projectName: projectName,
-            taskName: taskName
-          }),
-        });
-      } catch (err) {
-        console.error("MainProject sync failed", err);
+  const handleBlur = async (rowId, field, value) => {
+    if (field !== mainProjectId) return;
+
+    if (!value || value.trim() === "") return;
+
+    const projectName = data.find(r => r._id === rowId)?.[mainProjectId];
+    const taskName = data.find(r => r._id === rowId)?.[taskNameId];
+    try {
+      const res = await fetch(`${API_URL}/api/mainProject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: rowId,
+          projectName: projectName,
+          taskName: taskName
+        }),
+      });
+
+      if (res.ok) {
+        const responseData = await res.json();
+        const mainProjectList = responseData.data;
+        if (mainProjectList && mainProjectList.length > 0) {
+          const mainProjectEntry = mainProjectList[0];
+          const newMainProjectId = mainProjectEntry._id;
+
+          const tasksToUpdate = mainProjectEntry.tasks || [];
+
+          // Use PUT to update all tasks of this newly created entry (since PATCH /:id might not exist)
+          for (const task of tasksToUpdate) {
+            fetch(`${API_URL}${dataEndpoint}/${task.rowId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ mainProjectId: newMainProjectId }),
+            });
+          }
+
+          // Update local state to reflect the new mainProjectId for all related tasks
+          setData(prevData => {
+            const updatedData = [...prevData];
+            tasksToUpdate.forEach(task => {
+              const rowIndex = updatedData.findIndex(r => r._id === task.rowId);
+              if (rowIndex > -1) {
+                updatedData[rowIndex] = { ...updatedData[rowIndex], mainProjectId: newMainProjectId };
+              }
+            });
+            return updatedData;
+          });
+        }
       }
-      // }
+    } catch (err) {
+      console.error("MainProject sync failed", err);
     }
   }
 
@@ -873,16 +908,12 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       prev.map((row) => (row._id === rowId ? { ...row, [field]: value } : row)),
     );
 
-    // Clear existing timeout for this row-field combination if it exists
     const timeoutKey = `${rowId}-${field}`;
     if (updateTimeoutRef.current[timeoutKey]) {
       clearTimeout(updateTimeoutRef.current[timeoutKey]);
     }
 
-    // Debounce the API call
     updateTimeoutRef.current[timeoutKey] = setTimeout(() => {
-      // Find the row we are going to send to backend (get the latest from the current state if needed,
-      // but simpler to just use what we have and the new value)
       let changedByUserName = "Unknown";
       let changedByUserId = null;
       try {
@@ -893,13 +924,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           changedByUserId = parsed.email || null;
         }
       } catch (e) { }
-
-      // We need to get the full row content to ensure strict:false fields are preserved
-      // but since the backend does $set: updateBody, we only need to send the changed fields
-      // or the whole object if the backend expects it.
-      // The current backend uses req.body and expects changedByUserId/Name.
-
-      // Get the latest row from state to include any other concurrent changes
       setData(prevData => {
         const latestRow = prevData.find(r => r._id === rowId);
         if (latestRow) {
@@ -913,26 +937,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             }),
           }).then(response => {
             if (response.ok) {
-              // if (field === mainProjectId) {
-              //   const oldValue = data.find(r => r._id === rowId)?.[field];
-              //   console.log("oldValue", oldValue);
-              //   console.log("value", value);
-              //   if (oldValue !== value && value) {
-              //     try {
-              //       fetch(`${API_URL}/api/mainProject`, {
-              //         method: "POST",
-              //         headers: { "Content-Type": "application/json" },
-              //         body: JSON.stringify({
-              //           projectId: rowId,
-              //           projectName: value,
-              //           taskName: value
-              //         }),
-              //       });
-              //     } catch (err) {
-              //       console.error("MainProject sync failed", err);
-              //     }
-              //   }
-              // }
               window.dispatchEvent(new CustomEvent('dataUpdated'));
             }
           });
@@ -1148,6 +1152,21 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   };
   const [userData, setUserData] = useState([]);
 
+  // const fetchMainProjects = async () => {
+  //   try {
+  //     const response = await fetch(`${API_URL}/api/mainProject/names`);
+  //     const data = await response.json();
+
+  //     console.log("mainProjects", data);
+  //   } catch (err) {
+  //     console.error("Failed:", err);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchMainProjects();
+  // }, []);
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -1321,9 +1340,10 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   >
                     {sortConfig.key === col.name
                       ? sortConfig.direction === "asc"
-                        ? "↑"
-                        : "↓"
-                      : "↕"}
+                        ? (<LiaSortUpSolid />)
+                        : (<LiaSortDownSolid />)
+                      : (<LiaSortSolid />
+                      )}
                   </button>
                 )}
                 {status.status === "admin" && (
@@ -1335,7 +1355,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                     }}
                     title="Edit column access"
                   >
-                    <FaUserCog size={14} />
+                    <LiaUniversalAccessSolid />
                   </button>
                 )}
               </div>
@@ -1855,7 +1875,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                       });
                     }}
                   >
-                    <FaEdit size={12} />
+                    <LiaEditSolid />
                   </button>
                 )}
               </div>
@@ -2001,8 +2021,20 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                     data-row={row._id}
                     className="bg-transparent border-0 w-100 text-dark"
                     onChange={(e) => handleChange(row._id, col.name, e.target.value)}
-                    onBlur={(e) => handleBlur(row._id, col.name, e.target.value)}
-                    disabled={!canEdit(col.name, col)}
+                    onBlur={(e) => {
+                      setLockedFields(prev => ({ ...prev, [`${row._id}_${col.name}_locked`]: true }));
+                      handleBlur(row._id, col.name, e.target.value);
+                    }}
+                    onFocus={() => {
+                      if (!value || value.trim() === "") {
+                        setLockedFields(prev => ({ ...prev, [`${row._id}_${col.name}_typing`]: true }));
+                      }
+                    }}
+                    disabled={
+                      !canEdit(col.name, col) ||
+                      lockedFields[`${row._id}_${col.name}_locked`] ||
+                      (value !== "" && !lockedFields[`${row._id}_${col.name}_typing`])
+                    }
                   />
                   {/* <button
                     type="button"
@@ -2011,7 +2043,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                     onClick={() => getMainprojects(value)}
                   >
                     <RiLogoutCircleRLine />
-                  </button>
+                  </button> */}
                   <button
                     type="button"
                     className="btn project___mainproject"
@@ -2021,11 +2053,12 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                         isOpen: true,
                         rowId: row._id,
                         colName: col.name,
+                        label: value || ""
                       })
                     }
                   >
                     <LiaEditSolid />
-                  </button> */}
+                  </button>
                 </>
               ) : (
                 <input
@@ -2145,46 +2178,21 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         {status?.status !== 'staff' ? (
           <button
             onClick={handleFilterClick}
-            className={`btn ${isFilterOpen ? "btn-dark" : "btn-outline-dark"}`}
+            className={`btn ${isFilterOpen ? "btn-dark" : "btn-outline-dark"} d-inline-flex align-items-center`}
             title="Toggle Filters"
+            style={{ height: "40px" }}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              style={{ width: "16px", height: "16px" }}
-              xmlnsXlink="http://www.w3.org/2000/svg"
-            >
-              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-              <g
-                id="SVGRepo_tracerCarrier"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              ></g>
-              <g id="SVGRepo_iconCarrier">
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M15 10.5A3.502 3.502 0 0 0 18.355 8H21a1 1 0 1 0 0-2h-2.645a3.502 3.502 0 0 0-6.71 0H3a1 1 0 0 0 0 2h8.645A3.502 3.502 0 0 0 15 10.5zM3 16a1 1 0 1 0 0 2h2.145a3.502 3.502 0 0 0 6.71 0H21a1 1 0 1 0 0-2h-9.145a3.502 3.502 0 0 0-6.71 0H3z"
-                  fill="currentColor"
-                ></path>
-              </g>
-            </svg>
+            <LiaFilterSolid />
           </button>
         ) : null}
         {status?.status === "admin" ? (
           <button
             onClick={handleColumnEditClick}
-            className={`btn ${isDelete ? "btn-dark" : "btn-outline-dark"}`}
+            className={`btn ${isDelete ? "btn-dark" : "btn-outline-dark d-inline-flex align-items-center"}`}
             title="Toggle Edit Mode"
+            style={{ height: "40px" }}
           >
-            <svg
-              fill="currentColor"
-              width="16"
-              height="16"
-              viewBox="0 0 528.899 528.899"
-            >
-              <path d="M328.883,89.125l107.59,107.589l-272.34,272.34L56.604,361.465L328.883,89.125z M518.113,63.177l-47.981-47.981 c-18.543-18.543-48.653-18.543-67.259,0l-45.961,45.961l107.59,107.59l53.611-53.611 C532.495,100.753,532.495,77.559,518.113,63.177z M0.3,512.69c-1.958,8.812,5.998,16.708,14.811,14.565l119.891-29.069 L27.473,390.597L0.3,512.69z"></path>
-            </svg>
+            <LiaEditSolid />
           </button>
         ) : null}
         {status?.status === "admin" ? (
@@ -2243,18 +2251,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       </div>
 
       <div className="">
-        {/* <FilterSidebar
-          ref={filterSidebarRef}
-          status={status}
-          isFilterOpen={isFilterOpen}
-          clearFilters={clearFilters}
-          setIsSaveFilterModalOpen={setIsSaveFilterModalOpen}
-          filters={filters}
-        /> */}
-
         <div className="">
-          {/* Saved Filters List above the table */}
-
           <div className="saved-filters-row w-100 mb-3">
             <div className="row flex-nowrap w-100 align-items-center">
               <div className={`filters-list-horizontal align-items-center col-9`}>
@@ -2770,7 +2767,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             const taskName = newRow[taskNameId];
             console.log("projectName", projectName);
             if (projectName) {
-              await fetch(`${API_URL}/api/mainProject`, {
+              const mpRes = await fetch(`${API_URL}/api/mainProject`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -2779,11 +2776,29 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   taskName: taskName        // optional
                 }),
               });
+
+              if (mpRes.ok) {
+                const responseData = await mpRes.json();
+                const mainProjectList = responseData.data;
+                if (mainProjectList && mainProjectList.length > 0) {
+                  const newMainProjectId = mainProjectList[0]._id;
+                  saved.mainProjectId = newMainProjectId;
+
+                  // Update the row with its new mainProjectId
+                  await fetch(`${API_URL}${dataEndpoint}/${saved._id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mainProjectId: newMainProjectId }),
+                  });
+                }
+              }
             }
             // Add new row to the top of the list
             setData((prev) => [saved, ...prev]);
             setIsRowModel(false); // Close modal after saving
-
+            setShowPopup(true);
+            setPopupContent("Project added");
+            setTimeout(() => setShowPopup(false), 10000);
           } catch (err) {
             console.error("Error adding row:", err);
             alert("Error adding row: " + err.message);
@@ -2895,7 +2910,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h5 className="mb-0 fw-bold">Edit Link</h5>
+              <h5 className="mb-0 fw-bold">Edit Label</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -2903,26 +2918,13 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               ></button>
             </div>
             <div className="mb-3">
-              <label className="form-label fw-semibold">Label</label>
+              <label className="form-label fw-semibold">Project Name</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter label (e.g. Website)"
-                value={linkModal.label}
+                value={mainProjectModal.label}
                 onChange={(e) =>
-                  setLinkModal((prev) => ({ ...prev, label: e.target.value }))
-                }
-              />
-            </div>
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Link URL</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter URL (e.g. google.com)"
-                value={linkModal.link}
-                onChange={(e) =>
-                  setLinkModal((prev) => ({ ...prev, link: e.target.value }))
+                  setMainProjectModal((prev) => ({ ...prev, label: e.target.value }))
                 }
               />
             </div>
@@ -2935,13 +2937,43 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
               </button>
               <button
                 className="btn btn-primary px-4"
-                onClick={() => {
-                  const payload = JSON.stringify({
-                    label: linkModal.label.trim(),
-                    link: linkModal.link.trim(),
-                  });
-                  handleChange(linkModal.rowId, linkModal.colName, payload);
-                  setLinkModal((prev) => ({ ...prev, isOpen: false }));
+                onClick={async () => {
+                  const newName = mainProjectModal.label?.trim();
+                  if (!newName) return;
+
+                  try {
+                    const res = await fetch(`${API_URL}/api/mainProject/update-by-row/${mainProjectModal.rowId}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ projectName: newName })
+                    });
+
+                    if (res.ok) {
+                      const dataRes = await res.json();
+                      const tasks = dataRes.project?.tasks || [];
+                      setData(prev => {
+                        const updated = [...prev];
+                        tasks.forEach(t => {
+                          const idx = updated.findIndex(r => r._id === String(t.rowId));
+                          if (idx > -1) {
+                            updated[idx] = { ...updated[idx], [mainProjectModal.colName]: newName };
+                            fetch(`${API_URL}${dataEndpoint}/${t.rowId}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ [mainProjectModal.colName]: newName })
+                            });
+                          }
+                        });
+                        return updated;
+                      });
+                    }
+                  } catch (e) {
+                    console.error("Project rename failed", e);
+                  }
+                  setShowPopup(true);
+                  setPopupContent("Project name has been renamed");
+                  setTimeout(() => setShowPopup(false), 10000);
+                  setMainProjectModal(prev => ({ ...prev, isOpen: false }));
                 }}
               >
                 Save
@@ -3035,7 +3067,12 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           </div>
         </div>
       )}
+      {showPopup && (
+        <div class="sticky-bar" id="bar"> <span>{popupContent}</span> <button onClick={(e) => { setShowPopup(false) }}>✕</button> </div>
+      )}
+
     </section >
+
   );
 }
 

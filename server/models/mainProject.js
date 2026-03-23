@@ -1,10 +1,20 @@
 const mongoose = require("mongoose");
 
 const MainProjectSchema = new mongoose.Schema({
-    mainProjectName: { type: String },
+    mainProject: {
+        type: String,
+        required: true,
+        unique: true,
+        immutable: true // 🔒 cannot be changed after creation
+    },
+    mainProjectName: {
+        type: String,
+        required: true
+    },
     tasks: [
         {
             taskName: String,
+            taskNameLabel: String,
             rowId: String,
         }
     ],
