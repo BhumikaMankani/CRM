@@ -3,7 +3,9 @@ import { IoCloseSharp } from "react-icons/io5";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AddEntryModal.css";
+import { API_URL } from "../../proxy";
 
+// const [mainProjects, setMainPro]
 
 const AddEntryModal = ({
     isRowModel,
@@ -23,6 +25,23 @@ const AddEntryModal = ({
     const [isLoading, setIsLoading] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [mainProjectsList, setMainProjectsList] = useState([]);
+
+    useEffect(() => {
+        if (!isRowModel) return;
+        const fetchProjects = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/mainProject/names`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setMainProjectsList(data.mainProjectNames || []);
+                }
+            } catch (err) {
+                console.error("Failed to fetch main projects", err);
+            }
+        };
+        fetchProjects();
+    }, [isRowModel]);
 
     // ----------------------------
     // HELPER: FIND COLUMN BY HEADING
@@ -201,18 +220,35 @@ const AddEntryModal = ({
                                                 <label className="modal-label">
                                                     {col.column_heading} {col.is_required ? "*" : ""}
                                                 </label>
-
-                                                {col.column_type === 'text' && (
-                                                    <input
+                                                {col.column_type === 'text' && !col.showInMainProject && (
+                                                    < input
                                                         type="text"
                                                         name={col.name}
+                                                        data-hide={col.showInMainProject}
                                                         value={formData[col.name] || ""}
                                                         onChange={handleChange}
                                                         className="modal-input"
                                                         placeholder={`Enter ${col.column_heading}`}
                                                     />
                                                 )}
-
+                                                {col.column_type === 'text' && col.showInMainProject && (
+                                                    <>
+                                                        <input
+                                                            list={`projects-list-${col.name}`}
+                                                            name={col.name}
+                                                            value={formData[col.name] || ""}
+                                                            onChange={handleChange}
+                                                            className="modal-input"
+                                                            placeholder={`Select or enter new ${col.column_heading}`}
+                                                            autoComplete="off"
+                                                        />
+                                                        <datalist id={`projects-list-${col.name}`}>
+                                                            {mainProjectsList.map((proj, i) => (
+                                                                <option key={i} value={proj} />
+                                                            ))}
+                                                        </datalist>
+                                                    </>
+                                                )}
                                                 {col.column_type === 'date' && (
                                                     <input
                                                         type="date"

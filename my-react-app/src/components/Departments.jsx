@@ -4,6 +4,7 @@ import Marketing from "../pages/marketing";
 import Seo from "../pages/seo";
 import Form from "../components/Form";
 import Header from "./header";
+import { LiaEditSolid } from "react-icons/lia";
 import { FaTimes, FaChartBar, FaEdit, FaArchive, FaTrash, FaBars } from 'react-icons/fa';
 // import Md5Hasher from "../components/Password";
 import Development from "../pages/development";
@@ -476,27 +477,6 @@ function Departments({ setIsLoggedIn }) {
                                                             : row[column.accessor]}
                                                         {status?.status === 'admin' && column.accessor === 'department' && (
                                                             <div className="d-flex gap-2 align-items-center">
-                                                                {/* {userData
-                                                                    .filter(user => user.status === 'staff')
-                                                                    .map((user, index) => (
-                                                                        <div key={user._id || index} className="form-check">
-                                                                            <input
-                                                                                className="form-check-input"
-                                                                                type="checkbox"
-                                                                                value={user.user_name}
-                                                                                id={`${user._id} - ${row.department}`}
-                                                                                checked={user.department?.includes(row.department)}
-                                                                                onChange={(e) => handleCheckboxChange(e, user, row.department)}
-                                                                            />
-                                                                            <label
-                                                                                htmlFor={`${user._id} - ${row.department}`}
-                                                                                className="form-check-label"
-                                                                            >
-                                                                                {user.user_name}
-                                                                            </label>
-                                                                        </div>
-                                                                    ))
-                                                                } */}
                                                                 <button
                                                                     className="action-btn-mini action-btn-mini_ct"
                                                                     title="Edit"
@@ -505,7 +485,7 @@ function Departments({ setIsLoggedIn }) {
                                                                         setIsModalOpen(true);
                                                                     }}
                                                                 >
-                                                                    <FaEdit size={12} />
+                                                                    <LiaEditSolid />
                                                                 </button>
                                                             </div>
                                                         )}
