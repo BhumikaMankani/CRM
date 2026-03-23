@@ -69,6 +69,10 @@ button.btn {
     border-radius: 10px !important;
 }
 
+.project___mainproject {
+    padding: 1px 2px;
+}
+
 .card-body svg {
     height: 35px;
     width: 35px;

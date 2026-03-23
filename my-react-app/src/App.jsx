@@ -7,6 +7,7 @@ import Departments from "./components/Departments";
 import Development from "./pages/development";
 import Marketing from "./pages/marketing";
 import Seo from "./pages/seo";
+import TasksPage from "./pages/TasksPage";
 import Footer from "./components/Footer"
 import './components/color.css';
 import Header from "./components/header";
@@ -99,6 +100,7 @@ function App() {
               <Route path="/development" element={<Development />} />
               <Route path="/marketing" element={<Marketing />} />
               <Route path="/seo" element={<Seo />} />
+              <Route path="/tasks" element={<TasksPage />} />
             </Routes>
           </main>
           <Footer />

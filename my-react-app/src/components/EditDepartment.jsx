@@ -4,9 +4,9 @@ import "./custom.css";
 const EditDepartment = ({ isModalOpen, onClose, department, userData, handleCheckboxChange, fetchDepartments }) => {
     const [departmentName, setDepartmentName] = useState("");
 
-    console.log("departmentName", departmentName);
+    // console.log("departmentName", departmentName);
 
-    console.log("department._id", department?._id);
+    // console.log("department._id", department?._id);
     useEffect(() => {
         if (department) {
             setDepartmentName(department.department || "");

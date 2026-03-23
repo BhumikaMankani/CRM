@@ -20,6 +20,8 @@ const MarketingColumnSchema = new mongoose.Schema({
     sticky: { type: Boolean, default: false }, // whether the column should be sticky
     showYear: { type: Boolean, default: false }, // whether to show year with month selection
     status: { type: String, default: "active" }, // active, inactive
+    rowpopup_column: { type: Boolean, default: false },
+    showInMainProject: { type: Boolean, default: false },
 },
     { timestamps: true },);
 module.exports = mongoose.model("Marketing_Column", MarketingColumnSchema);
