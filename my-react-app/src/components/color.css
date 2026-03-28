@@ -66,6 +66,7 @@ button[type="submit"]:hover {
 }
 
 button.btn {
+    border: 0 !important;
     border-radius: 10px !important;
 }
 

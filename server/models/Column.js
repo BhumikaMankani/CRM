@@ -1,17 +1,5 @@
-// const mongoose = require("mongoose");
-
-// const ColumnSchema = new mongoose.Schema({
-//     column_heading: { type: String, required: true },
-//     name: { type: String, required: true },
-//     column_type: { type: String, default: "text" }, // text, select, date
-//     sorting: { type: Boolean, default: false },
-//     multipleValue: { type: [String], default: [] }, // for select
-//     status: { type: String, default: "active" }, // active, inactive
-// }, { timestamps: true });
-
-// module.exports = mongoose.model("Column", ColumnSchema);
-
 const mongoose = require("mongoose");
+
 const ColumnSchema = new mongoose.Schema({
   column_heading: { type: String, required: true }, name: { type: String, required: true },
   column_type: { type: String, default: "text" }, // text, select, date, condition
@@ -35,6 +23,10 @@ const ColumnSchema = new mongoose.Schema({
   status: { type: String, default: "active" }, // active, inactive
   rowpopup_column: { type: Boolean, default: false },
   showInMainProject: { type: Boolean, default: false },
-},
-  { timestamps: true },);
-module.exports = mongoose.model("Column", ColumnSchema);
+}, { timestamps: true });
+const getColumnModel = (collectionName) => {
+  return mongoose.models[collectionName] ||
+    mongoose.model(collectionName, ColumnSchema, collectionName);
+};
+
+module.exports = getColumnModel;

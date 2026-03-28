@@ -1,16 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from 'react-router-dom'
-import Marketing from "../pages/marketing";
-import Seo from "../pages/seo";
-import Form from "../components/Form";
-import Header from "./header";
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { LiaEditSolid } from "react-icons/lia";
-import { FaTimes, FaChartBar, FaEdit, FaArchive, FaTrash, FaBars } from 'react-icons/fa';
-// import Md5Hasher from "../components/Password";
-import Development from "../pages/development";
 import EditDepartment from "./EditDepartment";
 import { API_URL } from "../../proxy";
-import Sidebar from "./sidebar";
 import { MdDashboard } from "react-icons/md";
 import { IoPlayCircleOutline } from "react-icons/io5";
 import { FaRegCheckCircle } from "react-icons/fa";
@@ -21,6 +13,8 @@ import { MdOutlinePhoneForwarded } from "react-icons/md";
 import { RiChatFollowUpFill } from "react-icons/ri";
 import UserForm from "../components/User";
 import "./custom.css";
+import { IoCloseSharp } from "react-icons/io5";
+import { LiaBarsSolid } from "react-icons/lia";
 
 // Status values that should be treated as "ACTIVE"
 const ACTIVE_STATUSES = [
@@ -37,22 +31,10 @@ const ACTIVE_STATUSES = [
 ];
 
 function Departments({ setIsLoggedIn }) {
-    const APIS = {
-        development: {
-            dataEndpoint: '/api/development',
-            dataColumns: '/api/columns',
-        },
-        marketing: {
-            dataEndpoint: '/api/marketing',
-            dataColumns: '/api/marketing-columns',
-        },
-        seo: {
-            dataEndpoint: '/api/seo',
-            dataColumns: '/api/seo-columns',
-        },
-    };
-
     const [audits, setAudits] = useState([]);
+
+    const [dataCollection, setDataCollection] = useState("");
+    const [columnCollection, setColumnCollection] = useState("");
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -89,8 +71,8 @@ function Departments({ setIsLoggedIn }) {
         const parsed = savedData ? JSON.parse(savedData) : null;
         return parsed?.department?.[0] || "";
     });
-    const navigate = useNavigate();
 
+    console.log("selectedDepartment", selectedDepartment);
     const fetchDepartments = async () => {
         try {
             const response = await fetch(`${API_URL}/api/department`);
@@ -101,6 +83,17 @@ function Departments({ setIsLoggedIn }) {
         }
     };
 
+    useEffect(() => {
+        fetchDepartments();
+    }, []);
+
+    const selectedDepartmentDown = selectedDepartment.toLowerCase();
+    const matchedDepartment = departments.find(
+        (department) => department.department.toLowerCase() === selectedDepartmentDown
+    );
+    console.log("matchedDepartment", matchedDepartment);
+    const matchedDepartmentData = matchedDepartment?.dataCollection;
+    const matchedDepartmentColumn = matchedDepartment?.columnCollection;
     const [isUserFormOpen, setIsUserFormOpen] = useState(false);
     const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
     const addUser = async (e) => {
@@ -130,7 +123,8 @@ function Departments({ setIsLoggedIn }) {
 
     const handleSaveDepartment = async (e) => {
         e.preventDefault();
-        if (!newDepartmentName.trim()) return;
+        const deptName = newDepartmentName.trim(); // ✅ store first
+        if (!deptName) return;
 
         try {
             const response = await fetch(`${API_URL}/api/department`, {
@@ -139,12 +133,33 @@ function Departments({ setIsLoggedIn }) {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    department: newDepartmentName.trim(),
+                    department: deptName,
                     // Internal name will be handled by backend
                 }),
             });
 
             if (response.ok) {
+                try {
+                    const response2 = await fetch(`${API_URL}/api/create-collection`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ collectionName: deptName }) // ✅ correct
+                    });
+
+                    if (!response2.ok) {
+                        throw new Error('Failed to create collection');
+                    }
+
+                    const data2 = await response2.json();
+                    console.log(data2.message);
+                    alert(data2.message);
+
+                } catch (error) {
+                    console.error('Error creating collection:', error);
+                    alert('Error creating collection');
+                }
                 setNewDepartmentName("");
                 setIsDepartmentModalOpen(false);
                 fetchDepartments();
@@ -180,7 +195,6 @@ function Departments({ setIsLoggedIn }) {
             const response = await fetch(`${API_URL}/api/audit`);
             const data = await response.json();
             setAudits(data);
-            // console.log("audits", data);
         } catch (err) {
             console.error("Failed to fetch audits:", err);
         }
@@ -221,14 +235,12 @@ function Departments({ setIsLoggedIn }) {
     }, [status, selectedDepartment]);
 
     useEffect(() => {
-
+        if (!matchedDepartmentData || !matchedDepartmentColumn) return;
         const fetchProjectsAndCount = async () => {
             try {
                 // Fetch projects and columns together (same as Development page)
-                const [projectsRes, columnsRes] = await Promise.all([
-                    fetch(`${API_URL}${APIS[selectedDepartment.toLowerCase()].dataEndpoint}`),
-                    fetch(`${API_URL}${APIS[selectedDepartment.toLowerCase()].dataColumns}`),
-                ]);
+                const projectsRes = await fetch(`${API_URL}/api/data?collectionName=${matchedDepartmentData}`);
+                const columnsRes = await fetch(`${API_URL}/api/columns?collectionName=${matchedDepartmentColumn}`);
                 const data = await projectsRes.json();
                 const columns = await columnsRes.json();
                 setProjects(data);
@@ -355,7 +367,7 @@ function Departments({ setIsLoggedIn }) {
         if (status?.user_name) {
             fetchProjectsAndCount();
         }
-    }, [status]);
+    }, [status, matchedDepartmentData, matchedDepartmentColumn]);
 
 
     const handleCheckboxChange = async (event, user, deptName) => {
@@ -399,7 +411,7 @@ function Departments({ setIsLoggedIn }) {
             accessor: 'department',
             render: (row) => (
                 <div className="cell-input-wrapper">
-                    <Link to={`/${row.name.replace(/\d+/g, "")}`}
+                    <Link to={`/department/${row.name.replace(/\d+/g, "")}`}
                         className="text-dark">{row.department}</Link>
                 </div>
             )
@@ -423,10 +435,10 @@ function Departments({ setIsLoggedIn }) {
                                                     <div className="d-flex align-items-center justify-content-end gap-2 position-relative">
                                                         <div className="dropdown">
                                                             <button
-                                                                className="btn btn-secondary d-inline-flex align-items-center p-2"
+                                                                className="btn btn-secondary text-dark d-inline-flex align-items-center p-2"
                                                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                                             >
-                                                                <FaBars />
+                                                                <LiaBarsSolid />
                                                             </button>
                                                             {isDropdownOpen && (
                                                                 <div className="dropdown-menu show dropdown-menu-end position-absolute" style={{ top: "100%", right: 0, zIndex: 10 }}>
@@ -528,7 +540,7 @@ function Departments({ setIsLoggedIn }) {
                                                 ))}
                                             </ul>
                                         ) : (
-                                            <a href={`/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</a>
+                                            <a href={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</a>
                                         )}
                                     </div>
                                 </div>
@@ -536,7 +548,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Total Projects Card */}
                                     <div className="col-md-3">
                                         <div className="card border-primary">
-                                            <Link to={`/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
 
                                                 <div className="card-body">
                                                     <MdDashboard />
@@ -553,7 +565,7 @@ function Departments({ setIsLoggedIn }) {
                                     <div className="col-md-3">
                                         <div className="card border-danger">
                                             <Link
-                                                to={`/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-active-projects`}
+                                                to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-active-projects`}
                                                 className="text-dark text-decoration-none"
                                             >
                                                 <div className="card-body ">
@@ -573,7 +585,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* ON TRACK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-success">
-                                            <Link to={`/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-on-track-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-on-track-projects`} className="text-dark text-decoration-none">
 
                                                 <div className="card-body ">
                                                     <FaRegCheckCircle />
@@ -588,7 +600,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* OFF TRACK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-warning">
-                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-off-track-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-off-track-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <RxCrossCircled />
 
@@ -602,7 +614,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* AT RISK Card */}
                                     <div className="col-md-3">
                                         <div className="card border-info">
-                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <CgDanger />
 
@@ -617,7 +629,7 @@ function Departments({ setIsLoggedIn }) {
 
                                     <div className="col-md-3">
                                         <div className="card border-dark">
-                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-follow-up`} className="text-dark text-decoration-none">
+                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-follow-up`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <RiChatFollowUpFill />
 
@@ -631,7 +643,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Forwarded to client projects */}
                                     <div className="col-md-3">
                                         <div className="card border-warning">
-                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-forwarded-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-forwarded-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <MdOutlinePhoneForwarded />
 
@@ -646,7 +658,7 @@ function Departments({ setIsLoggedIn }) {
                                     {/* Completed projects */}
                                     <div className="col-md-3">
                                         <div className="card border-success">
-                                            <Link to={`/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
+                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
                                                 <div className="card-body">
                                                     <MdOutlineIncompleteCircle />
 
@@ -677,7 +689,7 @@ function Departments({ setIsLoggedIn }) {
                             }}>
                                 <div className="d-flex justify-content-between align-items-center mb-3">
                                     <h4 className="m-0"><strong>Edit User Status</strong></h4>
-                                    <button type="button" className="btn-close" onClick={() => setIsEditUserModalOpen(false)} aria-label="Close"></button>
+                                    <button type="button" className="close-btn" onClick={() => setIsEditUserModalOpen(false)} aria-label="Close"><IoCloseSharp /></button>
                                 </div>
                                 <div>
                                     {userData
@@ -732,7 +744,7 @@ function Departments({ setIsLoggedIn }) {
                             }}>
                                 <div className="d-flex justify-content-between align-items-center mb-3">
                                     <h4 className="m-0">Add New Department</h4>
-                                    <button type="button" className="btn-close" onClick={() => setIsDepartmentModalOpen(false)} aria-label="Close"></button>
+                                    <button type="button" className="close-btn" onClick={() => setIsDepartmentModalOpen(false)} aria-label="Close"><IoCloseSharp /></button>
                                 </div>
                                 <form onSubmit={handleSaveDepartment}>
                                     <div className="mb-3">
@@ -770,7 +782,7 @@ function Departments({ setIsLoggedIn }) {
                             }}>
                                 <div className="d-flex justify-content-between align-items-center mb-3">
                                     <h4 className="m-0">Archived Departments</h4>
-                                    <button type="button" className="btn-close" onClick={() => setIsArchiveModalOpen(false)} aria-label="Close"></button>
+                                    <button type="button" className="close-btn" onClick={() => setIsArchiveModalOpen(false)} aria-label="Close"><IoCloseSharp /></button>
                                 </div>
                                 <div className="mb-3">
                                     {departments.filter(d => d.status === 'archived').length === 0 ? (

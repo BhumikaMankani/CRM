@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { FaSave, FaTimes, FaPlus, FaTrash } from "react-icons/fa";
+import { FaSave, FaPlus } from "react-icons/fa";
+import { IoCloseSharp } from "react-icons/io5";
 import "./ColorPickerModal.css";
+import { LiaTrashRestoreAltSolid } from "react-icons/lia";
+
 
 function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, existingColors, existingTextColors }) {
     const [localOptions, setLocalOptions] = useState([]);
@@ -74,7 +77,7 @@ function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, exi
                 <div className="side-panel-header">
                     <h2>Column Options</h2>
                     <button className="btn btn-link p-0 text-muted" onClick={onClose}>
-                        <FaTimes size={22} />
+                        <IoCloseSharp size={22} />
                     </button>
                 </div>
 
@@ -120,7 +123,7 @@ function ColorPickerModal({ isOpen, onClose, onSave, columnHeading, options, exi
                                     onClick={() => confirmDelete(index)}
                                     title="Remove Option"
                                 >
-                                    <FaTrash size={16} />
+                                    <LiaTrashRestoreAltSolid />
                                 </button>
                             </div>
                         ))}

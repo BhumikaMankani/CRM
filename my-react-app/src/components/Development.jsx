@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { LiaEditSolid, LiaFilterSolid, LiaSortUpSolid, LiaSortDownSolid, LiaUniversalAccessSolid, LiaSortSolid } from "react-icons/lia";
+import { LiaEditSolid, LiaFilterSolid, LiaSortUpSolid, LiaSortDownSolid, LiaUniversalAccessSolid, LiaSortSolid, LiaTrashRestoreAltSolid } from "react-icons/lia";
 import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
 import AnalyticsModal from "./AnalyticsModal";
+import { IoCloseSharp } from "react-icons/io5";
 import { RiLogoutCircleRLine } from "react-icons/ri";
 
 import ToggleButtonIcon from "./toggle";
@@ -14,14 +15,13 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import EditColumnAccessModal from "./EditColumnAccessModal";
 import { API_URL } from "../../proxy";
-import { FaTrash, FaTimes, FaUserCog, FaEdit } from "react-icons/fa";
+import { FaTimes, FaEdit } from "react-icons/fa";
 import { BsInfoCircleFill } from "react-icons/bs";
 import ColorPickerModal from "./ColorPickerModal";
 import CustomSelectDropdown from "./CustomSelectDropdown";
 import { IoMailUnreadSharp } from "react-icons/io5";
 
-function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
-  // Create a ref for FilterSidebar
+function TableColumns({ columnCollection, dataCollection, departmentKey, dataEndpoint, dataColumns }) {
   const filterSidebarRef = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [popupContent, setPopupContent] = useState('');
@@ -141,54 +141,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   const [resetDisabled, setResetDisabled] = useState(false);
 
   const [isResetLocked, setIsResetLocked] = useState(false);
-
-  // useEffect(() => {
-  //   const checkResetStatus = async () => {
-  //     try {
-  //       const res = await fetch(`${API_URL}/api/columns/reset/status`);
-  //       if (res.ok) {
-  //         const status = await res.json();
-  //         setIsResetLocked(!status.canReset);
-  //       }
-  //     } catch (e) {
-  //       console.error("Failed to check global reset status", e);
-  //     }
-  //   };
-
-  //   checkResetStatus();
-  // }, [API_URL]);
-
-  // const todayDate = new Date().toISOString().split("T")[0];
-  // const FetchDate = async () => {
-  //   const response = await fetch(`${API_URL}/api/cron-status`, {
-  //     method: "GET",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   });
-
-  //   const data = await response.json();
-  //   setCronStatus(data.lastRunDate);
-  // };
-
-  // useEffect(() => {
-  //   FetchDate();
-  // }, []);
-
-  // useEffect(() => {
-  //   if (cronStatus) {
-  //     console.log("Updated cronStatus:", cronStatus);
-  //     console.log("Today date", todayDate);
-  //     if (cronStatus !== todayDate) {
-  //       console.log("Dates do not match → running updater");
-  //       updateColumnDefaultValue();
-  //     } else {
-  //       console.log("Dates match → no update needed");
-  //     }
-
-  //   }
-  // }, [cronStatus]);
-
   const updateColumnDefaultValue = async () => {
     try {
       setLoadingUpdater(true);
@@ -200,6 +152,9 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            collectionName: dataCollection,
+          }),
         }
       );
 
@@ -251,25 +206,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   };
 
   const getMainprojects = async (projectName) => {
-    // try {
-    //   const res = await fetch(`${API_URL}/api/mainProject`);
-    //   const mainProjects = await res.json();
-    //   console.log("mainProjects", mainProjects);
-    //   // ✅ Find clicked project
-    //   const selectedProject = mainProjects.find(
-    //     p => p.mainProjectName === projectName
-    //   );
-
-    //   console.log("selectedProject", selectedProject);
-
-    //   // 👉 tasks of that project
-    //   const tasks = selectedProject?.tasks || [];
-    //   console.log("Tasks:", tasks);
-    //   setTasks(tasks);
-
-    // } catch (err) {
-    //   console.error(err);
-    // }
     navigate(`/tasks?project=${encodeURIComponent(projectName)}`);
   };
 
@@ -876,7 +812,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
           // Use PUT to update all tasks of this newly created entry (since PATCH /:id might not exist)
           for (const task of tasksToUpdate) {
-            fetch(`${API_URL}${dataEndpoint}/${task.rowId}`, {
+            fetch(`${API_URL}/api/data/${task.rowId}?collectionName=${dataCollection}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ mainProjectId: newMainProjectId }),
@@ -927,7 +863,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       setData(prevData => {
         const latestRow = prevData.find(r => r._id === rowId);
         if (latestRow) {
-          fetch(`${API_URL}${dataEndpoint}/${rowId}`, {
+          fetch(`${API_URL}/api/data/${rowId}?collectionName=${dataCollection}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -973,7 +909,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     }));
 
     try {
-      const res = await fetch(`${API_URL}${dataColumns}/reorder/update`, {
+      const res = await fetch(`${API_URL}/api/columns/reorder/update?collectionName=${columnCollection}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ columnOrders }),
@@ -997,7 +933,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     if (!selectedColorCol) return;
 
     try {
-      const res = await fetch(`${API_URL}${dataColumns}/${selectedColorCol.name}/options`, {
+      const res = await fetch(`${API_URL}/api/columns/${selectedColorCol.name}/options?collectionName=${columnCollection}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ multipleValue, optionColors, optionTextColors }),
@@ -1042,7 +978,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
     try {
       const response = await fetch(
-        `${API_URL}${dataEndpoint}/deactivate/${rowId}`,
+        `${API_URL}/api/data/deactivate/${rowId}?collectionName=${dataCollection}`,
         {
           method: "PATCH",
         },
@@ -1075,13 +1011,14 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
       const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column, showInMainProject };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
-        `${API_URL}${dataColumns}/${columnName}/access`,
+        `${API_URL}/api/columns/${columnName}/access?collectionName=${columnCollection}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         }
       );
+      console.log("url for testing", `${API_URL}/api/columns/${columnName}/access?collectionName=${columnCollection}`);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to update column");
@@ -1118,7 +1055,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
   const confirmDelete = async () => {
     const { accessor } = deleteConfirmation;
     try {
-      const res = await fetch(`${API_URL}${dataColumns}/deactivate/${accessor}`, {
+      const res = await fetch(`${API_URL}/api/columns/deactivate/${accessor}?collectionName=${columnCollection}`, {
         method: "PATCH",
       });
 
@@ -1151,22 +1088,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     setIsRowModel(true);
   };
   const [userData, setUserData] = useState([]);
-
-  // const fetchMainProjects = async () => {
-  //   try {
-  //     const response = await fetch(`${API_URL}/api/mainProject/names`);
-  //     const data = await response.json();
-
-  //     console.log("mainProjects", data);
-  //   } catch (err) {
-  //     console.error("Failed:", err);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchMainProjects();
-  // }, []);
-
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -1212,7 +1133,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     if (!trimmedNewName || oldName === trimmedNewName) return;
 
     try {
-      const res = await fetch(`${API_URL}${dataColumns}/${oldName}`, {
+      const res = await fetch(`${API_URL}/api/columns/${oldName}?collectionName=${columnCollection}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newHeading: trimmedNewName }),
@@ -1246,7 +1167,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
     });
 
     try {
-      const res = await fetch(`${API_URL}/api/development/${row._id}/audit`);
+      const res = await fetch(`${API_URL}/api/audit`);
       if (!res.ok) throw new Error("Failed to fetch audit history");
       const data = await res.json();
       setAuditModal(prev => ({
@@ -1289,7 +1210,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                     className=" btn btn-link text-danger p-0"
                     type="button"
                   >
-                    <FaTrash className="delete-icon" size={14} />
+                    <LiaTrashRestoreAltSolid className="delete-icon" />
                   </button>
                 ) : (
                   <span>{rowIndex + 1}</span>
@@ -1340,8 +1261,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   >
                     {sortConfig.key === col.name
                       ? sortConfig.direction === "asc"
-                        ? (<LiaSortUpSolid />)
-                        : (<LiaSortDownSolid />)
+                        ? (<LiaSortSolid />)
+                        : (<LiaSortSolid />)
                       : (<LiaSortSolid />
                       )}
                   </button>
@@ -1365,7 +1286,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   onClick={() => handleDeleteClick(col)}
                   title="Deactivate Column"
                 >
-                  <FaTrash className="delete-icon" size={14} />
+                  <LiaTrashRestoreAltSolid className="delete-icon" />
                 </button>
               )}
               {/* EDIT COLORS OPTION */}
@@ -1593,7 +1514,6 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                       className="btn btn-link p-0 small"
                       title="View change history"
                       onClick={async (e) => {
-
                         e.stopPropagation();
                         setAuditModal({
                           isOpen: true,
@@ -1603,7 +1523,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                         });
                         try {
                           const res = await fetch(
-                            `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                            `${API_URL}/api/data/${row._id}/audit/${col.name}?collectionName=${dataCollection}`,
                           );
                           if (!res.ok) throw new Error("Failed to fetch history");
                           const history = await res.json();
@@ -1692,7 +1612,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                           });
                           try {
                             const res = await fetch(
-                              `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                              `${API_URL}/api/data/${row._id}/audit/${col.name}?collectionName=${dataCollection}`,
                             );
                             if (!res.ok) throw new Error("Failed to fetch history");
                             const history = await res.json();
@@ -1777,7 +1697,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                         });
                         try {
                           const res = await fetch(
-                            `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                            `${API_URL}/api/data/${row._id}/audit/${col.name}?collectionName=${dataCollection}`,
                           );
                           if (!res.ok)
                             throw new Error("Failed to fetch history");
@@ -1825,28 +1745,31 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
             const isEmpty = !linkData.label && !linkData.link;
 
             return (
-              <div className="d-flex align-items-center justify-content-between w-100 gap-2 px-2">
+              <div style={{ position: "relative" }} className="d-flex align-items-center justify-content-between w-100 gap-2 px-2">
                 {isEmpty ? (
                   <span
                     className="text-muted cursor-pointer flex-grow-1"
                     style={{ fontSize: "12px", fontStyle: "italic" }}
-                    onClick={() =>
-                      setLinkModal({
-                        isOpen: true,
-                        rowId: row._id,
-                        colName: col.name,
-                        label: "",
-                        link: "",
-                      })
-                    }
+                    disabled={status.status === "admin" ? false : true}
+                  // onClick={() =>
+                  //   setLinkModal({
+                  //     isOpen: true,
+                  //     rowId: row._id,
+                  //     colName: col.name,
+                  //     label: "",
+                  //     link: "",
+                  //   })
+                  // }
                   >
                     Add Link
                   </span>
                 ) : (
                   <button
                     type="button"
+                    // disabled={status.status === "admin" ? false : true}
                     className="btn btn-link p-0 text-primary text-truncate flex-grow-1 text-start"
                     style={{ fontSize: "13px", textDecoration: "none", maxWidth: "calc(100% - 20px)" }}
+
                     onClick={() => {
                       if (linkData.link) {
                         const url =
@@ -1863,7 +1786,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                 )}
                 {canEdit(col.name, col) && (
                   <button
-                    className="btn btn-link p-0 text-muted"
+                    className="btn btn-link p-0 text-muted lmebtn__ct"
+                    disabled={status.status === "admin" ? false : true}
                     onClick={(e) => {
                       e.stopPropagation();
                       setLinkModal({
@@ -1974,11 +1898,11 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                         });
                         try {
                           const res = await fetch(
-                            `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                            `${API_URL}/api/data/${row._id}/audit/${col.name}?collectionName=${dataCollection}`,
                           );
                           if (!res.ok) throw new Error("Failed to fetch history");
                           const history = await res.json();
-                          console.log("res", history);
+                          console.log("history", history);
 
                           setAuditModal({
                             isOpen: true,
@@ -2096,7 +2020,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                       });
                       try {
                         const res = await fetch(
-                          `${API_URL}${dataEndpoint}/${row._id}/audit/${col.name}`,
+                          `${API_URL}/api/data/${row._id}/audit/${col.name}?collectionName=${dataCollection}`,
                         );
                         console.log("res", res);
                         if (!res.ok) throw new Error("Failed to fetch history");
@@ -2174,7 +2098,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
 
   return (
     <section className="">
-      <div className="d-flex align-items-center gap-2 justify-content-end mb-4">
+      <div className="icons__new d-flex align-items-center gap-2 justify-content-end mb-4">
         {status?.status !== 'staff' ? (
           <button
             onClick={handleFilterClick}
@@ -2188,7 +2112,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         {status?.status === "admin" ? (
           <button
             onClick={handleColumnEditClick}
-            className={`btn ${isDelete ? "btn-dark" : "btn-outline-dark d-inline-flex align-items-center"}`}
+            className={`btn d-inline-flex align-items-center ${isDelete ? "btn-dark" : "btn-outline-dark"}`}
             title="Toggle Edit Mode"
             style={{ height: "40px" }}
           >
@@ -2296,8 +2220,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                       </span>
                       {status.status === 'admin' && (
                         <div className="filter-actions-group">
-                          <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><FaEdit size={12} /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn"><FaTrash size={12} /></button>
+                          <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><LiaEditSolid /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn text-danger"><LiaTrashRestoreAltSolid /></button>
                         </div>
                       )}
                     </div>
@@ -2315,8 +2239,8 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                         </span>
                         {status.status === 'admin' && (
                           <div className="filter-actions-group">
-                            <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><FaEdit size={12} /></button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn"><FaTrash size={12} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><LiaEditSolid /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn text-danger"><LiaTrashRestoreAltSolid /></button>
                           </div>
                         )}
                       </div>
@@ -2657,6 +2581,22 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                           </tbody>
                         </table>
                       </div>
+                      // <div className="d-flex flex-column gap-2">
+                      //   {auditModal.auditData.map((audit, idx) => (
+                      //     <div key={idx} className="custom__button">
+                      //       <span>{audit.changedByUserName || "Unknown"} has changed {audit.oldValue === "" ? (
+                      //         <em className="text-muted">Empty</em>
+                      //       ) : (
+                      //         audit.oldValue ?? "-"
+                      //       )} to {audit.newValue === "" ? (
+                      //         <em className="text-muted">Empty</em>
+                      //       ) : (
+                      //         audit.newValue ?? "-"
+                      //       )} at {new Date(audit.changedAt).toLocaleString()}
+                      //       </span>
+                      //     </div>
+                      //   ))}
+                      // </div>
                     )}
                   </div>
                 </div>
@@ -2785,7 +2725,7 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
                   saved.mainProjectId = newMainProjectId;
 
                   // Update the row with its new mainProjectId
-                  await fetch(`${API_URL}${dataEndpoint}/${saved._id}`, {
+                  await fetch(`${API_URL}/api/data/${saved._id}?collectionName=${dataCollection}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ mainProjectId: newMainProjectId }),
@@ -2829,247 +2769,254 @@ function TableColumns({ departmentKey, dataEndpoint, dataColumns }) {
         userStatus={status}
       />
 
-      {resetConfirmation.isOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1060,
-          }}
-        >
+      {
+        resetConfirmation.isOpen && (
           <div
-            className="delete-confirmation-modal"
             style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              textAlign: "center",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1060,
             }}
           >
-            <h5 className="mb-3">Confirm Reset</h5>
-            <p className="mb-4">
-              Are you sure you want to reset columns to their default values?
-            </p>
-            <div className="d-flex justify-content-center gap-2">
-              <button
-                className="btn btn-outline-secondary" style={{ background: "transparent", color: "black" }}
-                onClick={() => setResetConfirmation({ isOpen: false })}
-              >
-                No
-              </button>
-              <button
-                className="btn btn-secondary" style={{ background: "red", color: "white" }}
-                disabled={loadingUpdater}
-                onClick={() => {
-                  setResetConfirmation({ isOpen: false });
-                  updateColumnDefaultValue();
-                }}
-              >
-                {loadingUpdater ? "Updating..." : "Yes"}
-              </button>
+            <div
+              className="delete-confirmation-modal"
+              style={{
+                backgroundColor: "white",
+                padding: "20px",
+                borderRadius: "8px",
+                textAlign: "center",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h5 className="mb-3">Confirm Reset</h5>
+              <p className="mb-4">
+                Are you sure you want to reset columns to their default values?
+              </p>
+              <div className="d-flex justify-content-center gap-2">
+                <button
+                  className="btn btn-outline-secondary" style={{ background: "transparent", color: "black" }}
+                  onClick={() => setResetConfirmation({ isOpen: false })}
+                >
+                  No
+                </button>
+                <button
+                  className="btn btn-secondary" style={{ background: "red", color: "white" }}
+                  disabled={loadingUpdater}
+                  onClick={() => {
+                    setResetConfirmation({ isOpen: false });
+                    updateColumnDefaultValue();
+                  }}
+                >
+                  {loadingUpdater ? "Updating..." : "Yes"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )
+        )
       }
       {/* Main task edit popup */}
-      {mainProjectModal.isOpen && (
-        <div
-          className="modal-overlay"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1100,
-          }}
-          onClick={() => setMainProjectModal((prev) => ({ ...prev, isOpen: false }))}
-        >
+      {
+        mainProjectModal.isOpen && (
           <div
-            className="modal-content"
+            className="modal-overlay"
             style={{
-              backgroundColor: "white",
-              padding: "24px",
-              borderRadius: "12px",
-              width: "400px",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1100,
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => setMainProjectModal((prev) => ({ ...prev, isOpen: false }))}
           >
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h5 className="mb-0 fw-bold">Edit Label</h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setMainProjectModal((prev) => ({ ...prev, isOpen: false }))}
-              ></button>
-            </div>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Project Name</label>
-              <input
-                type="text"
-                className="form-control"
-                value={mainProjectModal.label}
-                onChange={(e) =>
-                  setMainProjectModal((prev) => ({ ...prev, label: e.target.value }))
-                }
-              />
-            </div>
-            <div className="d-flex justify-content-end gap-2">
-              <button
-                className="btn btn-light px-4"
-                onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary px-4"
-                onClick={async () => {
-                  const newName = mainProjectModal.label?.trim();
-                  if (!newName) return;
-
-                  try {
-                    const res = await fetch(`${API_URL}/api/mainProject/update-by-row/${mainProjectModal.rowId}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ projectName: newName })
-                    });
-
-                    if (res.ok) {
-                      const dataRes = await res.json();
-                      const tasks = dataRes.project?.tasks || [];
-                      setData(prev => {
-                        const updated = [...prev];
-                        tasks.forEach(t => {
-                          const idx = updated.findIndex(r => r._id === String(t.rowId));
-                          if (idx > -1) {
-                            updated[idx] = { ...updated[idx], [mainProjectModal.colName]: newName };
-                            fetch(`${API_URL}${dataEndpoint}/${t.rowId}`, {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ [mainProjectModal.colName]: newName })
-                            });
-                          }
-                        });
-                        return updated;
-                      });
-                    }
-                  } catch (e) {
-                    console.error("Project rename failed", e);
+            <div
+              className="modal-content"
+              style={{
+                backgroundColor: "white",
+                padding: "24px",
+                borderRadius: "12px",
+                width: "400px",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <h5 className="mb-0 fw-bold">Edit Label</h5>
+                <button
+                  type="button"
+                  className="close-btn"
+                  onClick={() => setMainProjectModal((prev) => ({ ...prev, isOpen: false }))}
+                ><IoCloseSharp /></button>
+              </div>
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Project Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={mainProjectModal.label}
+                  onChange={(e) =>
+                    setMainProjectModal((prev) => ({ ...prev, label: e.target.value }))
                   }
-                  setShowPopup(true);
-                  setPopupContent("Project name has been renamed");
-                  setTimeout(() => setShowPopup(false), 10000);
-                  setMainProjectModal(prev => ({ ...prev, isOpen: false }));
-                }}
-              >
-                Save
-              </button>
+                />
+              </div>
+              <div className="d-flex justify-content-end gap-2">
+                <button
+                  className="btn btn-light px-4"
+                  onClick={() => setMainProjectModal((prev) => ({ ...prev, isOpen: false }))}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary px-4"
+                  onClick={async () => {
+                    const newName = mainProjectModal.label?.trim();
+                    if (!newName) return;
+
+                    try {
+                      const res = await fetch(`${API_URL}/api/mainProject/update-by-row/${mainProjectModal.rowId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ projectName: newName })
+                      });
+
+                      if (res.ok) {
+                        const dataRes = await res.json();
+                        const tasks = dataRes.project?.tasks || [];
+                        setData(prev => {
+                          const updated = [...prev];
+                          tasks.forEach(t => {
+                            const idx = updated.findIndex(r => r._id === String(t.rowId));
+                            if (idx > -1) {
+                              updated[idx] = { ...updated[idx], [mainProjectModal.colName]: newName };
+                              fetch(`${API_URL}/api/data/${t.rowId}?collectionName=${dataCollection}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ [mainProjectModal.colName]: newName })
+                              });
+                            }
+                          });
+                          return updated;
+                        });
+                      }
+                    } catch (e) {
+                      console.error("Project rename failed", e);
+                    }
+                    setShowPopup(true);
+                    setPopupContent("Project name has been renamed");
+                    setTimeout(() => setShowPopup(false), 10000);
+                    setMainProjectModal(prev => ({ ...prev, isOpen: false }));
+                  }}
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
       {/* Link Edit Modal */}
-      {linkModal.isOpen && (
-        <div
-          className="modal-overlay"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1100,
-          }}
-          onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
-        >
+      {
+        linkModal.isOpen && (
           <div
-            className="modal-content"
+            className="modal-overlay"
             style={{
-              backgroundColor: "white",
-              padding: "24px",
-              borderRadius: "12px",
-              width: "400px",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1100,
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
           >
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h5 className="mb-0 fw-bold">Edit Link</h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
-              ></button>
-            </div>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Label</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter label (e.g. Website)"
-                value={linkModal.label}
-                onChange={(e) =>
-                  setLinkModal((prev) => ({ ...prev, label: e.target.value }))
-                }
-              />
-            </div>
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Link URL</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter URL (e.g. google.com)"
-                value={linkModal.link}
-                onChange={(e) =>
-                  setLinkModal((prev) => ({ ...prev, link: e.target.value }))
-                }
-              />
-            </div>
-            <div className="d-flex justify-content-end gap-2">
-              <button
-                className="btn btn-light px-4"
-                onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary px-4"
-                onClick={() => {
-                  const payload = JSON.stringify({
-                    label: linkModal.label.trim(),
-                    link: linkModal.link.trim(),
-                  });
-                  handleChange(linkModal.rowId, linkModal.colName, payload);
-                  setLinkModal((prev) => ({ ...prev, isOpen: false }));
-                }}
-              >
-                Save
-              </button>
+            <div
+              className="modal-content"
+              style={{
+                backgroundColor: "white",
+                padding: "24px",
+                borderRadius: "12px",
+                width: "400px",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <h5 className="mb-0 fw-bold">Edit Link</h5>
+                <button
+                  type="button"
+                  className="close-btn"
+                  onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
+                ><IoCloseSharp /></button>
+              </div>
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Label</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter label (e.g. Website)"
+                  value={linkModal.label}
+                  onChange={(e) =>
+                    setLinkModal((prev) => ({ ...prev, label: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="mb-4">
+                <label className="form-label fw-semibold">Link URL</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter URL (e.g. google.com)"
+                  value={linkModal.link}
+                  onChange={(e) =>
+                    setLinkModal((prev) => ({ ...prev, link: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="d-flex justify-content-end gap-2">
+                <button
+                  className="btn btn-light px-4"
+                  onClick={() => setLinkModal((prev) => ({ ...prev, isOpen: false }))}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary px-4"
+                  onClick={() => {
+                    const payload = JSON.stringify({
+                      label: linkModal.label.trim(),
+                      link: linkModal.link.trim(),
+                    });
+                    handleChange(linkModal.rowId, linkModal.colName, payload);
+                    setLinkModal((prev) => ({ ...prev, isOpen: false }));
+                  }}
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {showPopup && (
-        <div class="sticky-bar" id="bar"> <span>{popupContent}</span> <button onClick={(e) => { setShowPopup(false) }}>✕</button> </div>
-      )}
+        )
+      }
+      {
+        showPopup && (
+          <div className="sticky-bar" id="bar"> <span>{popupContent}</span> <button onClick={(e) => { setShowPopup(false) }}>✕</button> </div>
+        )
+      }
 
     </section >
 

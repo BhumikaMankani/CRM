@@ -1,6 +1,9 @@
 import React, { useMemo } from 'react';
-import { FaTimes, FaChartBar, FaEdit, FaTrash } from 'react-icons/fa';
+import { LiaFilterSolid } from "react-icons/lia";
 import './AnalyticsModal.css';
+import { LiaEditSolid, LiaTrashRestoreAltSolid } from "react-icons/lia";
+import { IoCloseSharp } from 'react-icons/io5';
+
 
 const AnalyticsModal = ({ isOpen, onClose, filters, onApplyFilter, onEdit, onDelete, userStatus }) => {
     const analyticsFilters = useMemo(() => {
@@ -14,10 +17,10 @@ const AnalyticsModal = ({ isOpen, onClose, filters, onApplyFilter, onEdit, onDel
             <div className="analytics-modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="analytics-header">
                     <h4 className="d-flex align-items-center gap-2">
-                        <FaChartBar className="text-brand-orange" /> Analytics Filters
+                        <LiaFilterSolid className="text-brand-orange" /> Analytics Filters
                     </h4>
-                    <button className="close-btn-analytics" onClick={onClose}>
-                        <FaTimes />
+                    <button className="close-btn" onClick={onClose}>
+                        <IoCloseSharp />
                     </button>
                 </div>
 
@@ -50,7 +53,7 @@ const AnalyticsModal = ({ isOpen, onClose, filters, onApplyFilter, onEdit, onDel
                                                 }}
                                                 title="Edit"
                                             >
-                                                <FaEdit size={12} />
+                                                <LiaEditSolid />
                                             </button>
                                             <button
                                                 className="action-btn-mini delete text-danger"
@@ -60,7 +63,7 @@ const AnalyticsModal = ({ isOpen, onClose, filters, onApplyFilter, onEdit, onDel
                                                 }}
                                                 title="Delete"
                                             >
-                                                <FaTrash size={12} />
+                                                <LiaTrashRestoreAltSolid />
                                             </button>
                                         </div>
                                     )}
@@ -69,7 +72,7 @@ const AnalyticsModal = ({ isOpen, onClose, filters, onApplyFilter, onEdit, onDel
                         </div>
                     ) : (
                         <div className="empty-state">
-                            <FaChartBar size={48} className="mb-3 opacity-25" />
+                            <LiaFilterSolid size={48} className="mb-3 opacity-25" />
                             <p className="mb-0">No analytics filters found.</p>
                             <small>Mark a filter as "Show in Analytics" when saving to see it here.</small>
                         </div>

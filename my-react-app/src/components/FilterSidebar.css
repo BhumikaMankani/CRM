@@ -78,7 +78,7 @@
 .filter-actions-group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    /* gap: 4px; */
 }
 
 .delete-filter-btn,
@@ -104,8 +104,8 @@
 
 .delete-filter-btn svg,
 .edit-filter-btn svg {
-    width: 12px;
-    height: 12px;
+    width: 15px;
+    height: 15px;
 }
 
 .loading-spinner {

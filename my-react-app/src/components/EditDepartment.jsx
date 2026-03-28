@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { API_URL } from "../../proxy";
 import "./custom.css";
+import { IoCloseSharp } from "react-icons/io5";
 const EditDepartment = ({ isModalOpen, onClose, department, userData, handleCheckboxChange, fetchDepartments }) => {
     const [departmentName, setDepartmentName] = useState("");
 
@@ -13,7 +14,7 @@ const EditDepartment = ({ isModalOpen, onClose, department, userData, handleChec
         }
     }, [department]);
 
-    const cleanDept = department?.name?.replace(/\d+/g, "").toLowerCase() || ""; console.log("cleanDept", cleanDept);
+    const cleanDept = department?.name?.replace(/\d+/g, "").toLowerCase() || "";
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -70,7 +71,7 @@ const EditDepartment = ({ isModalOpen, onClose, department, userData, handleChec
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" style={{ "maxWidth": "500px", "padding": "10px" }} onClick={(e) => e.stopPropagation()}>
                 <button className="close-btn" onClick={onClose}>
-                    ×
+                    <IoCloseSharp />
                 </button>
 
                 <div className="form-container">

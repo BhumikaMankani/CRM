@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Form.css";
+import { IoCloseSharp } from "react-icons/io5";
 
 const EditColumnAccessModal = ({
   isOpen,
@@ -98,7 +99,7 @@ const EditColumnAccessModal = ({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="close-btn" onClick={onClose}>
-          ×
+          <IoCloseSharp />
         </button>
 
         <div className="form-container">

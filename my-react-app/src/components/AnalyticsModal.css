@@ -50,16 +50,6 @@
     background-color: #f8fafc;
 }
 
-.close-btn-analytics {
-    background: none;
-    border: none;
-    color: #999;
-    cursor: pointer;
-    transition: color 0.2s;
-    padding: 4px;
-    font-size: 1.2rem;
-}
-
 /* Filter Cards */
 .analytics-filter-card {
     background: white;

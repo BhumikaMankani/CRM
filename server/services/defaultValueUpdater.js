@@ -1,14 +1,12 @@
-const Column = require("../models/Column");
-const Project = require("../models/Development");
+const getColumnModel = require("../models/Column");
+const getDataModel = require("../models/Data");
 const Audit = require("../models/Audit");
 const CronStatus = require("../models/CronStatus");
 const { logError, logInfo } = require("../utils/logError");
 
-const updateDefaultValues = async (force = false) => {
+const updateDefaultValues = async (force = false, collectionName) => {
   await logInfo("TEST", "Cron reached updateDefaultValues");
-  console.log("Cron reached updateDefaultValues (force: " + force + ")");
   try {
-
     const today = new Date().toISOString().split("T")[0];
 
     const cron = await CronStatus.findOne({ taskName: "dailyUpdate" });
@@ -17,6 +15,20 @@ const updateDefaultValues = async (force = false) => {
       console.log("Already updated today");
       return;
     }
+    if (!collectionName) {
+      console.log("❌ collectionName is missing");
+      return;
+    }
+
+    const baseName = collectionName.endsWith("s")
+      ? collectionName.slice(0, -1)
+      : collectionName;
+
+    const realColumnCollectionName = `${baseName}_columns`;
+
+    const Column = getColumnModel(realColumnCollectionName);
+    const Project = getDataModel(collectionName);
+
     try {
       const columnsWithDefaults = await Column.find({
         status: { $ne: "deactive" },

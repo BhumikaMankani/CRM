@@ -16,7 +16,7 @@ export default function TasksPage() {
 
     // ✅ Fetch all rows
     const getAllRows = async () => {
-        const res = await fetch(`${API_URL}/api/development`);
+        const res = await fetch(`${API_URL}/api/data?collectionName=developments`);
         const result = await res.json();
         setData(result);
         console.log("getAllRows", result);

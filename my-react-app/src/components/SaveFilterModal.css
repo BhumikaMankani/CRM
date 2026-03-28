@@ -3,6 +3,7 @@
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     max-width: 450px;
+    position: relative;
     width: 90%;
     max-height: 70vh;
     display: flex;
@@ -169,8 +170,6 @@
 
 .staff-selection-box {
     background-color: #fff !important;
-    /* border: 1px solid #dee2e6 !important; */
-    max-height: 180px;
     overflow-y: auto;
 }
 

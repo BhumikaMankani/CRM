@@ -2,22 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const { logError, logInfo } = require("./utils/logError");
 
 // COlumns api
-const CronStatus = require('./routes/CronStatus');
-const Columns = require('./routes/columns');
-const MarketingColumns = require('./routes/marketing-columns');
-const Seo_Column = require('./routes/seo-columns');
+const CreateCollection = require('./routes/CreateCollection');
 const Audit = require('./routes/audit');
-// project api
-const Development = require('./routes/development');
-const Marketing = require('./routes/marketing');
-const Seo = require('./routes/seo');
 const Department = require('./routes/department');
 const User = require('./routes/user');
 const Filters = require('./routes/filters');
-const mainProject = require('./routes/mainProject');
+const MainProject = require('./routes/mainProject');
 const { updateDefaultValues } = require('./services/defaultValueUpdater');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -32,9 +24,7 @@ const connectDB = () => {
     const mongoURI = process.env.MONGO_URI;
     try {
         mongoose.connect(mongoURI).then(() => {
-            console.log("✅ Mongo connected successfully");
-            // Run lazy cron after successful DB connection
-            // runLazyCron();
+            console.log("✅ Mongo connected successfully");;
         });
     } catch (err) {
         console.error(`:x: Mongo connection error :`, err.message);
@@ -42,31 +32,26 @@ const connectDB = () => {
 };
 connectDB();
 
-// Log all incoming API requests for debugging
 app.use("/api", (req, res, next) => {
     console.log(`[API Request] ${req.method} ${req.originalUrl}`);
     next();
 });
-
-// app.use('/api/projects', projectRoutes);
-app.use("/api/columns", Columns);
-app.use("/api/development", Development);
+app.use("/api/create-collection", CreateCollection);
 app.use("/api/user", User);
 
-// Marketing & SEO routes (JSON APIs used by frontend)
-app.use("/api/marketing", Marketing);
-app.use("/api/seo", Seo);
+// ✅ Data route
+const dataRoutes = require("./routes/data");
+app.use("/api/data", dataRoutes);
 
-// Column routes
-app.use("/api/marketing-columns", MarketingColumns);
-app.use("/api/seo-columns", Seo_Column);
+// ✅ Column route
+const columnRoutes = require("./routes/columns");
+app.use("/api/columns", columnRoutes);
 
-// Audit routes
 app.use("/api/audit", Audit);
-
 app.post("/api/run-default-updater", async (req, res) => {
     try {
-        await updateDefaultValues(true);
+        await updateDefaultValues(true, req.body.collectionName);
+        console.log("Data collection", req.body.collectionName);
         res.json({ success: true, message: "Default values updated successfully" });
     } catch (err) {
         console.error("Manual updater error:", err);
@@ -74,12 +59,9 @@ app.post("/api/run-default-updater", async (req, res) => {
     }
 });
 
-// Backwards‑compat: keep old path if anything else still calls it
-app.use("/api/marketingcolumns", MarketingColumns);
-
 app.use("/api/department", Department);
 app.use("/api/filters", Filters);
-app.use("/api/mainProject", mainProject);
+app.use("/api/mainProject", MainProject);
 
 // Diagnostic route
 app.get("/api/ping", (req, res) => res.json({ message: "pong" }));
