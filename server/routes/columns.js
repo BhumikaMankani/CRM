@@ -1,18 +1,24 @@
 const express = require("express");
 const router = express.Router();
-const Column = require("../models/Column");
+const getColumnModel = require("../models/Column");
+
 // Get all active columns
 router.get("/", async (req, res) => {
     try {
+        const { collectionName } = req.query;
+        const Column = getColumnModel(collectionName);
         const columns = await Column.find({ status: { $ne: 'deactive' } }).sort({ order: 1 });
         res.json(columns);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
 // Add new column
 router.post("/", async (req, res) => {
     try {
+        const { collectionName } = req.query;
+        const Column = getColumnModel(collectionName);
         const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky, showYear } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
@@ -54,6 +60,8 @@ router.post("/", async (req, res) => {
 
 // Update options (labels and colors) for a specific column
 router.put("/:name/options", async (req, res) => {
+    const { collectionName } = req.query;
+    const Column = getColumnModel(collectionName);
     try {
         const { multipleValue, optionColors, optionTextColors } = req.body;
 
@@ -84,6 +92,8 @@ router.put("/:name/options", async (req, res) => {
 
 // Update column ordering
 router.put("/reorder/update", async (req, res) => {
+    const { collectionName } = req.query;
+    const Column = getColumnModel(collectionName);
     try {
         const { columnOrders } = req.body; // Array of { name, order }
         if (!Array.isArray(columnOrders)) {
@@ -104,6 +114,8 @@ router.put("/reorder/update", async (req, res) => {
 
 // Rename column heading
 router.put("/:name", async (req, res) => {
+    const { collectionName } = req.query;
+    const Column = getColumnModel(collectionName);
     try {
         const { newHeading } = req.body;
         if (!newHeading) {
@@ -119,8 +131,11 @@ router.put("/:name", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 // Deactivate column (Soft Delete)
 router.patch("/deactivate/:name", async (req, res) => {
+    const { collectionName } = req.query;
+    const Column = getColumnModel(collectionName);
     try {
         await Column.updateOne(
             { name: req.params.name },
@@ -134,6 +149,8 @@ router.patch("/deactivate/:name", async (req, res) => {
 
 // Update column access and/or heading
 router.patch("/:name/access", async (req, res) => {
+    const { collectionName } = req.query;
+    const Column = getColumnModel(collectionName);
     try {
         const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky, showYear, rowpopup_column, showInMainProject } = req.body;
         const updateData = {};
@@ -176,52 +193,5 @@ router.patch("/:name/access", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
-// Global Reset Lock API
-// router.get("/reset/status", async (req, res) => {
-//     try {
-//         const lastResetLog = await require("../models/Logs").findOne({
-//             source: "global_column_reset",
-//             message: "RESET_EXECUTED"
-//         }).sort({ createdAt: -1 });
-
-//         if (!lastResetLog) {
-//             return res.json({ canReset: true, lastResetTime: null, remainingMs: 0 });
-//         }
-
-//         const lastResetTime = new Date(lastResetLog.createdAt).getTime();
-//         const now = Date.now();
-//         const diff = now - lastResetTime;
-//         const LOCK_DURATION = 12 * 60 * 60 * 1000; // 12 hours
-
-//         if (diff < LOCK_DURATION) {
-//             return res.json({
-//                 canReset: false,
-//                 lastResetTime,
-//                 remainingMs: LOCK_DURATION - diff
-//             });
-//         }
-
-//         res.json({ canReset: true, lastResetTime, remainingMs: 0 });
-//     } catch (err) {
-//         console.error("Error checking reset status:", err);
-//         res.status(500).json({ error: err.message });
-//     }
-// });
-
-// router.post("/reset/lock", async (req, res) => {
-//     try {
-//         await require("../models/Logs").create({
-//             level: "INFO",
-//             source: "global_column_reset",
-//             message: "RESET_EXECUTED",
-//             time: new Date()
-//         });
-//         res.json({ success: true });
-//     } catch (err) {
-//         console.error("Error locking reset:", err);
-//         res.status(500).json({ error: err.message });
-//     }
-// });
 
 module.exports = router;

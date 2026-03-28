@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import Registration from './components/Registration';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Routes, Route, useNavigate } from "react-router-dom";
 import Departments from "./components/Departments";
-import Development from "./pages/development";
-import Marketing from "./pages/marketing";
-import Seo from "./pages/seo";
+import DepartmentPages from "./pages/DevelopmentPages";
 import TasksPage from "./pages/TasksPage";
 import Footer from "./components/Footer"
 import './components/color.css';
 import Header from "./components/header";
 
 function App() {
-
   const [status, setStatus] = useState(null);
-
-
   const getSessionData = (key) => {
     const itemString = localStorage.getItem(key);
     if (!itemString) return null;
@@ -74,7 +69,7 @@ function App() {
 
   useEffect(() => {
     const validSession = getSessionData('isLoggedIn');
-    console.log("validSession", validSession);
+    // console.log("validSession", validSession);
     if (!validSession && isLoggedIn) {
       handleLogout();
     }
@@ -97,10 +92,8 @@ function App() {
           <main>
             <Routes>
               <Route path="/" element={<Departments setIsLoggedIn={setIsLoggedIn} />} />
-              <Route path="/development" element={<Development />} />
-              <Route path="/marketing" element={<Marketing />} />
-              <Route path="/seo" element={<Seo />} />
               <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/department/:name" element={<DepartmentPages />} />
             </Routes>
           </main>
           <Footer />

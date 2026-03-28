@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import "./Form.css";
+import { IoCloseSharp } from "react-icons/io5";
+import { LiaTrashRestoreAltSolid } from "react-icons/lia";
 
 function Form({
   isPopupOpen,
@@ -193,7 +195,7 @@ function Form({
     <div className="modal-overlay">
       <div className="modal-content">
         <button className="close-btn" onClick={onPopupClose}>
-          ×
+          <IoCloseSharp />
         </button>
 
         <div className="form-container">
@@ -416,7 +418,7 @@ function Form({
                         onClick={() => removeOption(index)}
                         title="Remove option"
                       >
-                        <FaTrash size={14} />
+                        <LiaTrashRestoreAltSolid size={14} />
                       </button>
                     )}
                   </div>

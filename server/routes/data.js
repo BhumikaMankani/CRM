@@ -1,13 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const Seo = require("../models/Seo");
+const getColumnModel = require("../models/Column");
+const getDataModel = require("../models/Data");
 const Audit = require("../models/Audit");
 
 // Get all rows
 router.get("/", async (req, res) => {
     try {
-        const seoprojects = await Seo.find({ showstatus: { $ne: 'deactivate' } }).sort({ createdAt: -1 });
-        res.json(seoprojects);
+        const { collectionName } = req.query;
+
+        const Project = getDataModel(collectionName);
+        console.log("collectionName", collectionName);
+        console.log("Project", Project);
+        const projects = await Project.find({ showstatus: { $ne: 'deactivate' } }).sort({ createdAt: -1 });
+        res.json(projects);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -15,18 +21,20 @@ router.get("/", async (req, res) => {
 
 // Add new row
 router.post("/", async (req, res) => {
+    const { collectionName } = req.query;
+    const Project = getDataModel(collectionName);
     console.log("➕ ADD ROW REQUEST:", req.body);
     try {
         const { createdByUserId, createdByUserName, ...rowContent } = req.body;
-        const Seoproject = new Seo({
+        const project = new Project({
             ...rowContent,
             showstatus: 'activate',
             createdByUserId: createdByUserId || "Unknown",
             createdByUserName: createdByUserName || "Unknown"
         });
-        await Seoproject.save();
-        console.log("✅ Row added successfully:", Seoproject);
-        res.json(Seoproject);
+        await project.save();
+        console.log("✅ Row added successfully:", project);
+        res.json(project);
     } catch (err) {
         console.error("❌ Error adding row:", err.message);
         res.status(500).json({ error: err.message });
@@ -35,9 +43,11 @@ router.post("/", async (req, res) => {
 
 // Get column access
 router.get("/columnAccess/:id", async (req, res) => {
+    const { collectionName } = req.query;
+    const Project = getDataModel(collectionName);
     try {
-        const seoprojects = await Seo.findById(req.params.id);
-        res.json(seoprojects ? seoprojects.column_access : "");
+        const projects = await Project.findById(req.params.id);
+        res.json(projects ? projects.column_access : "");
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -45,15 +55,17 @@ router.get("/columnAccess/:id", async (req, res) => {
 
 // Toggle column access
 router.put("/columnAccess/:id", async (req, res) => {
+    const { collectionName } = req.query;
+    const Project = getDataModel(collectionName);
     try {
         const { columnName } = req.body;
-        const Seoproject = await Seo.findById(req.params.id);
+        const project = await Project.findById(req.params.id);
 
-        if (!Seoproject) {
+        if (!project) {
             return res.status(404).json({ error: "Record not found" });
         }
 
-        let currentAccess = Seoproject.column_access || "";
+        let currentAccess = project.column_access || "";
         let accessArray = currentAccess.split(',').map(item => item.trim()).filter(item => item !== "");
 
         if (accessArray.includes(columnName)) {
@@ -64,10 +76,10 @@ router.put("/columnAccess/:id", async (req, res) => {
             accessArray.push(columnName);
         }
 
-        Seoproject.column_access = accessArray.join(',');
-        await Seoproject.save();
+        project.column_access = accessArray.join(',');
+        await project.save();
 
-        res.json(Seoproject.column_access);
+        res.json(project.column_access);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -79,14 +91,15 @@ router.put("/:id", async (req, res) => {
     try {
         const { changedByUserId, changedByUserName, ...updateBody } = req.body;
 
+        const { collectionName } = req.query;
+        const Project = getDataModel(collectionName);
         // 1) Load the existing document so we can compare old vs new values
-        const existing = await Seo.findById(req.params.id);
+        const existing = await Project.findById(req.params.id);
         if (!existing) {
             return res.status(404).json({ error: "Row not found" });
         }
-
         // 2) Apply update and get the new doc
-        const updated = await Seo.findByIdAndUpdate(
+        const updated = await Project.findByIdAndUpdate(
             req.params.id,
             {
                 $set: {
@@ -100,12 +113,18 @@ router.put("/:id", async (req, res) => {
 
         // 3) For select/default-value columns, write audit entries for any changed fields
         try {
-            // Load column definitions so we know metadata (hasDefaultValue, etc.)
-            const Column = require("../models/SeoColumn");
+            const baseName = collectionName.endsWith("s")
+                ? collectionName.slice(0, -1)
+                : collectionName;
+
+            const realColumnCollectionName = `${baseName}_columns`;
+            const Column = getColumnModel(realColumnCollectionName);
             const columns = await Column.find({ status: { $ne: "deactive" } });
 
             const auditOps = [];
 
+            console.log("columns", columns);
+            console.log("Column", Column);
             for (const col of columns) {
                 const field = col.name;
 
@@ -115,7 +134,9 @@ router.put("/:id", async (req, res) => {
 
                 // Skip if value didn't actually change
                 if (oldValue === newValue) continue;
-
+                console.log("oldValue", oldValue);
+                console.log("newValue", newValue);
+                console.log("col", col);
                 auditOps.push(
                     Audit.create({
                         recordId: existing._id,
@@ -129,7 +150,7 @@ router.put("/:id", async (req, res) => {
                     })
                 );
             }
-
+            console.log("auditOps", auditOps);
             if (auditOps.length) {
                 await Promise.all(auditOps);
                 console.log(`🧾 Audit entries written: ${auditOps.length}`);
@@ -149,6 +170,8 @@ router.put("/:id", async (req, res) => {
 
 // Get audit history for a specific record (all fields)
 router.get("/:id/audit", async (req, res) => {
+    const { collectionName } = req.query;
+    const Project = getDataModel(collectionName);
     const { id } = req.params;
     try {
         const history = await Audit.find({ recordId: id }).sort({ changedAt: -1 });
@@ -160,8 +183,9 @@ router.get("/:id/audit", async (req, res) => {
 });
 
 // Get audit history for a specific record + column
-// URL shape must match frontend: /api/development/:id/audit/:field
 router.get("/:id/audit/:field", async (req, res) => {
+    const { collectionName } = req.query;
+    const Project = getDataModel(collectionName);
     const { id, field } = req.params;
     try {
         // Find all audit entries that belong to this record + column field key
@@ -178,28 +202,12 @@ router.get("/:id/audit/:field", async (req, res) => {
     }
 });
 
-// router.patch("/deactivate/:id", async (req, res) => {
-//     try {
-//         const updated = await Project.findByIdAndUpdate(
-//             req.params.id,
-//             { $set: { showstatus: "deactivate" } },
-//             { new: true, runValidators: true }
-//         );
-//         if (!updated) {
-//             console.warn("Row not found for deactivation:", req.params.id);
-//             return res.status(404).json({ error: "Row not found" });
-//         }
-//         console.log("✅ Row deactivated successfully:", req.params.id);
-//         res.json(updated);
-//     } catch (err) {
-//         res.status(500).json({ error: err.message });
-//     }
-// });
-
 router.patch("/deactivate/:id", async (req, res) => {
+    const { collectionName } = req.query;
+    const Project = getDataModel(collectionName);
     console.log("🔥 DEACTIVATE API HIT:", req.params.id);
 
-    const updated = await Seo.findByIdAndUpdate(
+    const updated = await Project.findByIdAndUpdate(
         req.params.id,
         { $set: { showstatus: "deactivate" } },
         { new: true }

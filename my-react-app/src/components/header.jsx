@@ -1,27 +1,14 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { IoIosLock } from "react-icons/io";
 import { API_URL } from "../../proxy";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
-// import User from "../../../server/models/User";
-
+import { LiaLockSolid } from "react-icons/lia";
 
 const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => {
     const navigate = useNavigate();
     const [audits, setAudits] = useState([]);
     const location = useLocation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-    // const fetchAudits = async () => {
-    //     try {
-    //         const response = await fetch(`${API_URL}/api/audit`);
-    //         const data = await response.json();
-    //         setAudits(data);
-    //         // console.log("audits", data);
-    //     } catch (err) {
-    //         console.error("Failed to fetch audits:", err);
-    //     }
-    // };
 
     const fetchAudits = useCallback(async () => {
         try {
@@ -33,34 +20,6 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
         }
     }, []);
 
-
-    // useEffect(() => {
-    //     fetchAudits();
-
-    //     // Poll for new audit data every 10 seconds
-    //     const interval = setInterval(() => {
-    //         fetchAudits();
-    //     }, 10000); // 10 seconds
-
-    //     // Listen for data update events to refresh immediately
-    //     const handleDataUpdate = () => {
-    //         fetchAudits();
-    //     };
-    //     window.addEventListener('dataUpdated', handleDataUpdate);
-
-    //     return () => {
-    //         clearInterval(interval);
-    //         window.removeEventListener('dataUpdated', handleDataUpdate);
-    //     };
-    // }, []);
-
-    // const lastActiveTime = useMemo(() => {
-    //     if (!status?.user_name || !audits.length) return null;
-    //     // Audits are fetched sorted by changedAt desc
-    //     const latest = audits.find(a => a.changedByUserName === status.user_name);
-    //     return latest ? latest.changedAt : null;
-    // }, [audits, status]);
-
     useEffect(() => {
         fetchAudits();
 
@@ -70,8 +29,6 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
             window.removeEventListener('dataUpdated', fetchAudits);
         };
     }, [fetchAudits]);
-
-
 
     const lastActiveTime = useMemo(() => {
         if (!status?.user_name || !audits.length) return null;
@@ -136,7 +93,7 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                                 </div>
                                 <div className="dropdown-divider"></div>
                                 <button className="dropdown-item-custom" style={{ color: "#e87c00" }} onClick={handleLogout}>
-                                    <IoIosLock />
+                                    <LiaLockSolid />
                                     Logout
                                 </button>
                             </div>

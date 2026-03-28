@@ -432,8 +432,8 @@ button.filter_button svg {
 }
 
 button.btn svg.delete-icon {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
 }
 
 button.btn[title="Edit Option Colors"] svg.color-icon {
@@ -698,4 +698,14 @@ table tr:last-child td {
 
 button.action-btn-mini.action-btn-mini_ct {
   padding: 0 10px;
+}
+
+span.text-muted.cursor-pointer+.lmebtn__ct::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  content: "";
+  width: 100%;
+  background-color: transparent;
 }

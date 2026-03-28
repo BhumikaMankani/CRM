@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaUsers, FaChartLine } from 'react-icons/fa';
+import { FaUsers } from 'react-icons/fa';
 import { API_URL } from '../../proxy';
+import { LiaFilterSolid } from "react-icons/lia";
 import './SaveFilterModal.css';
+import { IoCloseSharp } from 'react-icons/io5';
 
 const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFilter }) => {
     const [filterName, setFilterName] = useState('');
@@ -99,9 +101,9 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
         <div className="modal-overlay" onClick={handleClose}>
             <div className="save-filter-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    {/* <h4>{editFilter ? 'Edit Filter' : 'Save & Share Filter'}</h4> */}
+                    <h4>{editFilter ? 'Edit Filter' : 'Save & Share Filter'}</h4>
                     <button className="close-btn" onClick={handleClose}>
-                        <FaTimes />
+                        <IoCloseSharp />
                     </button>
                 </div>
 
@@ -135,7 +137,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                             <label className="form-label fw-bold d-flex align-items-center gap-2">
                                 <FaUsers /> Share with Staff
                             </label>
-                            <div className="staff-selection-box" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                            <div className="staff-selection-box">
                                 {loadingStaff ? (
                                     <p className="text-muted small mb-0">Loading staff members...</p>
                                 ) : staffList.length > 0 ? (
@@ -168,7 +170,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                     )}
                     <div className="mb-3">
                         <label className="form-label fw-bold d-flex align-items-center gap-2">
-                            <FaChartLine /> Analytics Settings
+                            <LiaFilterSolid /> Analytics Settings
                         </label>
                         <div className="">
                             <div className="form-check">

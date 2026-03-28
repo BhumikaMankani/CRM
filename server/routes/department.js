@@ -2,6 +2,15 @@ const express = require("express");
 const router = express.Router();
 const Department = require("../models/Department");
 
+const makeSlug = (text) => {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "_")      // spaces -> underscore
+        .replace(/[^a-z0-9_]/g, ""); // remove special chars
+};
+
+
 // Get all rows
 router.get("/", async (req, res) => {
     const departments = await Department.find();
@@ -11,32 +20,14 @@ router.get("/", async (req, res) => {
 // Add new row
 router.post("/", async (req, res) => {
     const department = new Department(req.body);
-    const name = department.department.toLowerCase().replace(/\s+/g, '_') + (new Date()).getTime();
+    const name = department.department.toLowerCase().replace(/\s+/g, '_');
     department.name = name;
+    department.slug = makeSlug(department.department);
+    department.dataCollection = makeSlug(department.department);
+    department.columnCollection = makeSlug(department.department) + "_columns";
     await department.save();
     res.json(department);
 });
-
-// router.put("/:name", async (req, res) => {
-//     try {
-//         const { newName } = req.body;
-//         if (!newName) {
-//             return res.status(400).json({ error: "New heading is required" });
-//         }
-
-//         await Department.updateOne(
-//             { name: req.params.oldname },
-//             { department: newName }
-//         );
-
-//         // await Department.updateMany({}, { $rename: { [oldName]: newName } });
-
-//         res.json({ success: true });
-//     } catch (err) {
-//         console.error("Column rename error:", err);
-//         res.status(500).json({ error: err.message });
-//     }
-// });
 
 router.put("/:id", async (req, res) => {
     try {

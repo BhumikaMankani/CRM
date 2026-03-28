@@ -16,7 +16,7 @@ const Sidebar = () => {
                 </a>
                 </li>
 
-                <li className="nav-item"> <a href="/development" className="nav-link border text-dark " aria-current="page">
+                <li className="nav-item"> <a href="/department/development" className="nav-link border text-dark " aria-current="page">
                     Development
                 </a>
                 </li>

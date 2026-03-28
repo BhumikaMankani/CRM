@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const MarketingSchema = new mongoose.Schema({
+const DataSchema = new mongoose.Schema({
     showstatus: {
         type: String,
         default: 'activate'
@@ -9,4 +9,9 @@ const MarketingSchema = new mongoose.Schema({
     createdByUserName: { type: String },
 }, { strict: false, timestamps: true });
 
-module.exports = mongoose.model("Marketing", MarketingSchema);
+const getDataModel = (collectionName) => {
+    return mongoose.models[collectionName] ||
+        mongoose.model(collectionName, DataSchema, collectionName);
+};
+
+module.exports = getDataModel;

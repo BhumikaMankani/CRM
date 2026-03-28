@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const Development = require("./Development");
 
 const SavedFilterSchema = new mongoose.Schema(
     {
@@ -32,7 +31,7 @@ const SavedFilterSchema = new mongoose.Schema(
         },
         department: {
             type: String,
-            default: Development
+            default: "Development"
         },
         allowedUsers: {
             type: [mongoose.Schema.Types.ObjectId],
