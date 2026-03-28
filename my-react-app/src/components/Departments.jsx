@@ -72,7 +72,6 @@ function Departments({ setIsLoggedIn }) {
         return parsed?.department?.[0] || "";
     });
 
-    console.log("selectedDepartment", selectedDepartment);
     const fetchDepartments = async () => {
         try {
             const response = await fetch(`${API_URL}/api/department`);
@@ -91,7 +90,6 @@ function Departments({ setIsLoggedIn }) {
     const matchedDepartment = departments.find(
         (department) => department.department.toLowerCase() === selectedDepartmentDown
     );
-    console.log("matchedDepartment", matchedDepartment);
     const matchedDepartmentData = matchedDepartment?.dataCollection;
     const matchedDepartmentColumn = matchedDepartment?.columnCollection;
     const [isUserFormOpen, setIsUserFormOpen] = useState(false);
@@ -233,13 +231,12 @@ function Departments({ setIsLoggedIn }) {
             setSelectedDepartment(status.department[0]);
         }
     }, [status, selectedDepartment]);
-
     useEffect(() => {
         if (!matchedDepartmentData || !matchedDepartmentColumn) return;
         const fetchProjectsAndCount = async () => {
             try {
                 // Fetch projects and columns together (same as Development page)
-                const projectsRes = await fetch(`${API_URL}/api/data?collectionName=${matchedDepartmentData}`);
+                const projectsRes = await fetch(`${API_URL}/api/data?collectionName=${matchedDepartmentData}s`);
                 const columnsRes = await fetch(`${API_URL}/api/columns?collectionName=${matchedDepartmentColumn}`);
                 const data = await projectsRes.json();
                 const columns = await columnsRes.json();
@@ -402,8 +399,6 @@ function Departments({ setIsLoggedIn }) {
             console.error("Error updating department:", err);
         }
     };
-
-    // console.log("userData", userData);
 
     const columns = [
         {
