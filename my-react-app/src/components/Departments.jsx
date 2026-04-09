@@ -1,20 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { LiaEditSolid } from "react-icons/lia";
 import EditDepartment from "./EditDepartment";
 import { API_URL } from "../../proxy";
-import { MdDashboard } from "react-icons/md";
-import { IoPlayCircleOutline } from "react-icons/io5";
-import { FaRegCheckCircle } from "react-icons/fa";
-import { RxCrossCircled } from "react-icons/rx";
-import { CgDanger } from "react-icons/cg";
-import { MdOutlineIncompleteCircle } from "react-icons/md";
-import { MdOutlinePhoneForwarded } from "react-icons/md";
-import { RiChatFollowUpFill } from "react-icons/ri";
+import DepartmentFilters from "./DepartmentFilters";
 import UserForm from "../components/User";
 import "./custom.css";
 import { IoCloseSharp } from "react-icons/io5";
-import { LiaBarsSolid } from "react-icons/lia";
 
 // Status values that should be treated as "ACTIVE"
 const ACTIVE_STATUSES = [
@@ -31,26 +23,26 @@ const ACTIVE_STATUSES = [
 ];
 
 function Departments({ setIsLoggedIn }) {
+    const [savedFilters, setSavedFilters] = useState([]);
     const [audits, setAudits] = useState([]);
 
-    const [dataCollection, setDataCollection] = useState("");
-    const [columnCollection, setColumnCollection] = useState("");
-
     const [isModalOpen, setIsModalOpen] = useState(false);
-
+    const [isDepartment, setIsDepartment] = useState(false);
     const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
     const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [selectedArchivedDepartments, setSelectedArchivedDepartments] = useState([]);
     const [newDepartmentName, setNewDepartmentName] = useState("");
-    const [isEditing, setIsEditing] = useState(false);
-    const [isDepartment, setIsDepartment] = useState(false);
     const [editingDepartment, setEditingDepartment] = useState({});
     const [userData, setUserData] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [projects, setProjects] = useState([]);
     const [totalProjects, setTotalProjects] = useState(0);
+    const [adminTotalProjects, setAdminTotalProjects] = useState(0);
     const [activeProjectsCount, setActiveProjectsCount] = useState(0);
+    const [adminActiveProjectsCount, setAdminActiveProjectsCount] = useState(0);
+    const [adminTotalTasks, setAdminTotalTasks] = useState(0);
+    const [adminActiveTasksByUser, setAdminActiveTasksByUser] = useState({ Aditya: 0, Nikhil: 0 });
+    const [adminConfirmationPendingCount, setAdminConfirmationPendingCount] = useState(0);
 
     const [projectsByStatus, setProjectsByStatus] = useState({
         onTrack: 0,
@@ -61,6 +53,7 @@ function Departments({ setIsLoggedIn }) {
         followUp: 0,
         completed: 0,
     });
+
     const [statusColumnName, setStatusColumnName] = useState(null);
     const [status, setStatus] = useState(() => {
         const savedData = localStorage.getItem('user');
@@ -255,12 +248,12 @@ function Departments({ setIsLoggedIn }) {
                         const h = (col.column_heading || "").toLowerCase();
                         return h.includes("team") && (h.includes("lead") || h.includes("leader"));
                     });
-                    let teamLeadField = teamLeadColumn?.name;
+                    let adminTeamLeadField = teamLeadColumn?.name;
 
                     // Fallback: find by key pattern if columns API didn't return the column
-                    if (!teamLeadField && data.length > 0) {
+                    if (!adminTeamLeadField && data.length > 0) {
                         const firstProject = data[0];
-                        teamLeadField =
+                        adminTeamLeadField =
                             Object.keys(firstProject).find(key => {
                                 const k = key.toLowerCase();
                                 return (
@@ -271,11 +264,10 @@ function Departments({ setIsLoggedIn }) {
                                 );
                             }) || null;
                     }
-
                     const userNameNorm = (status.user_name || "").trim().toLowerCase();
                     const userProjects = data.filter(project => {
                         const field =
-                            teamLeadField ||
+                            adminTeamLeadField ||
                             Object.keys(project).find(key => {
                                 const k = key.toLowerCase();
                                 return (
@@ -292,9 +284,13 @@ function Departments({ setIsLoggedIn }) {
                             projectValue.startsWith(userNameNorm + " ")
                         );
                     });
+                    const adminProjects = data.filter(project => {
+                        return (
+                            project
+                        );
+                    });
+                    setAdminTotalProjects(adminProjects.length);
                     setTotalProjects(userProjects.length);
-
-                    // Calculate projects by status
                     const statusCounts = {
                         onTrack: 0,
                         offTrack: 0,
@@ -304,6 +300,7 @@ function Departments({ setIsLoggedIn }) {
                         followUp: 0,
                         completed: 0
                     };
+                    let adminActiveCount = 0;
                     let activeCount = 0;
 
                     const isActiveStatus = value => {
@@ -313,6 +310,41 @@ function Departments({ setIsLoggedIn }) {
                         );
                     };
 
+                    if (status?.status === 'admin') {
+                        adminProjects.forEach(project => {
+                            // Use identified statusColumnName if available, else fallback to search
+                            const fieldToUse = statusColumnName && (statusColumnName in project)
+                                ? statusColumnName
+                                : Object.keys(project).find(
+                                    key =>
+                                        key.toLowerCase().includes("status") &&
+                                        !key.toLowerCase().includes("showstatus")
+                                );
+
+                            if (fieldToUse) {
+                                const statusValue = project[fieldToUse];
+                                if (!statusValue) return;
+
+                                const normalizedStatus = String(statusValue).trim().toUpperCase();
+
+                                // Use fuzzy matching for status counts to match Development filter behavior
+                                if (normalizedStatus.includes("ON TRACK")) {
+                                    statusCounts.onTrack++;
+                                } else if (normalizedStatus.includes("OFF TRACK")) {
+                                    statusCounts.offTrack++;
+                                } else if (normalizedStatus.includes("NOT STARTED")) {
+                                    statusCounts.notStarted++;
+                                } else if (normalizedStatus.includes("FOLLOW UP")) {
+                                    statusCounts.followUp++;
+                                } else if (normalizedStatus.includes("COMPLETED")) {
+                                    statusCounts.completed++;
+                                }
+                                if (isActiveStatus(normalizedStatus)) {
+                                    adminActiveCount++;
+                                }
+                            }
+                        });
+                    }
                     userProjects.forEach(project => {
                         // Use identified statusColumnName if available, else fallback to search
                         const fieldToUse = statusColumnName && (statusColumnName in project)
@@ -352,9 +384,68 @@ function Departments({ setIsLoggedIn }) {
                             }
                         }
                     });
-
                     setProjectsByStatus(statusCounts);
+                    setAdminActiveProjectsCount(adminActiveCount);
                     setActiveProjectsCount(activeCount);
+
+                    // Admin-specific dashboard counts
+                    const adminTotalTasksValue = data.filter(item => {
+                        const projectKey = Object.keys(item).find(key =>
+                            key.startsWith("project1773898690093")
+                        );
+
+                        return (
+                            item.showstatus === "activate" &&
+                            projectKey &&
+                            item[projectKey]?.trim() !== ""
+                        );
+                    }).length;
+
+                    console.log("Total Active Projects:", adminTotalTasksValue);
+
+                    // const adminTotalTasksValue = data.length;
+                    const confirmationPendingCount = data.reduce((count, project) => {
+                        const fieldToUse = statusColumnName && (statusColumnName in project)
+                            ? statusColumnName
+                            : Object.keys(project).find(
+                                key =>
+                                    key.toLowerCase().includes("status") &&
+                                    !key.toLowerCase().includes("showstatus")
+                            );
+                        const statusValue = fieldToUse ? (project[fieldToUse] || "") : "";
+                        const normalized = String(statusValue).trim().toLowerCase();
+                        return count + (normalized.includes("confirmation pending") || normalized.includes("pending") ? 1 : 0);
+                    }, 0);
+
+                    const teamLeadField = Array.isArray(columns) && columns.find(col => {
+                        const h = (col.column_heading || "").toLowerCase();
+                        return h.includes("team") && (h.includes("lead") || h.includes("leader"));
+                    })?.name ||
+                        Object.keys(data[0] || {}).find(key => {
+                            const k = key.toLowerCase();
+                            return (
+                                k.startsWith("team_lead") ||
+                                k.startsWith("team_leader") ||
+                                (k.includes("team") && (k.includes("lead") || k.includes("leader")))
+                            );
+                        });
+                    const activeCountsByUser = {
+                        Aditya: 0,
+                        Nikhil: 0,
+                    };
+                    if (teamLeadField) {
+                        data.forEach(project => {
+                            const fieldValue = String(project[teamLeadField] || "").trim().toLowerCase();
+                            if (!fieldValue) return;
+                            const isActive = isActiveStatus(project[statusColumnName] || project[Object.keys(project).find(key => key.toLowerCase().includes("status") && !key.toLowerCase().includes("showstatus"))]);
+                            if (!isActive) return;
+                            if (fieldValue.includes("aditya")) activeCountsByUser.Aditya += 1;
+                            if (fieldValue.includes("nikhil")) activeCountsByUser.Nikhil += 1;
+                        });
+                    }
+                    setAdminTotalTasks(adminTotalTasksValue);
+                    setAdminActiveTasksByUser(activeCountsByUser);
+                    setAdminConfirmationPendingCount(confirmationPendingCount);
                 }
             } catch (err) {
                 console.error("Failed to fetch projects:", err);
@@ -365,8 +456,6 @@ function Departments({ setIsLoggedIn }) {
             fetchProjectsAndCount();
         }
     }, [status, matchedDepartmentData, matchedDepartmentColumn]);
-
-
     const handleCheckboxChange = async (event, user, deptName) => {
         const { checked } = event.target;
         let updatedDepartments = user.department || [];
@@ -405,10 +494,8 @@ function Departments({ setIsLoggedIn }) {
             header: 'Department',
             accessor: 'department',
             render: (row) => (
-                <div className="cell-input-wrapper">
-                    <Link to={`/department/${row.name.replace(/\d+/g, "")}`}
-                        className="text-dark">{row.department}</Link>
-                </div>
+                <Link to={`/department/${row.name.replace(/\d+/g, "")}`}
+                    className="text-dark text-decoration-none">{row.department}</Link>
             )
         },
     ];
@@ -416,259 +503,78 @@ function Departments({ setIsLoggedIn }) {
     return (
         < div className="main-parent" >
             <section className="w-100">
-
+                {status?.status === 'staff' ? (
+                    <DepartmentFilters
+                        selectedDepartment={selectedDepartment}
+                        status={status}
+                        totalProjects={totalProjects}
+                        projectsByStatus={projectsByStatus}
+                        setSelectedDepartment={setSelectedDepartment}
+                        activeProjectsCount={activeProjectsCount}
+                    />
+                ) : (
+                    <DepartmentFilters
+                        isEditUserModalOpen={isEditUserModalOpen}
+                        setIsEditUserModalOpen={setIsEditUserModalOpen}
+                        isModalOpen={isModalOpen}
+                        setSelectedArchivedDepartments={setSelectedArchivedDepartments}
+                        selectedDepartment={selectedDepartment}
+                        isArchiveModalOpen={isArchiveModalOpen}
+                        setIsArchiveModalOpen={setIsArchiveModalOpen}
+                        isDepartmentModalOpen={isDepartmentModalOpen}
+                        setIsDepartmentModalOpen={setIsDepartmentModalOpen}
+                        savedFilters={savedFilters}
+                        setSavedFilters={setSavedFilters}
+                        setIsModalOpen={setIsModalOpen}
+                        isDepartment={isDepartment}
+                        setIsDepartment={setIsDepartment}
+                        status={status}
+                        handleUnarchiveDepartments={handleUnarchiveDepartments}
+                        selectedArchivedDepartments={selectedArchivedDepartments}
+                        addUser={addUser}
+                        departments={departments}
+                        totalProjects={adminTotalProjects}
+                        totalTasks={adminTotalTasks}
+                        activeProjectsCount={adminActiveProjectsCount}
+                        activeTasksByUser={adminActiveTasksByUser}
+                        confirmationPendingCount={adminConfirmationPendingCount}
+                        setSelectedDepartment={setSelectedDepartment}
+                        projectsByStatus={projectsByStatus}
+                    />
+                )}
                 {status?.status === 'admin' &&
-                    <div className="row">
-
-                        <div className="col-md-12">
-                            <table className="table" style={{ 'marginBottom': "0" }}>
-                                <thead className="thead-primary">
-                                    <tr>
-                                        {columns.map((column, index) => (
-                                            <th className="p-2 w-100 d-flex justify-content-between align-items-center" key={index}>{column.header}
-                                                {status?.status === 'admin' ? (
-                                                    <div className="d-flex align-items-center justify-content-end gap-2 position-relative">
-                                                        <div className="dropdown">
-                                                            <button
-                                                                className="btn btn-secondary text-dark d-inline-flex align-items-center p-2"
-                                                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                                            >
-                                                                <LiaBarsSolid />
-                                                            </button>
-                                                            {isDropdownOpen && (
-                                                                <div className="dropdown-menu show dropdown-menu-end position-absolute" style={{ top: "100%", right: 0, zIndex: 10 }}>
-                                                                    <button
-                                                                        className="dropdown-item"
-                                                                        onClick={() => {
-                                                                            setIsDropdownOpen(false);
-                                                                            setIsDepartmentModalOpen(true);
-                                                                        }}
-                                                                    >
-                                                                        Create
-                                                                    </button>
-                                                                    {departments.filter(d => d.status === 'archived').length > 0 && (
-                                                                        <button
-                                                                            className="dropdown-item"
-                                                                            onClick={() => {
-                                                                                setIsDropdownOpen(false);
-                                                                                setSelectedArchivedDepartments([]);
-                                                                                setIsArchiveModalOpen(true);
-                                                                            }}
-                                                                        >
-                                                                            Archived
-                                                                        </button>
-                                                                    )}
-                                                                    {status?.status === 'admin' && (
-                                                                        <>
-                                                                            <button className="dropdown-item" onClick={addUser}>Add User</button>
-                                                                            <button className="dropdown-item" onClick={() => setIsEditUserModalOpen(true)}>Edit User</button>
-                                                                        </>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>) : null}
-                                            </th>
+                    <div className="custom_alert_first_row py-3 px-4 bg-white rounded mt-4">
+                        <h4 className="mb-4">Projects overview by department</h4>
+                        <div className="row">
+                            {departments.map((row, rowIndex) => row.status !== 'archived' && (
+                                (status?.status === 'admin' || status?.department?.includes(row.department)) && (
+                                    <div className="col-4" key={rowIndex}>
+                                        {columns.map((column, colIndex) => (
+                                            <div className={`cell-input-wrapper  p-2 ${rowIndex}`} key={colIndex}>
+                                                <div className="d-flex gap-2 align-items-center justify-content-between">
+                                                    {column.render
+                                                        ? column.render(row, rowIndex)
+                                                        : row[column.accessor]}
+                                                    {status?.status === 'admin' && column.accessor === 'department' && (
+                                                        <button
+                                                            className="action-btn-mini action-btn-mini_ct"
+                                                            title="Edit"
+                                                            onClick={() => {
+                                                                setEditingDepartment(row);
+                                                                setIsModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <LiaEditSolid />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
                                         ))}
-
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {departments.map((row, rowIndex) => row.status !== 'archived' && (
-                                        (status?.status === 'admin' || status?.department?.includes(row.department)) && (
-                                            <tr className="w-100" key={rowIndex}>
-                                                {columns.map((column, colIndex) => (
-                                                    <td className="p-2 w-100 d-flex justify-content-between align-items-center" key={colIndex}>
-                                                        {column.render
-                                                            ? column.render(row, rowIndex)
-                                                            : row[column.accessor]}
-                                                        {status?.status === 'admin' && column.accessor === 'department' && (
-                                                            <div className="d-flex gap-2 align-items-center">
-                                                                <button
-                                                                    className="action-btn-mini action-btn-mini_ct"
-                                                                    title="Edit"
-                                                                    onClick={() => {
-                                                                        setEditingDepartment(row);
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                >
-                                                                    <LiaEditSolid />
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        )
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </div>
+                                )
+                            ))}
                         </div>
                     </div>}
-
-                {/* Display Total Projects for Logged-in Staff */}
-                {status?.status === 'staff' && (
-                    <div className="row ">
-                        <div className="col-md-12">
-                            <div className="alert alert-light border">
-                                <div className="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h2 className="mb-3"> <strong> Welcome back, {status.user_name}!</strong></h2>
-                                        <p>Here's what happening with your project's today</p>
-                                    </div>
-                                    <div className="staff__analytics d-flex flex-column align-items-end gap-2">
-                                        {status?.department?.length > 1 ? (
-                                            <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
-                                                {status.department.map(dept => (
-                                                    <li className="nav-item" key={dept}>
-                                                        <button
-                                                            className={`btn btn-sm btn-outline-primary ${selectedDepartment === dept ? 'active' : ''} `}
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                setSelectedDepartment(dept);
-                                                            }}
-                                                            style={{ cursor: 'pointer', border: '1px solid transparent' }}
-                                                        >
-                                                            {dept.charAt(0).toUpperCase() + dept.slice(1)}
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <a href={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</a>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="row g-3">
-                                    {/* Total Projects Card */}
-                                    <div className="col-md-3">
-                                        <div className="card border-primary">
-                                            <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
-
-                                                <div className="card-body">
-                                                    <MdDashboard />
-
-
-                                                    <h6 className="card-title text-muted mb-2">Total Projects</h6>
-                                                    <h2 className="mb-0 text-primary">{totalProjects}</h2>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    {/* ACTIVE Card - click to go to Development with active filter applied */}
-                                    <div className="col-md-3">
-                                        <div className="card border-danger">
-                                            <Link
-                                                to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-active-projects`}
-                                                className="text-dark text-decoration-none"
-                                            >
-                                                <div className="card-body ">
-                                                    <IoPlayCircleOutline />
-
-                                                    <h6 className="card-title text-muted mb-2">
-                                                        ACTIVE Projects
-                                                    </h6>
-                                                    <h2 className="mb-0 text-danger">
-                                                        {activeProjectsCount}
-                                                    </h2>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    {/* ON TRACK Card */}
-                                    <div className="col-md-3">
-                                        <div className="card border-success">
-                                            <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-on-track-projects`} className="text-dark text-decoration-none">
-
-                                                <div className="card-body ">
-                                                    <FaRegCheckCircle />
-
-                                                    <h6 className="card-title text-muted mb-2">ON TRACK</h6>
-                                                    <h2 className="mb-0 text-success">{projectsByStatus.onTrack}</h2>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    {/* OFF TRACK Card */}
-                                    <div className="col-md-3">
-                                        <div className="card border-warning">
-                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-off-track-projects`} className="text-dark text-decoration-none">
-                                                <div className="card-body">
-                                                    <RxCrossCircled />
-
-                                                    <h6 className="card-title text-muted mb-2">OFF TRACK</h6>
-                                                    <h2 className="mb-0 text-warning">{projectsByStatus.offTrack}</h2>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    {/* AT RISK Card */}
-                                    <div className="col-md-3">
-                                        <div className="card border-info">
-                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
-                                                <div className="card-body">
-                                                    <CgDanger />
-
-                                                    <h6 className="card-title text-muted mb-2">NOT STARTED</h6>
-                                                    <h2 className="mb-0 text-danger">{projectsByStatus.notStarted}</h2>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    {/* Follow up */}
-
-                                    <div className="col-md-3">
-                                        <div className="card border-dark">
-                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-follow-up`} className="text-dark text-decoration-none">
-                                                <div className="card-body">
-                                                    <RiChatFollowUpFill />
-
-                                                    <h6 className="card-title text-muted mb-2">Follow up</h6>
-                                                    <h2 className="mb-0 text-danger">{projectsByStatus.followUp}</h2>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    {/* Forwarded to client projects */}
-                                    <div className="col-md-3">
-                                        <div className="card border-warning">
-                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-forwarded-projects`} className="text-dark text-decoration-none">
-                                                <div className="card-body">
-                                                    <MdOutlinePhoneForwarded />
-
-                                                    <h6 className="card-title text-muted mb-2">Forwarded to client</h6>
-                                                    <h2 className="mb-0 text-danger">{projectsByStatus.forwardedToClient}</h2>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-
-                                    {/* Completed projects */}
-                                    <div className="col-md-3">
-                                        <div className="card border-success">
-                                            <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
-                                                <div className="card-body">
-                                                    <MdOutlineIncompleteCircle />
-
-                                                    <h6 className="card-title text-muted mb-2">Completed</h6>
-                                                    <h2 className="mb-0 text-danger">{projectsByStatus.completed}</h2>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-                }
 
                 {/* Edit User Status Modal */}
                 {
@@ -823,6 +729,7 @@ function Departments({ setIsLoggedIn }) {
                     )
                 }
             </section>
+
             <EditDepartment handleCheckboxChange={handleCheckboxChange} userData={userData} isModalOpen={isModalOpen} onClose={() => setIsModalOpen(false)} department={editingDepartment} fetchDepartments={fetchDepartments} />
 
             <UserForm isUserFormOpen={isUserFormOpen} onClose={() => setIsUserFormOpen(false)} onUserCreated={fetchUsers} />

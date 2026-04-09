@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Department = require("../models/Department");
+const User = require("../models/User");
 
 const makeSlug = (text) => {
     return text
@@ -19,14 +20,33 @@ router.get("/", async (req, res) => {
 
 // Add new row
 router.post("/", async (req, res) => {
-    const department = new Department(req.body);
-    const name = department.department.toLowerCase().replace(/\s+/g, '_');
-    department.name = name;
-    department.slug = makeSlug(department.department);
-    department.dataCollection = makeSlug(department.department);
-    department.columnCollection = makeSlug(department.department) + "_columns";
-    await department.save();
-    res.json(department);
+    try {
+        const department = new Department(req.body);
+
+        const cleanDepartmentName = department.department.trim();
+        const name = cleanDepartmentName.toLowerCase().replace(/\s+/g, "_");
+
+        department.name = name;
+        department.slug = makeSlug(cleanDepartmentName);
+        department.dataCollection = makeSlug(cleanDepartmentName);
+        department.columnCollection = makeSlug(cleanDepartmentName) + "_columns";
+
+        await department.save();
+
+        // Add new department to all users
+        console.log("User data", User);
+        console.log("Admin users", User.status);
+        await User.updateMany(
+            { status: "admin" },
+            { $addToSet: { department: cleanDepartmentName } }
+        );
+
+        console.log("User", User);
+
+        res.json(department);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 router.put("/:id", async (req, res) => {
