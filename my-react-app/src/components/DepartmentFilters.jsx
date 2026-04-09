@@ -101,7 +101,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <MdDashboard />
 
 
-                                    <h6 className="card-title text-muted mb-2">Total Projects</h6>
+                                    <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Tasks</h6>
                                     <h2 className="mb-0 text-primary">{totalProjects}</h2>
                                 </div>
                             </Link>
@@ -111,7 +111,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <MdDashboard />
 
 
-                                    <h6 className="card-title text-muted mb-2">Total Projects</h6>
+                                    <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Tasks</h6>
                                     <h2 className="mb-0 text-primary">{totalProjects}</h2>
                                 </div>
                             </Link>
@@ -130,7 +130,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                 <div className="card-body ">
                                     <IoPlayCircleOutline />
 
-                                    <h6 className="card-title text-muted mb-2">
+                                    <h6 className="card-title text-transform-uppercase text-muted mb-2">
                                         ACTIVE Projects
                                     </h6>
                                     <h2 className="mb-0 text-danger">
@@ -150,7 +150,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <div className="card-body ">
                                         <FaRegCheckCircle />
 
-                                        <h6 className="card-title text-muted mb-2">ON TRACK</h6>
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">ON TRACK</h6>
                                         <h2 className="mb-0 text-success">{projectsByStatus.onTrack}</h2>
                                     </div>
                                 </Link>
@@ -164,7 +164,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <div className="card-body">
                                         <RxCrossCircled />
 
-                                        <h6 className="card-title text-muted mb-2">OFF TRACK</h6>
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">OFF TRACK</h6>
                                         <h2 className="mb-0 text-warning">{projectsByStatus.offTrack}</h2>
                                     </div>
                                 </Link>
@@ -178,7 +178,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <div className="card-body">
                                         <CgDanger />
 
-                                        <h6 className="card-title text-muted mb-2">NOT STARTED</h6>
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">NOT STARTED</h6>
                                         <h2 className="mb-0 text-danger">{projectsByStatus.notStarted}</h2>
                                     </div>
                                 </Link>
@@ -192,7 +192,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <div className="card-body">
                                         <RiChatFollowUpFill />
 
-                                        <h6 className="card-title text-muted mb-2">Follow up</h6>
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Follow up</h6>
                                         <h2 className="mb-0 text-danger">{projectsByStatus.followUp}</h2>
                                     </div>
                                 </Link>
@@ -206,7 +206,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <div className="card-body">
                                         <MdOutlinePhoneForwarded />
 
-                                        <h6 className="card-title text-muted mb-2">Forwarded to client</h6>
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Forwarded to client</h6>
                                         <h2 className="mb-0 text-danger">{projectsByStatus.forwardedToClient}</h2>
                                     </div>
                                 </Link>
@@ -220,7 +220,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <div className="card-body">
                                         <MdOutlineIncompleteCircle />
 
-                                        <h6 className="card-title text-muted mb-2">Completed</h6>
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Completed</h6>
                                         <h2 className="mb-0 text-danger">{projectsByStatus.completed}</h2>
                                     </div>
                                 </Link>
@@ -235,7 +235,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
                                     <div className="card-body">
                                         <MdDashboard />
-                                        <h6 className="card-title text-muted mb-2">Total Tasks</h6>
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Projects</h6>
                                         <h2 className="mb-0 text-secondary">{totalTasks || 0}</h2>
                                     </div>
                                 </Link>
@@ -246,45 +246,51 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=all-active-tasks`} className="text-dark text-decoration-none">
                                     <div className="card-body">
                                         <IoPlayCircleOutline />
-                                        <h6 className="card-title text-muted mb-2">All Active Tasks</h6>
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">All Active Tasks</h6>
                                         <h2 className="mb-0 text-danger">{activeProjectsCount || 0}</h2>
                                     </div>
                                 </Link>
                             </div>
                         </div>
-                        <div className="col-md-3">
-                            <div className="card border-success">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=aditya-active-projects`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <FaRegCheckCircle />
-                                        <h6 className="card-title text-muted mb-2">Aditya Active Tasks</h6>
-                                        <h2 className="mb-0 text-success">{adityaActive}</h2>
-                                    </div>
-                                </Link>
+                        {selectedDepartment !== 'Seo' && (
+                            <div className="col-md-3">
+                                <div className="card border-success">
+                                    <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=aditya-active-projects`} className="text-dark text-decoration-none">
+                                        <div className="card-body">
+                                            <FaRegCheckCircle />
+                                            <h6 selectedDepartment={selectedDepartment} className="card-title text-transform-uppercase text-muted mb-2">Aditya Active Tasks</h6>
+                                            <h2 className="mb-0 text-success">{adityaActive}</h2>
+                                        </div>
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="card border-warning">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=nikhil-active-projects`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <RxCrossCircled />
-                                        <h6 className="card-title text-muted mb-2">Nikhil Active Tasks</h6>
-                                        <h2 className="mb-0 text-warning">{nikhilActive}</h2>
-                                    </div>
-                                </Link>
+                        )}
+                        {selectedDepartment !== 'Seo' && (
+                            <div className="col-md-3">
+                                <div className="card border-warning">
+                                    <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=nikhil-active-projects`} className="text-dark text-decoration-none">
+                                        <div className="card-body">
+                                            <RxCrossCircled />
+                                            <h6 className="card-title text-transform-uppercase text-muted mb-2">Nikhil Active Tasks</h6>
+                                            <h2 className="mb-0 text-warning">{nikhilActive}</h2>
+                                        </div>
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="card border-info">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=confirmation-pending-tasks`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <RiChatFollowUpFill />
-                                        <h6 className="card-title text-muted mb-2">Confirmation Pending - Tasks</h6>
-                                        <h2 className="mb-0 text-info">{confirmationPendingCount || 0}</h2>
-                                    </div>
-                                </Link>
+                        )}
+                        {selectedDepartment !== 'Seo' && (
+                            <div className="col-md-3">
+                                <div className="card border-info">
+                                    <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=confirmation-pending-tasks`} className="text-dark text-decoration-none">
+                                        <div className="card-body">
+                                            <RiChatFollowUpFill />
+                                            <h6 className="card-title text-transform-uppercase text-muted mb-2">Confirmation Pending - Tasks</h6>
+                                            <h2 className="mb-0 text-info">{confirmationPendingCount || 0}</h2>
+                                        </div>
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </>
                 )}
             </div>

@@ -10,6 +10,10 @@
     sans-serif;
 }
 
+h6.card-title.text-transform-uppercase {
+  text-transform: uppercase;
+}
+
 .action-btn-mini_ct {
   display: flex;
   align-items: center;
@@ -17,27 +21,28 @@
 }
 
 .cell-input-wrapper.\30 {
-    background: linear-gradient(90deg, #D97A00 0%, #F0A000 100%);
+  background: linear-gradient(90deg, #D97A00 0%, #F0A000 100%);
 }
 
 .cell-input-wrapper.\31 {
-    background: linear-gradient(90deg, #3E9EC7 0%, #5BB8DE 100%);
+  background: linear-gradient(90deg, #3E9EC7 0%, #5BB8DE 100%);
 }
 
 .cell-input-wrapper.\32 {
-      background: linear-gradient(90deg, #7077D0 0%, #8B92E5 100%);
+  background: linear-gradient(90deg, #7077D0 0%, #8B92E5 100%);
 }
 
-.custom_alert_first_row, .cell-input-wrapper {
-    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+.custom_alert_first_row,
+.cell-input-wrapper {
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 
 .custom_alert.row {
-    row-gap: 15px;
+  row-gap: 15px;
 }
 
 .custom_alert .row {
-    row-gap: 10px;
+  row-gap: 10px;
 }
 
 .dropdown-item:focus,

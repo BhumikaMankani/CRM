@@ -544,11 +544,11 @@ function Departments({ setIsLoggedIn }) {
                 )}
                 {status?.status === 'admin' &&
                     <div className="custom_alert_first_row py-3 px-4 bg-white rounded mt-4">
-                        <h4 className="mb-4">Projects overview by department</h4>
+                        <h4 className="mb-4">Manage departments</h4>
                         <div className="row">
                             {departments.map((row, rowIndex) => row.status !== 'archived' && (
                                 (status?.status === 'admin' || status?.department?.includes(row.department)) && (
-                                    <div className="col-4" key={rowIndex}>
+                                    <div className="col-12 col-md-12 col-lg-4 mb-3" key={rowIndex}>
                                         {columns.map((column, colIndex) => (
                                             <div className={`cell-input-wrapper  p-2 ${rowIndex}`} key={colIndex}>
                                                 <div className="d-flex gap-2 align-items-center justify-content-between">
