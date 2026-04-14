@@ -44,7 +44,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     ))}
                                 </ul>
                             ) : (
-                                <a href={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</a>
+                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</Link>
                             )}
                             {status?.status === 'admin' && (
                                 <div className="dropdown">
@@ -243,7 +243,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                         </div>
                         <div className="col-md-3">
                             <div className="card border-danger">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=all-active-tasks`} className="text-dark text-decoration-none">
+                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=all-active-projects`} className="text-dark text-decoration-none">
                                     <div className="card-body">
                                         <IoPlayCircleOutline />
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">All Active Tasks</h6>

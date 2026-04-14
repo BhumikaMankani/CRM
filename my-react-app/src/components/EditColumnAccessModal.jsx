@@ -20,6 +20,7 @@ const EditColumnAccessModal = ({
   const [showInfo, setShowInfo] = useState(false);
   const [sticky, setSticky] = useState(false);
   const [showYear, setShowYear] = useState(false);
+  const [isMatched, setIsMatched] = useState(false);
   const [rowpopup_column, setRowpopup_column] = useState(false);
   const [showInMainProject, setShowInMainProject] = useState(false);
 
@@ -49,6 +50,7 @@ const EditColumnAccessModal = ({
       setRowpopup_column(!!column.rowpopup_column);
       setShowInMainProject(!!column.showInMainProject);
       setShowYear(!!column.showYear);
+      setIsMatched(!!column.isMatched);
     }
   }, [column]);
 
@@ -88,6 +90,7 @@ const EditColumnAccessModal = ({
         rowpopup_column,
         showInMainProject,
         showYear,
+        isMatched
       });
     }
     onClose?.();
@@ -177,6 +180,19 @@ const EditColumnAccessModal = ({
                 </label>
               </div>
 
+              <div className="form-check form-check-inline">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="isMatched"
+                  name="isMatched"
+                  checked={isMatched}
+                  onChange={(e) => setIsMatched(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="isMatched">
+                  Is Matched
+                </label>
+              </div>
               <div className="form-check form-check-inline">
                 <input
                   className="form-check-input"

@@ -20,6 +20,7 @@ const ColumnSchema = new mongoose.Schema({
   showInfo: { type: Boolean, default: false }, // whether to show change history info icon
   sticky: { type: Boolean, default: false }, // whether the column should be sticky
   showYear: { type: Boolean, default: false }, // whether to show year with month selection
+  isMatched: { type: Boolean, default: false },
   status: { type: String, default: "active" }, // active, inactive
   rowpopup_column: { type: Boolean, default: false },
   showInMainProject: { type: Boolean, default: false },

@@ -5,6 +5,7 @@ import Table from "./Table";
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
 import AnalyticsModal from "./AnalyticsModal";
+import ExcelToJson from "./Excel";
 import { IoCloseSharp } from "react-icons/io5";
 import { RiLogoutCircleRLine } from "react-icons/ri";
 
@@ -49,6 +50,9 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
 
   // Analytics Modal
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
+
+  // Upload file Mode;
+  const [isUploadModelOpen, setIsUploadModelOpen] = useState(false);
 
   // Data FILTERED COUNT..
   const [filterCount, setFilterCount] = useState([]);
@@ -210,7 +214,24 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
   };
 
   // Helper for overdue calculation
-  const calculateOverdue = (dateStr) => {
+  const calculateOverdue = (dateStr, row, columnsDef) => {
+    // Check if any column with "status" in its name or heading is set to "completed"
+    if (row && columnsDef) {
+      const statusCol = columnsDef.find(c =>
+        c.column_heading.toLowerCase().includes("status") ||
+        c.name.toLowerCase().includes("status")
+      );
+      if (statusCol) {
+        const statusValue = String(row[statusCol.name] || "").trim().toLowerCase();
+        if (statusValue === "completed") {
+          return {
+            text: "Completed",
+            className: "overdue-block bg-success p-1 rounded text-white text-center",
+          };
+        }
+      }
+    }
+
     if (!dateStr)
       return {
         text: "No Date",
@@ -1006,9 +1027,9 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
     setDeleteRowConfirmation({ isOpen: false, rowId: null, label: "" });
   };
 
-  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column, showInMainProject }) => {
+  const handleSaveColumnAccess = async (columnName, { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, isMatched, rowpopup_column, showInMainProject }) => {
     try {
-      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, rowpopup_column, showInMainProject };
+      const body = { access, viewAccess, sorting, equalPrefix, morePrefix, lessPrefix, showInfo, sticky, showYear, isMatched, rowpopup_column, showInMainProject };
       if (column_heading !== undefined) body.column_heading = column_heading;
       const res = await fetch(
         `${API_URL}/api/columns/${columnName}/access?collectionName=${columnCollection}`,
@@ -1040,6 +1061,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
               rowpopup_column: updated.rowpopup_column,
               showInMainProject: updated.showInMainProject,
               showYear: updated.showYear,
+              isMatched: updated.isMatched,
               ...(updated.column_heading && { column_heading: updated.column_heading }),
             }
             : col
@@ -1503,7 +1525,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
             col.column_heading.toLowerCase() === "overdue"
           ) {
             const endDateValue = row["end_date"] || row["endDate"] || "";
-            const overdueInfo = calculateOverdue(endDateValue);
+            const overdueInfo = calculateOverdue(endDateValue, row, columnsDef);
             return (
               <div className="d-flex align-items-center gap-1">
                 <div className={overdueInfo.className}>{overdueInfo.text}</div>
@@ -1574,7 +1596,13 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
               const diffTime = end - today;
               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-              const dayClass =
+              const statusCol = columnsDef.find(c =>
+                c.column_heading.toLowerCase().includes("status") ||
+                c.name.toLowerCase().includes("status")
+              );
+              const statusValue = statusCol ? String(row[statusCol.name] || "").trim().toLowerCase() : "";
+
+              let dayClass =
                 diffDays > 0
                   ? "days-positive" // future
                   : diffDays < 0
@@ -1582,7 +1610,16 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                     : "days-zero"; // today
 
               let displayText = "";
-              if (diffDays === 0) {
+
+              // Check for completed status in condition column too
+
+              if (statusValue === "completed") {
+                displayText = "Completed";
+                dayClass = "days-completed";
+              } else if (statusValue === "archived") {
+                displayText = "Archived";
+                dayClass = "days-completed";
+              } else if (diffDays === 0) {
                 displayText = col.equalPrefix || "Deadline Today";
               } else if (diffDays > 0) {
                 const prefix = col.morePrefix || "Deadline in";
@@ -1817,6 +1854,8 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                 displayYear = parts[1];
               }
             }
+
+            const isMatched = col.isMatched;
 
             const trimmedValue = displayMonth.toString().trim();
             const optionColors = col.optionColors || {};
@@ -2161,7 +2200,23 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
           >
             Analytics
           </button>
-        ) : null}
+        )
+          : null}
+
+        {status?.status === "admin" ? (
+          <button
+            className="btn btn-outline-dark"
+            onClick={() => setIsUploadModelOpen(true)}
+          >
+            Upload file
+          </button>
+        )
+          : null}
+        {isUploadModelOpen &&
+          (
+            <ExcelToJson isUploadModelOpen={isUploadModelOpen} setIsUploadModelOpen={setIsUploadModelOpen} columns={columnsDef} columnCollection={columnCollection} dataCollection={dataCollection}
+              data={filteredAndSortedData} setData={setData} dataEndpoint={dataEndpoint} API_URL={API_URL} />
+          )}
         {/* {isDelete && (
                     <button
                         onClick={() => setIsDelete(false)}
@@ -2701,7 +2756,6 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
             }
             const saved = await res.json();
 
-            // New mainProject added...
             console.log("New row data", newRow);
             const projectName = newRow[mainProjectId];
             const taskName = newRow[taskNameId];

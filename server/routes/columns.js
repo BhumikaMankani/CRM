@@ -19,7 +19,7 @@ router.post("/", async (req, res) => {
     try {
         const { collectionName } = req.query;
         const Column = getColumnModel(collectionName);
-        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky, showYear } = req.body;
+        const { column_heading, column_type, multipleValue, sorting, conditionColumn1, conditionColumn2, equalPrefix, morePrefix, lessPrefix, hasDefaultValue, defaultValue, access, viewAccess, sticky, showYear, isMatched } = req.body;
         if (!column_heading) {
             return res.status(400).json({ error: "Column heading is required" });
         }
@@ -48,6 +48,7 @@ router.post("/", async (req, res) => {
             viewAccess: Array.isArray(viewAccess) ? viewAccess : [],
             sticky: !!sticky,
             showYear: !!showYear,
+            isMatched: !!isMatched,
             status: 'active'
         });
         await column.save();
@@ -152,7 +153,7 @@ router.patch("/:name/access", async (req, res) => {
     const { collectionName } = req.query;
     const Column = getColumnModel(collectionName);
     try {
-        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky, showYear, rowpopup_column, showInMainProject } = req.body;
+        const { access, viewAccess, column_heading, sorting, equalPrefix, morePrefix, lessPrefix, sticky, showYear, isMatched, rowpopup_column, showInMainProject } = req.body;
         const updateData = {};
         if (Array.isArray(access)) updateData.access = access;
         if (Array.isArray(viewAccess)) updateData.viewAccess = viewAccess;
@@ -167,6 +168,9 @@ router.patch("/:name/access", async (req, res) => {
         }
         if (typeof showYear === "boolean") {
             updateData.showYear = showYear;
+        }
+        if (typeof isMatched === "boolean") {
+            updateData.isMatched = isMatched;
         }
         if (typeof req.body.showInfo === "boolean") {
             updateData.showInfo = req.body.showInfo;

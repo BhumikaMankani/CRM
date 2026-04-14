@@ -46,6 +46,7 @@ function Departments({ setIsLoggedIn }) {
 
     const [projectsByStatus, setProjectsByStatus] = useState({
         onTrack: 0,
+        activeCT: 0,
         offTrack: 0,
         atRisk: 0,
         notStarted: 0,
@@ -294,6 +295,7 @@ function Departments({ setIsLoggedIn }) {
                     const statusCounts = {
                         onTrack: 0,
                         offTrack: 0,
+                        activeCT: 0,
                         forwardedToClient: 0,
                         atRisk: 0,
                         notStarted: 0,
@@ -326,18 +328,17 @@ function Departments({ setIsLoggedIn }) {
                                 if (!statusValue) return;
 
                                 const normalizedStatus = String(statusValue).trim().toUpperCase();
-
                                 // Use fuzzy matching for status counts to match Development filter behavior
                                 if (normalizedStatus.includes("ON TRACK")) {
                                     statusCounts.onTrack++;
+                                } else if (normalizedStatus.includes("ACTIVE")) {
+                                    statusCounts.activeCT++;
                                 } else if (normalizedStatus.includes("OFF TRACK")) {
                                     statusCounts.offTrack++;
                                 } else if (normalizedStatus.includes("NOT STARTED")) {
                                     statusCounts.notStarted++;
                                 } else if (normalizedStatus.includes("FOLLOW UP")) {
                                     statusCounts.followUp++;
-                                } else if (normalizedStatus.includes("COMPLETED")) {
-                                    statusCounts.completed++;
                                 }
                                 if (isActiveStatus(normalizedStatus)) {
                                     adminActiveCount++;
@@ -345,45 +346,47 @@ function Departments({ setIsLoggedIn }) {
                             }
                         });
                     }
-                    userProjects.forEach(project => {
-                        // Use identified statusColumnName if available, else fallback to search
-                        const fieldToUse = statusColumnName && (statusColumnName in project)
-                            ? statusColumnName
-                            : Object.keys(project).find(
-                                key =>
-                                    key.toLowerCase().includes("status") &&
-                                    !key.toLowerCase().includes("showstatus")
-                            );
+                    if (status?.status === 'admin') {
+                        userProjects.forEach(project => {
+                            // Use identified statusColumnName if available, else fallback to search
+                            const fieldToUse = statusColumnName && (statusColumnName in project)
+                                ? statusColumnName
+                                : Object.keys(project).find(
+                                    key =>
+                                        key.toLowerCase().includes("status") &&
+                                        !key.toLowerCase().includes("showstatus")
+                                );
 
-                        if (fieldToUse) {
-                            const statusValue = project[fieldToUse];
+                            if (fieldToUse) {
+                                const statusValue = project[fieldToUse];
 
-                            if (!statusValue) return;
+                                if (!statusValue) return;
 
-                            const normalizedStatus = String(statusValue).trim().toUpperCase();
+                                const normalizedStatus = String(statusValue).trim().toUpperCase();
 
-                            // Use fuzzy matching for status counts to match Development filter behavior
-                            if (normalizedStatus.includes("ON TRACK")) {
-                                statusCounts.onTrack++;
-                            } else if (normalizedStatus.includes("OFF TRACK")) {
-                                statusCounts.offTrack++;
-                            } else if (normalizedStatus.includes("AT RISK")) {
-                                statusCounts.atRisk++;
-                            } else if (normalizedStatus.includes("NOT STARTED")) {
-                                statusCounts.notStarted++;
-                            } else if (normalizedStatus.includes("FORWARDED") || normalizedStatus.includes("FORWORDED")) {
-                                statusCounts.forwardedToClient++;
-                            } else if (normalizedStatus.includes("FOLLOW UP")) {
-                                statusCounts.followUp++;
-                            } else if (normalizedStatus.includes("COMPLETED")) {
-                                statusCounts.completed++;
+                                // Use fuzzy matching for status counts to match Development filter behavior
+                                if (normalizedStatus.includes("ON TRACK")) {
+                                    statusCounts.onTrack++;
+                                } else if (normalizedStatus.includes("OFF TRACK")) {
+                                    statusCounts.offTrack++;
+                                } else if (normalizedStatus.includes("AT RISK")) {
+                                    statusCounts.atRisk++;
+                                } else if (normalizedStatus.includes("NOT STARTED")) {
+                                    statusCounts.notStarted++;
+                                } else if (normalizedStatus.includes("FORWARDED") || normalizedStatus.includes("FORWORDED")) {
+                                    statusCounts.forwardedToClient++;
+                                } else if (normalizedStatus.includes("FOLLOW UP")) {
+                                    statusCounts.followUp++;
+                                } else if (normalizedStatus.includes("COMPLETED")) {
+                                    statusCounts.completed++;
+                                }
+
+                                if (isActiveStatus(normalizedStatus)) {
+                                    activeCount++;
+                                }
                             }
-
-                            if (isActiveStatus(normalizedStatus)) {
-                                activeCount++;
-                            }
-                        }
-                    });
+                        });
+                    }
                     setProjectsByStatus(statusCounts);
                     setAdminActiveProjectsCount(adminActiveCount);
                     setActiveProjectsCount(activeCount);
