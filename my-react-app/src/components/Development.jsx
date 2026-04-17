@@ -736,8 +736,9 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
   }, [API_URL, dataColumns, dataEndpoint]);
 
   const mainProjectId = columnsDef?.find(c => c.showInMainProject)?.name;
-  const taskNameId = "project1768984734240";
+  const taskNameId = columnsDef?.find(col => col.isMatched === true)?.name;
 
+  console.log("taskNameId", taskNameId);
   useEffect(() => {
     // initial load
     fetchAll({ showSpinner: true });
@@ -806,6 +807,8 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
 
   const handleBlur = async (rowId, field, value) => {
     if (field !== mainProjectId) return;
+    console.log("field", field);
+    console.log("mainProjectId", mainProjectId);
 
     if (!value || value.trim() === "") return;
 
@@ -818,7 +821,8 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
         body: JSON.stringify({
           projectId: rowId,
           projectName: projectName,
-          taskName: taskName
+          taskName: taskName,
+          taskDepartment: dataCollection
         }),
       });
 
@@ -2767,7 +2771,8 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                 body: JSON.stringify({
                   projectId: saved._id,        // row id
                   projectName: projectName,    // matched value
-                  taskName: taskName        // optional
+                  taskName: taskName,        // optional
+                  taskDepartment: dataCollection
                 }),
               });
 
@@ -2936,7 +2941,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                   onClick={async () => {
                     const newName = mainProjectModal.label?.trim();
                     if (!newName) return;
-
+                    // console.log("roelid", mainProjectModal.rowId);
                     try {
                       const res = await fetch(`${API_URL}/api/mainProject/update-by-row/${mainProjectModal.rowId}`, {
                         method: "PATCH",

@@ -98,7 +98,7 @@ function MatchColumn({ isModelOpen, onClose, excelData, handleSubmit, columns, d
                                                         return !Object.values(mapping).includes(column.name)
                                                             || mapping[excelKey] === column.name;
                                                     })
-                                                    .map((column, index) => (
+                                                    .map((column, index) => column.showInMainProject !== true && (
                                                         <option key={column.name || index} value={column.name}>
                                                             {column.column_heading}
                                                         </option>

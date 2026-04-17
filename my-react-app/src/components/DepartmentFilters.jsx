@@ -5,7 +5,12 @@ import { FaRegCheckCircle } from 'react-icons/fa';
 import { RxCrossCircled } from 'react-icons/rx';
 import { CgDanger } from 'react-icons/cg';
 import { RiChatFollowUpFill } from 'react-icons/ri';
+import { MdOutlinePendingActions } from "react-icons/md";
 import { Link } from 'react-router-dom';
+import { FaTasks } from "react-icons/fa";
+
+import { VscFolderActive } from "react-icons/vsc";
+
 import { LiaBarsSolid } from "react-icons/lia";
 import { useState } from 'react';
 
@@ -13,8 +18,6 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
     const adityaActive = activeTasksByUser?.Aditya || 0;
     const nikhilActive = activeTasksByUser?.Nikhil || 0;
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-    console.log("status", status.status);
     return (
         <div className="">
             <div className='custom_alert_first_row py-3 px-4 bg-white rounded mb-4'>
@@ -98,7 +101,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                         {status?.status === 'staff' ? (
                             <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
                                 <div className="card-body">
-                                    <MdDashboard />
+                                    <FaTasks />
 
 
                                     <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Tasks</h6>
@@ -234,7 +237,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                             <div className="card border-secondary">
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
                                     <div className="card-body">
-                                        <MdDashboard />
+                                        <FaTasks />
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Projects</h6>
                                         <h2 className="mb-0 text-secondary">{totalTasks || 0}</h2>
                                     </div>
@@ -245,14 +248,25 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                             <div className="card border-danger">
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=all-active-projects`} className="text-dark text-decoration-none">
                                     <div className="card-body">
-                                        <IoPlayCircleOutline />
+                                        <VscFolderActive />
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">All Active Tasks</h6>
                                         <h2 className="mb-0 text-danger">{activeProjectsCount || 0}</h2>
                                     </div>
                                 </Link>
                             </div>
                         </div>
-                        {selectedDepartment !== 'Seo' && (
+                        <div className="col-md-3">
+                            <div className="card border-success">
+                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=all-completed-projects`} className="text-dark text-decoration-none">
+                                    <div className="card-body">
+                                        <FaRegCheckCircle />
+                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Completed Projects</h6>
+                                        <h2 className="mb-0 text-success">{projectsByStatus.completed || 0}</h2>
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
+                        {selectedDepartment == 'Development' && (
                             <div className="col-md-3">
                                 <div className="card border-success">
                                     <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=aditya-active-projects`} className="text-dark text-decoration-none">
@@ -265,12 +279,12 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                 </div>
                             </div>
                         )}
-                        {selectedDepartment !== 'Seo' && (
+                        {selectedDepartment == 'Development' && (
                             <div className="col-md-3">
                                 <div className="card border-warning">
                                     <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=nikhil-active-projects`} className="text-dark text-decoration-none">
                                         <div className="card-body">
-                                            <RxCrossCircled />
+                                            <FaRegCheckCircle />
                                             <h6 className="card-title text-transform-uppercase text-muted mb-2">Nikhil Active Tasks</h6>
                                             <h2 className="mb-0 text-warning">{nikhilActive}</h2>
                                         </div>
@@ -278,12 +292,12 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                 </div>
                             </div>
                         )}
-                        {selectedDepartment !== 'Seo' && (
+                        {selectedDepartment == 'Development' && (
                             <div className="col-md-3">
                                 <div className="card border-info">
                                     <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=confirmation-pending-tasks`} className="text-dark text-decoration-none">
                                         <div className="card-body">
-                                            <RiChatFollowUpFill />
+                                            <MdOutlinePendingActions />
                                             <h6 className="card-title text-transform-uppercase text-muted mb-2">Confirmation Pending - Tasks</h6>
                                             <h2 className="mb-0 text-info">{confirmationPendingCount || 0}</h2>
                                         </div>

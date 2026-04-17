@@ -8,18 +8,16 @@ import UserForm from "../components/User";
 import "./custom.css";
 import { IoCloseSharp } from "react-icons/io5";
 
-// Status values that should be treated as "ACTIVE"
+// Status values that should be treated as "ACTIVE" for the active-project count
 const ACTIVE_STATUSES = [
-    "Not started",
-    "OFF TRACK",
-    "Forwarded to client",
-    "Forwarded to Client",
-    "Forworded to Client",
-    "At Risk",
-    "AT RISK",
-    "Offtrack - client",
-    "Follow up",
-    "ON TRACK",
+    "not started",
+    "off track",
+    "offtrack",
+    "forwarded to client",
+    "follow up",
+    "on track",
+    "active",
+    "in progress",
 ];
 
 function Departments({ setIsLoggedIn }) {
@@ -240,7 +238,12 @@ function Departments({ setIsLoggedIn }) {
                     const h = (col.column_heading || "").toLowerCase();
                     return h.includes("status") && !h.includes("showstatus");
                 });
-                if (statusCol?.name) setStatusColumnName(statusCol.name);
+                const statusFieldName = statusCol?.name ||
+                    Object.keys(data[0] || {}).find(key => {
+                        const k = key.toLowerCase();
+                        return k.includes("status") && !k.includes("showstatus");
+                    }) || null;
+                if (statusFieldName) setStatusColumnName(statusFieldName);
 
                 // Calculate total projects for the logged-in user by Team Lead field
                 if (status?.user_name) {
@@ -292,7 +295,17 @@ function Departments({ setIsLoggedIn }) {
                     });
                     setAdminTotalProjects(adminProjects.length);
                     setTotalProjects(userProjects.length);
-                    const statusCounts = {
+                    const adminStatusCounts = {
+                        onTrack: 0,
+                        offTrack: 0,
+                        activeCT: 0,
+                        forwardedToClient: 0,
+                        atRisk: 0,
+                        notStarted: 0,
+                        followUp: 0,
+                        completed: 0
+                    };
+                    const staffStatusCounts = {
                         onTrack: 0,
                         offTrack: 0,
                         activeCT: 0,
@@ -312,109 +325,89 @@ function Departments({ setIsLoggedIn }) {
                         );
                     };
 
+                    const resolveStatusField = project => {
+                        if (statusFieldName && (statusFieldName in project)) {
+                            return statusFieldName;
+                        }
+                        return Object.keys(project).find(
+                            key =>
+                                key.toLowerCase().includes("status") &&
+                                !key.toLowerCase().includes("showstatus")
+                        );
+                    };
+
+                    const countStatus = (statusValue, counts) => {
+                        if (!statusValue) return;
+                        const normalizedStatus = String(statusValue).trim().toUpperCase();
+
+                        if (normalizedStatus.includes("ON TRACK")) {
+                            counts.onTrack++;
+                        } else if (normalizedStatus.includes("OFF TRACK")) {
+                            counts.offTrack++;
+                        } else if (normalizedStatus.includes("AT RISK")) {
+                            counts.atRisk++;
+                        } else if (normalizedStatus.includes("NOT STARTED")) {
+                            counts.notStarted++;
+                        } else if (normalizedStatus.includes("FORWARDED") || normalizedStatus.includes("FORWORDED")) {
+                            counts.forwardedToClient++;
+                        } else if (normalizedStatus.includes("FOLLOW UP")) {
+                            counts.followUp++;
+                        } else if (normalizedStatus.includes("COMPLETED")) {
+                            counts.completed++;
+                        } else if (normalizedStatus.includes("ACTIVE")) {
+                            counts.activeCT++;
+                        }
+                    };
+
                     if (status?.status === 'admin') {
                         adminProjects.forEach(project => {
-                            // Use identified statusColumnName if available, else fallback to search
-                            const fieldToUse = statusColumnName && (statusColumnName in project)
-                                ? statusColumnName
-                                : Object.keys(project).find(
-                                    key =>
-                                        key.toLowerCase().includes("status") &&
-                                        !key.toLowerCase().includes("showstatus")
-                                );
+                            const fieldToUse = resolveStatusField(project);
+                            if (!fieldToUse) return;
 
-                            if (fieldToUse) {
-                                const statusValue = project[fieldToUse];
-                                if (!statusValue) return;
-
-                                const normalizedStatus = String(statusValue).trim().toUpperCase();
-                                // Use fuzzy matching for status counts to match Development filter behavior
-                                if (normalizedStatus.includes("ON TRACK")) {
-                                    statusCounts.onTrack++;
-                                } else if (normalizedStatus.includes("ACTIVE")) {
-                                    statusCounts.activeCT++;
-                                } else if (normalizedStatus.includes("OFF TRACK")) {
-                                    statusCounts.offTrack++;
-                                } else if (normalizedStatus.includes("NOT STARTED")) {
-                                    statusCounts.notStarted++;
-                                } else if (normalizedStatus.includes("FOLLOW UP")) {
-                                    statusCounts.followUp++;
-                                }
-                                if (isActiveStatus(normalizedStatus)) {
-                                    adminActiveCount++;
-                                }
+                            const statusValue = project[fieldToUse];
+                            countStatus(statusValue, adminStatusCounts);
+                            if (isActiveStatus(statusValue)) {
+                                adminActiveCount++;
                             }
                         });
-                    }
-                    if (status?.status === 'admin') {
+
+                        setProjectsByStatus(adminStatusCounts);
+                        setAdminActiveProjectsCount(adminActiveCount);
+                    } else {
                         userProjects.forEach(project => {
-                            // Use identified statusColumnName if available, else fallback to search
-                            const fieldToUse = statusColumnName && (statusColumnName in project)
-                                ? statusColumnName
-                                : Object.keys(project).find(
-                                    key =>
-                                        key.toLowerCase().includes("status") &&
-                                        !key.toLowerCase().includes("showstatus")
-                                );
+                            const fieldToUse = resolveStatusField(project);
+                            if (!fieldToUse) return;
 
-                            if (fieldToUse) {
-                                const statusValue = project[fieldToUse];
-
-                                if (!statusValue) return;
-
-                                const normalizedStatus = String(statusValue).trim().toUpperCase();
-
-                                // Use fuzzy matching for status counts to match Development filter behavior
-                                if (normalizedStatus.includes("ON TRACK")) {
-                                    statusCounts.onTrack++;
-                                } else if (normalizedStatus.includes("OFF TRACK")) {
-                                    statusCounts.offTrack++;
-                                } else if (normalizedStatus.includes("AT RISK")) {
-                                    statusCounts.atRisk++;
-                                } else if (normalizedStatus.includes("NOT STARTED")) {
-                                    statusCounts.notStarted++;
-                                } else if (normalizedStatus.includes("FORWARDED") || normalizedStatus.includes("FORWORDED")) {
-                                    statusCounts.forwardedToClient++;
-                                } else if (normalizedStatus.includes("FOLLOW UP")) {
-                                    statusCounts.followUp++;
-                                } else if (normalizedStatus.includes("COMPLETED")) {
-                                    statusCounts.completed++;
-                                }
-
-                                if (isActiveStatus(normalizedStatus)) {
-                                    activeCount++;
-                                }
+                            const statusValue = project[fieldToUse];
+                            countStatus(statusValue, staffStatusCounts);
+                            if (isActiveStatus(statusValue)) {
+                                activeCount++;
                             }
                         });
+
+                        setProjectsByStatus(staffStatusCounts);
                     }
-                    setProjectsByStatus(statusCounts);
-                    setAdminActiveProjectsCount(adminActiveCount);
+
                     setActiveProjectsCount(activeCount);
 
                     // Admin-specific dashboard counts
+                    const mainProjectColumnName = Array.isArray(columns)
+                        ? columns.find(col => col.showInMainProject === true)?.name
+                        : null;
+                        console.log("Main project column:", mainProjectColumnName);
                     const adminTotalTasksValue = data.filter(item => {
-                        const projectKey = Object.keys(item).find(key =>
-                            key.startsWith("project1773898690093")
-                        );
+                        const projectKey = mainProjectColumnName
+                            ? mainProjectColumnName
+                            : Object.keys(item).find(key => key.startsWith("project1773898690093"));
 
                         return (
                             item.showstatus === "activate" &&
                             projectKey &&
-                            item[projectKey]?.trim() !== ""
+                            String(item[projectKey] || "").trim() !== ""
                         );
                     }).length;
-
-                    console.log("Total Active Projects:", adminTotalTasksValue);
-
-                    // const adminTotalTasksValue = data.length;
                     const confirmationPendingCount = data.reduce((count, project) => {
-                        const fieldToUse = statusColumnName && (statusColumnName in project)
-                            ? statusColumnName
-                            : Object.keys(project).find(
-                                key =>
-                                    key.toLowerCase().includes("status") &&
-                                    !key.toLowerCase().includes("showstatus")
-                            );
+                        const fieldToUse = resolveStatusField(project);
                         const statusValue = fieldToUse ? (project[fieldToUse] || "") : "";
                         const normalized = String(statusValue).trim().toLowerCase();
                         return count + (normalized.includes("confirmation pending") || normalized.includes("pending") ? 1 : 0);
@@ -440,7 +433,7 @@ function Departments({ setIsLoggedIn }) {
                         data.forEach(project => {
                             const fieldValue = String(project[teamLeadField] || "").trim().toLowerCase();
                             if (!fieldValue) return;
-                            const isActive = isActiveStatus(project[statusColumnName] || project[Object.keys(project).find(key => key.toLowerCase().includes("status") && !key.toLowerCase().includes("showstatus"))]);
+                            const isActive = isActiveStatus(project[resolveStatusField(project)]);
                             if (!isActive) return;
                             if (fieldValue.includes("aditya")) activeCountsByUser.Aditya += 1;
                             if (fieldValue.includes("nikhil")) activeCountsByUser.Nikhil += 1;

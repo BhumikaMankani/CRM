@@ -35,7 +35,7 @@ router.post("/", async (req, res) => {
         const results = [];
 
         for (const item of dataArr) {
-            const { projectId, projectName, taskName } = item;
+            const { projectId, projectName, taskName, taskDepartment } = item;
 
             if (!projectName) continue;
 
@@ -56,7 +56,8 @@ router.post("/", async (req, res) => {
                 } else {
                     project.tasks.push({
                         rowId: String(projectId),
-                        taskName: taskName || "Untitled Task"
+                        taskName: taskName || "Untitled Task",
+                        taskDepartment: taskDepartment || "Development"
                     });
                 }
 
@@ -86,7 +87,8 @@ router.post("/", async (req, res) => {
                     mainProjectName: projectName, // ✏️ editable
                     tasks: [{
                         rowId: String(projectId),
-                        taskName: taskName || "Untitled Task"
+                        taskName: taskName || "Untitled Task",
+                        taskDepartment: taskDepartment || "Development"
                     }]
                 });
 
