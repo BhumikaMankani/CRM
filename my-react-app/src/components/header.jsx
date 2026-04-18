@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
 import { LiaLockSolid } from "react-icons/lia";
 
+import logo from "../assets/ea72b0a312922dca13f69c2e529e6abebde9ecc2.svg";
 const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => {
     const navigate = useNavigate();
     const [audits, setAudits] = useState([]);
@@ -70,12 +71,14 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                             <FaArrowLeft size={12} />
                         </button>
                     )}
-                    <h1 className='text-left fw-bold m-0' style={{ fontSize: '1.5rem' }}>Mandasa</h1>
+                    <h1 className='text-left logo fw-bold m-0' style={{ fontSize: '1.5rem' }}><img width="100%" height="auto" alt="Mandasa crm" loading="lazy" src={logo}></img></h1>
                 </div>
                 <div className='d-flex justify-content-center align-items-center gap-2'>
                     {lastActiveTime && (
-                        <p className="text-muted mb-0" style={{ fontSize: '0.9rem' }}>
-                            Last update: {new Date(lastActiveTime).toLocaleString()}
+                        <p className="text-dark fw-bold mb-0" style={{ fontSize: '16px' }}>
+                            Last update: <span class="text-primary">
+                                {new Date(lastActiveTime).toLocaleString()}
+                            </span>
                         </p>
                     )}
                     <div className="custom-dropdown" ref={dropdownRef}>

@@ -13,7 +13,8 @@ import { FaRegUser } from "react-icons/fa";
 
 import { GiRadioactive } from "react-icons/gi";
 import { GrProjects } from "react-icons/gr";
-import { LiaBarsSolid } from "react-icons/lia";
+import { GiHamburgerMenu } from "react-icons/gi";
+
 import {
     FaCheckCircle,
     FaClock,
@@ -158,16 +159,16 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                 <div className="col-md-12">
                     <div className="d-flex justify-content-between align-items-start">
                         <div>
-                            <h2 className="mb-3"> <strong> Welcome back, {status.user_name}!</strong></h2>
-                            <p>Here's what happening with your project's today</p>
+                            <h2 className="mb-3 text-dark"> <strong> Welcome back, {status.user_name}!</strong></h2>
+                            <p>Here's your comprehensive projects & performance overview.</p>
                         </div>
-                        <div className="staff__analytics d-flex align-items-center gap-2">
+                        <div className="staff__analytics border-bottom pb-2 d-flex align-items-center gap-2">
                             {status?.department?.length > 1 ? (
                                 <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
                                     {status.department.map(dept => (
                                         <li className="nav-item" key={dept}>
                                             <button
-                                                className={`btn btn-sm btn-outline-primary ${selectedDepartment === dept ? 'active' : ''} `}
+                                                className={`btn fw-bold fs-6 btn-sm btn-outline-primary ${selectedDepartment === dept ? 'active' : ''} `}
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     setSelectedDepartment(dept);
@@ -189,7 +190,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                         className="btn btn-secondary text-dark d-inline-flex align-items-center p-2"
                                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                     >
-                                        <LiaBarsSolid />
+                                        <GiHamburgerMenu size={20} />
                                     </button>
                                     {isDropdownOpen && (
                                         <div className="dropdown-menu show dropdown-menu-end position-absolute" style={{ top: "100%", right: 0, zIndex: 10 }}>
@@ -360,9 +361,11 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                         <div className="col-md-3">
                             <div className="card">
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <GrProjects />
-                                        <h6 className="card-title mb-2">Total Projects</h6>
+                                    <div className="card-body d-flex justify-content-between align-items-center">
+                                        <div className='d-flex align-items-center gap-3'>
+                                            <GrProjects />
+                                            <h6 className="card-title fw-bold mb-0">Total Projects</h6>
+                                        </div>
                                         <h2 className="mb-0 text-primary">{totalProjects || 0}</h2>
                                     </div>
                                 </Link>
@@ -371,9 +374,11 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                         <div className="col-md-3">
                             <div className="card">
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <FaTasks />
-                                        <h6 className="card-title mb-2">Total Tasks</h6>
+                                    <div className="card-body d-flex justify-content-between align-items-center">
+                                        <div className='d-flex align-items-center gap-3'>
+                                            <FaTasks />
+                                            <h6 className="card-title mb-0 fw-bold">Total Tasks</h6>
+                                        </div>
                                         <h2 className="mb-0 text-primary">{totalTasks || 0}</h2>
                                     </div>
                                 </Link>
@@ -390,11 +395,14 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                             <div className="card">
                                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${formatFilterName(filter.filterName)}`} className="text-dark text-decoration-none">
 
-                                                    <div className="card-body">
-                                                        <div className="icon-wrapper">
-                                                            <IconComponent size={28} />
+                                                    <div className="card-body d-flex justify-content-between align-items-center">
+                                                        <div className='d-flex align-items-center gap-3'>
+                                                            <div className="icon-wrapper">
+                                                                <IconComponent size={28} />
+                                                            </div>
+                                                            <h6 className="card-title mb-0 fw-bold">{filter.filterName}</h6>
+
                                                         </div>
-                                                        <h6 className="card-title mb-2">{filter.filterName}</h6>
                                                         <h2 className="mb-0 text-primary">{countMatchingRows(filter.filterData)}</h2>
                                                     </div>
                                                 </Link>

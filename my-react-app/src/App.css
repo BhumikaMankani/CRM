@@ -10,7 +10,7 @@
     sans-serif;
 }
 
-h2.mb-0.text-primary {
+body .text-primary {
     color: #e87c00 !important;
 }
 
@@ -41,6 +41,10 @@ h6.card-title.text-transform-uppercase {
   box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 
+.main-parent .custom_alert_first_row {
+  --bs-border-radius: 10px !important;
+}
+
 .custom_alert.row {
   row-gap: 15px;
 }
@@ -62,9 +66,14 @@ h6.card-title.text-transform-uppercase {
 }
 
 ul.nav.nav-pills button.active {
-  --bs-btn-active-bg: #e87c00 !important;
-  --bs-btn-active-border-color: #e87c00 !important;
-  --bs-btn-active-color: #fff !important;
+  --bs-btn-active-bg: #fff !important;
+  border-color: #e87c00 !important;
+  --bs-btn-active-color: #e87c00 !important;
+}
+
+ul.nav.nav-pills .btn {
+  border: 2px solid !important;
+  border-color: transparent !important;
 }
 
 ul.nav.nav-pills .btn-outline-primary {
@@ -471,12 +480,25 @@ button.btn svg.delete-icon {
   height: 16px;
 }
 
+.logo img {
+  object-fit: cover;
+}
+
+.app-container h1 {
+    max-width: 200px;
+    margin: 0;
+}
+
 button.btn[title="Edit Option Colors"] svg.color-icon {
   width: 14px;
   height: 14px;
 }
+.card-body svg {
+    color: #e87c00;
+}
 
 .main-parent .card {
+  border: 1px solid #e87c00;
   /* border-color: var(--bs-border-color-translucent) !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1); */
   border-radius: 10px;
@@ -712,10 +734,20 @@ table td select {
   color: #dc2626;
 }
 
+.profile::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #e87c00;
+  border-radius: 50%;
+}
+
 .profile {
   border-radius: 50%;
-  background: #e87c00;
-  color: white;
+  position: relative;
+  background: black;
+  color: #e87c00;
   display: inline-flex;
   justify-content: center;
   align-items: center;

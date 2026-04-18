@@ -525,7 +525,7 @@ function Departments({ setIsLoggedIn }) {
             accessor: 'department',
             render: (row) => (
                 <Link to={`/department/${row.name.replace(/\d+/g, "")}`}
-                    className="text-dark text-decoration-none">{row.department}</Link>
+                    className="text-dark text-decoration-none fw-bold">{row.department}</Link>
             )
         },
     ];
@@ -575,13 +575,13 @@ function Departments({ setIsLoggedIn }) {
                 )}
                 {status?.status === 'admin' &&
                     <div className="custom_alert_first_row py-3 px-4 bg-white rounded mt-4">
-                        <h4 className="mb-4">Manage departments</h4>
+                        <h4 className="mb-4 fw-bold">Manage departments</h4>
                         <div className="row">
                             {departments.map((row, rowIndex) => row.status !== 'archived' && (
                                 (status?.status === 'admin' || status?.department?.includes(row.department)) && (
                                     <div className="col-12 col-md-12 col-lg-4 mb-3" key={rowIndex}>
                                         {columns.map((column, colIndex) => (
-                                            <div className={`cell-input-wrapper  p-2 ${rowIndex}`} key={colIndex}>
+                                            <div className={`cell-input-wrapper rounded p-3 ${rowIndex}`} key={colIndex}>
                                                 <div className="d-flex gap-2 align-items-center justify-content-between">
                                                     {column.render
                                                         ? column.render(row, rowIndex)
