@@ -26,7 +26,7 @@ import {
 
 import { useState } from 'react';
 
-function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, isEditUserModalOpen, setIsEditUserModalOpen, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, projects, addUser, departments, status, totalProjects, totalTasks, activeProjectsCount, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
+function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, isEditUserModalOpen, setIsEditUserModalOpen, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, projects, addUser, departments, status, totalProjects, totalTasks, activeProjectsCount, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
     const [savedFilters, setSavedFilters] = useState([]);
     const departmentKey = selectedDepartment.toLowerCase();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -42,8 +42,6 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
     };
     const getIconFromFilterName = (name) => {
         const lower = (name || "").toLowerCase().trim().replace(/[^\w\s-]/g, ""); // remove special chars
-
-        console.log("lower", lower);
         const matchKey = Object.keys(iconMap).find(key =>
             lower.includes(key)
         );
@@ -238,8 +236,6 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                             <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
                                 <div className="card-body">
                                     <FaTasks />
-
-
                                     <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Tasks</h6>
                                     <h2 className="mb-0 text-primary">{totalProjects}</h2>
                                 </div>
@@ -363,7 +359,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
                                     <div className="card-body d-flex justify-content-between align-items-center">
                                         <div className='d-flex align-items-center gap-3'>
-                                            <GrProjects />
+                                            <GrProjects style={{ color: "#e87c00", marginBottom: "0" }} size={28} />
                                             <h6 className="card-title fw-bold mb-0">Total Tasks</h6>
                                         </div>
                                         <h2 className="mb-0 text-primary">{totalProjects || 0}</h2>
@@ -376,10 +372,10 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
                                     <div className="card-body d-flex justify-content-between align-items-center">
                                         <div className='d-flex align-items-center gap-3'>
-                                            <FaTasks />
+                                            <FaTasks style={{ color: "#e87c00", marginBottom: "0" }} size={28} />
                                             <h6 className="card-title mb-0 fw-bold">Total Projects</h6>
                                         </div>
-                                        <h2 className="mb-0 text-primary">{totalTasks || 0}</h2>
+                                        <h2 className="mb-0 text-primary">{result || 0}</h2>
                                     </div>
                                 </Link>
                             </div>
@@ -398,7 +394,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                                     <div className="card-body d-flex justify-content-between align-items-center">
                                                         <div className='d-flex align-items-center gap-3'>
                                                             <div className="icon-wrapper">
-                                                                <IconComponent size={28} />
+                                                                <IconComponent style={{ color: "#e87c00", marginBottom: "0" }} size={28} />
                                                             </div>
                                                             <h6 className="card-title mb-0 fw-bold">{filter.filterName}</h6>
 

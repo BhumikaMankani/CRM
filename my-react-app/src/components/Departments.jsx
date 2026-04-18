@@ -33,6 +33,8 @@ function Departments({ setIsLoggedIn }) {
     const [userData, setUserData] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [projects, setProjects] = useState([]);
+    const [mainProjects, setMainProjects] = useState([]);
+    const [result, setResult] = useState([]);
     const [totalProjects, setTotalProjects] = useState(0);
     const [adminTotalProjects, setAdminTotalProjects] = useState(0);
     const [activeProjectsCount, setActiveProjectsCount] = useState(0);
@@ -72,6 +74,33 @@ function Departments({ setIsLoggedIn }) {
             console.error("Failed to fetch departments:", err);
         }
     };
+
+    useEffect(() => {
+        fetch(`${API_URL}/api/mainProject`)
+            .then(res => res.json())
+            .then(data => setMainProjects(data));
+    }, []);
+
+    useEffect(() => {
+        if (projects.length === 0) return;
+
+        const uniqueIds = [
+            ...new Set(
+                projects
+                    .map(p => p.mainProjectId)
+                    .filter(id => id !== undefined && id !== null && id !== "")
+                    .map(id => String(id))
+            )
+        ];
+
+        const result = uniqueIds.map(id => ({
+            mainProjectId: id,
+            projectCount: 1
+        }));
+
+        console.log("Final unique result:", result);
+        setResult(result.length);
+    }, [projects, result]);
 
     useEffect(() => {
         fetchDepartments();
@@ -389,22 +418,6 @@ function Departments({ setIsLoggedIn }) {
 
                     setActiveProjectsCount(activeCount);
 
-                    // Admin-specific dashboard counts
-                    const mainProjectColumnName = Array.isArray(columns)
-                        ? columns.find(col => col.showInMainProject === true)?.name
-                        : null;
-                    const adminTotalTasksValue = data.filter(item => {
-                        const projectKey = mainProjectColumnName
-                            ? mainProjectColumnName
-                            : Object.keys(item).find(key => key.startsWith("project1773898690093"));
-
-                        return (
-                            item.showstatus === "activate" &&
-                            projectKey &&
-                            String(item[projectKey] || "").trim() !== ""
-                        );
-                    }).length;
-
                     const teamLeadField = Array.isArray(columns) && columns.find(col => {
                         const h = (col.column_heading || "").toLowerCase();
                         return h.includes("team") && (h.includes("lead") || h.includes("leader"));
@@ -544,7 +557,8 @@ function Departments({ setIsLoggedIn }) {
                     />
                 ) : (
                     <DepartmentFilters
-                    projects={projects}
+                        result={result}
+                        projects={projects}
                         isEditUserModalOpen={isEditUserModalOpen}
                         setIsEditUserModalOpen={setIsEditUserModalOpen}
                         isModalOpen={isModalOpen}
