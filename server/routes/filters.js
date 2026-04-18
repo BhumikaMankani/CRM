@@ -103,7 +103,7 @@ router.get("/", async (req, res) => {
 // Create a new saved filter
 router.post("/", async (req, res) => {
     try {
-        const { userId, filterName, filterData, department, allowedUsers, showInAnalytics } = req.body;
+        const { userId, filterName, filterData, department, allowedUsers, showInAnalytics, showInDepartment } = req.body;
 
         if (!userId || !filterName || !filterData) {
             return res.status(400).json({
@@ -117,7 +117,8 @@ router.post("/", async (req, res) => {
             filterData,
             department: department || undefined,
             allowedUsers: allowedUsers || [],
-            showInAnalytics: showInAnalytics || false
+            showInAnalytics: showInAnalytics || false,
+            showInDepartment: showInDepartment || false
         });
 
         const savedFilter = await newFilter.save();
@@ -178,7 +179,7 @@ router.get("/:filterId", async (req, res) => {
 router.patch("/:filterId", async (req, res) => {
     try {
         const { filterId } = req.params;
-        const { filterName, filterData, allowedUsers, showInAnalytics } = req.body;
+        const { filterName, filterData, allowedUsers, showInAnalytics, showInDepartment } = req.body;
 
         const filter = await SavedFilter.findByIdAndUpdate(
             filterId,
@@ -187,6 +188,7 @@ router.patch("/:filterId", async (req, res) => {
                 filterData: filterData || undefined,
                 allowedUsers: allowedUsers || undefined,
                 showInAnalytics: showInAnalytics !== undefined ? showInAnalytics : undefined,
+                showInDepartment: showInDepartment !== undefined ? showInDepartment : undefined,
                 updatedAt: Date.now()
             },
             { new: true }

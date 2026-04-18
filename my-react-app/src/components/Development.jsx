@@ -163,7 +163,6 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
       );
 
       const data = await response.json();
-      console.log("data", data);
       if (data.success) {
         // alert("✅ Default values updated successfully");
         setIsResetLocked(true); // Lock immediately in UI
@@ -411,7 +410,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
   };
 
   // Save filter
-  const handleSaveFilter = async (filterName, filterData, allowedUsers, filterId = null, showInAnalytics) => {
+  const handleSaveFilter = async (filterName, filterData, allowedUsers, filterId = null, showInAnalytics, showInDepartment = false) => {
     try {
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
@@ -421,16 +420,6 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
         alert("User information not found. Please log in again.");
         return;
       }
-
-      console.log("Saving filter with data:", {
-        userId: user._id,
-        filterName,
-        filterData,
-        allowedUsers,
-        filterId,
-        department: departmentKey,
-        showInAnalytics,
-      });
 
       if (filterId) {
         // Update existing filter
@@ -445,6 +434,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
             allowedUsers,
             department: departmentKey,
             showInAnalytics,
+            showInDepartment,
           }),
         });
 
@@ -454,7 +444,6 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
         }
 
         const updatedData = await response.json();
-        console.log("Filter updated successfully:", updatedData);
 
         // Update local state immediately
         setSavedFilters(prev => prev.map(f => f._id === filterId ? updatedData : f));
@@ -477,6 +466,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
             department: departmentKey,
             allowedUsers,
             showInAnalytics,
+            showInDepartment,
           }),
         });
 
@@ -489,7 +479,6 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
         }
 
         const savedData = await response.json();
-        console.log("Filter saved successfully:", savedData);
 
         if (savedData) {
           setSavedFilters(prev => [savedData, ...prev]);
@@ -738,7 +727,6 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
   const mainProjectId = columnsDef?.find(c => c.showInMainProject)?.name;
   const taskNameId = columnsDef?.find(col => col.isMatched === true)?.name;
 
-  console.log("taskNameId", taskNameId);
   useEffect(() => {
     // initial load
     fetchAll({ showSpinner: true });

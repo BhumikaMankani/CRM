@@ -10,6 +10,10 @@
     sans-serif;
 }
 
+h2.mb-0.text-primary {
+    color: #e87c00 !important;
+}
+
 h6.card-title.text-transform-uppercase {
   text-transform: uppercase;
 }

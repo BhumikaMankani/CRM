@@ -41,6 +41,10 @@ const SavedFilterSchema = new mongoose.Schema(
         showInAnalytics: {
             type: Boolean,
             default: false
+        },
+        showInDepartment: {
+            type: Boolean,
+            default: false
         }
     },
     {

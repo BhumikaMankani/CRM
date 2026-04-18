@@ -1,23 +1,157 @@
-import React from 'react';
+import { useCallback, useEffect } from 'react';
 import { MdDashboard, MdOutlineIncompleteCircle, MdOutlinePhoneForwarded } from 'react-icons/md';
 import { IoPlayCircleOutline } from 'react-icons/io5';
 import { FaRegCheckCircle } from 'react-icons/fa';
 import { RxCrossCircled } from 'react-icons/rx';
 import { CgDanger } from 'react-icons/cg';
 import { RiChatFollowUpFill } from 'react-icons/ri';
-import { MdOutlinePendingActions } from "react-icons/md";
 import { Link } from 'react-router-dom';
 import { FaTasks } from "react-icons/fa";
+import { API_URL } from "../../proxy";
+import { CiUser } from "react-icons/ci";
+import { FaRegUser } from "react-icons/fa";
 
-import { VscFolderActive } from "react-icons/vsc";
-
+import { GiRadioactive } from "react-icons/gi";
+import { GrProjects } from "react-icons/gr";
 import { LiaBarsSolid } from "react-icons/lia";
+import {
+    FaCheckCircle,
+    FaClock,
+    FaExclamationTriangle,
+    FaUser,
+    FaProjectDiagram
+} from "react-icons/fa";
+
+
 import { useState } from 'react';
 
-function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, isEditUserModalOpen, setIsEditUserModalOpen, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, addUser, departments, status, totalProjects, totalTasks, activeProjectsCount, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
-    const adityaActive = activeTasksByUser?.Aditya || 0;
-    const nikhilActive = activeTasksByUser?.Nikhil || 0;
+function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, isEditUserModalOpen, setIsEditUserModalOpen, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, projects, addUser, departments, status, totalProjects, totalTasks, activeProjectsCount, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
+    const [savedFilters, setSavedFilters] = useState([]);
+    const departmentKey = selectedDepartment.toLowerCase();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const iconMap = {
+        "completed": FaCheckCircle,
+        "pending": FaClock,
+        "confirmation": FaExclamationTriangle,
+        "aditya": FaRegUser,
+        "nikhil": FaRegUser,
+        "active": GiRadioactive,
+        "project": FaProjectDiagram
+    };
+    const getIconFromFilterName = (name) => {
+        const lower = (name || "").toLowerCase().trim().replace(/[^\w\s-]/g, ""); // remove special chars
+
+        console.log("lower", lower);
+        const matchKey = Object.keys(iconMap).find(key =>
+            lower.includes(key)
+        );
+
+        return matchKey ? iconMap[matchKey] : FaTasks; // fallback icon
+    };
+    const fetchSavedFilters = useCallback(async () => {
+        if (!status?._id) return;
+        try {
+            const url = `${API_URL}/api/filters?userId=${status._id}${departmentKey ? `&department=${departmentKey}` : ""}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch filters');
+            const data = await response.json();
+            setSavedFilters(data);
+        } catch (err) {
+            console.error('Failed to load saved filters:', err);
+        }
+    }, [status?._id, departmentKey]);
+    useEffect(() => {
+        fetchSavedFilters();
+    }, [fetchSavedFilters, selectedDepartment]);
+    const countMatchingRows = (filterData) => {
+        if (!filterData || !projects) return 0;
+
+        let matchingCount = 0;
+        projects.forEach(row => {
+            let rowMatches = true;
+
+            Object.keys(filterData).forEach(key => {
+                const filterValue = filterData[key];
+                if (filterValue === undefined || filterValue === null) return;
+
+                // Handle Date Range (object with start/end)
+                if (typeof filterValue === "object" && !Array.isArray(filterValue)) {
+                    const { start, end } = filterValue;
+                    if (!start && !end) return;
+
+                    const cellValue = row[key];
+                    if (!cellValue) {
+                        rowMatches = false;
+                        return;
+                    }
+
+                    let rowDate;
+                    if (String(cellValue).includes("-")) {
+                        rowDate = new Date(cellValue);
+                    } else if (String(cellValue).includes("/")) {
+                        const [d, m, y] = String(cellValue).split("/");
+                        rowDate = new Date(`${y}-${m}-${d}`);
+                    } else {
+                        rowDate = new Date(cellValue);
+                    }
+
+                    if (isNaN(rowDate.getTime())) {
+                        rowMatches = false;
+                        return;
+                    }
+
+                    rowDate.setHours(0, 0, 0, 0);
+
+                    if (start && end) {
+                        const startDate = new Date(start);
+                        const endDate = new Date(end);
+                        startDate.setHours(0, 0, 0, 0);
+                        endDate.setHours(0, 0, 0, 0);
+                        if (!(rowDate >= startDate && rowDate <= endDate)) rowMatches = false;
+                    } else if (start) {
+                        const startDate = new Date(start);
+                        startDate.setHours(0, 0, 0, 0);
+                        if (!(rowDate >= startDate)) rowMatches = false;
+                    } else if (end) {
+                        const endDate = new Date(end);
+                        endDate.setHours(0, 0, 0, 0);
+                        if (!(rowDate <= endDate)) rowMatches = false;
+                    }
+                    return;
+                }
+
+                // Multi-select (array)
+                if (Array.isArray(filterValue)) {
+                    if (filterValue.length === 0) return;
+                    const cellValue = String(row[key] ?? "").trim().toLowerCase();
+                    const matches = filterValue.some((fv) => {
+                        const fvLower = String(fv ?? "").trim().toLowerCase();
+                        return cellValue === fvLower || cellValue.startsWith(fvLower + " ");
+                    });
+                    if (!matches) rowMatches = false;
+                } else {
+                    // String or number
+                    const filterStr = String(filterValue).toLowerCase();
+                    if (!filterStr) return;
+                    const cellValue = String(row[key] || "").toLowerCase();
+                    if (!cellValue.includes(filterStr)) rowMatches = false;
+                }
+            });
+
+            if (rowMatches) matchingCount++;
+        });
+
+        return matchingCount;
+    };
+
+    const formatFilterName = (name) => {
+        return (name || "")
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s-]/g, "") // remove special chars
+            .replace(/\s+/g, "-");
+    };
     return (
         <div className="">
             <div className='custom_alert_first_row py-3 px-4 bg-white rounded mb-4'>
@@ -96,9 +230,10 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
             </div>
             <div className="custom_alert row">
                 {/* Total Projects Card */}
-                <div className="col-md-3">
-                    <div className="card border-primary">
-                        {status?.status === 'staff' ? (
+                {status?.status === 'staff' && (
+
+                    <div className="col-md-3">
+                        <div className="card border-primary">
                             <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
                                 <div className="card-body">
                                     <FaTasks />
@@ -108,20 +243,9 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <h2 className="mb-0 text-primary">{totalProjects}</h2>
                                 </div>
                             </Link>
-                        ) : (
-                            <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
-                                <div className="card-body">
-                                    <MdDashboard />
-
-
-                                    <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Tasks</h6>
-                                    <h2 className="mb-0 text-primary">{totalProjects}</h2>
-                                </div>
-                            </Link>
-                        )}
+                        </div>
                     </div>
-                </div>
-
+                )}
                 {/* ACTIVE Card - click to go to Development with active filter applied */}
                 {status?.status === 'staff' && (
                     <div className="col-md-3">
@@ -234,77 +358,50 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                 {status?.status === 'admin' && (
                     <>
                         <div className="col-md-3">
-                            <div className="card border-secondary">
+                            <div className="card">
+                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
+                                    <div className="card-body">
+                                        <GrProjects />
+                                        <h6 className="card-title mb-2">Total Projects</h6>
+                                        <h2 className="mb-0 text-primary">{totalProjects || 0}</h2>
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="card">
                                 <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
                                     <div className="card-body">
                                         <FaTasks />
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Projects</h6>
-                                        <h2 className="mb-0 text-secondary">{totalTasks || 0}</h2>
+                                        <h6 className="card-title mb-2">Total Tasks</h6>
+                                        <h2 className="mb-0 text-primary">{totalTasks || 0}</h2>
                                     </div>
                                 </Link>
                             </div>
                         </div>
-                        <div className="col-md-3">
-                            <div className="card border-danger">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=all-active-projects`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <VscFolderActive />
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">All Active Tasks</h6>
-                                        <h2 className="mb-0 text-danger">{activeProjectsCount || 0}</h2>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="card border-success">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=all-completed-projects`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <FaRegCheckCircle />
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Completed Projects</h6>
-                                        <h2 className="mb-0 text-success">{projectsByStatus.completed || 0}</h2>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-                        {selectedDepartment == 'Development' && (
-                            <div className="col-md-3">
-                                <div className="card border-success">
-                                    <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=aditya-active-projects`} className="text-dark text-decoration-none">
-                                        <div className="card-body">
-                                            <FaRegCheckCircle />
-                                            <h6 selectedDepartment={selectedDepartment} className="card-title text-transform-uppercase text-muted mb-2">Aditya Active Tasks</h6>
-                                            <h2 className="mb-0 text-success">{adityaActive}</h2>
+
+                        {savedFilters.length > 0 &&
+                            savedFilters
+                                .filter(f => f.showInDepartment && f.department === selectedDepartment?.toLowerCase())
+                                .map((filter) => {
+                                    const IconComponent = filter.filterName.toLowerCase().includes("confirmation pending") ? FaExclamationTriangle : getIconFromFilterName(filter.filterName);
+                                    return (
+                                        <div key={filter._id} className="col-md-3">
+                                            <div className="card">
+                                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${formatFilterName(filter.filterName)}`} className="text-dark text-decoration-none">
+
+                                                    <div className="card-body">
+                                                        <div className="icon-wrapper">
+                                                            <IconComponent size={28} />
+                                                        </div>
+                                                        <h6 className="card-title mb-2">{filter.filterName}</h6>
+                                                        <h2 className="mb-0 text-primary">{countMatchingRows(filter.filterData)}</h2>
+                                                    </div>
+                                                </Link>
+                                            </div>
                                         </div>
-                                    </Link>
-                                </div>
-                            </div>
-                        )}
-                        {selectedDepartment == 'Development' && (
-                            <div className="col-md-3">
-                                <div className="card border-warning">
-                                    <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=nikhil-active-projects`} className="text-dark text-decoration-none">
-                                        <div className="card-body">
-                                            <FaRegCheckCircle />
-                                            <h6 className="card-title text-transform-uppercase text-muted mb-2">Nikhil Active Tasks</h6>
-                                            <h2 className="mb-0 text-warning">{nikhilActive}</h2>
-                                        </div>
-                                    </Link>
-                                </div>
-                            </div>
-                        )}
-                        {selectedDepartment == 'Development' && (
-                            <div className="col-md-3">
-                                <div className="card border-info">
-                                    <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=confirmation-pending-tasks`} className="text-dark text-decoration-none">
-                                        <div className="card-body">
-                                            <MdOutlinePendingActions />
-                                            <h6 className="card-title text-transform-uppercase text-muted mb-2">Confirmation Pending - Tasks</h6>
-                                            <h2 className="mb-0 text-info">{confirmationPendingCount || 0}</h2>
-                                        </div>
-                                    </Link>
-                                </div>
-                            </div>
-                        )}
+                                    );
+                                })}
                     </>
                 )}
             </div>

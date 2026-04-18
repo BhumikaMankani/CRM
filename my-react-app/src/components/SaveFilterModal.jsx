@@ -4,6 +4,7 @@ import { API_URL } from '../../proxy';
 import { LiaFilterSolid } from "react-icons/lia";
 import './SaveFilterModal.css';
 import { IoCloseSharp } from 'react-icons/io5';
+// import { set } from 'mongoose';
 
 const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFilter }) => {
     const [filterName, setFilterName] = useState('');
@@ -11,6 +12,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
     const [staffList, setStaffList] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState([]);
     const [showInAnalytics, setShowInAnalytics] = useState(false);
+    const [showInDepartment, setShowInDepartment] = useState(false);
     const [loadingStaff, setLoadingStaff] = useState(false);
 
     useEffect(() => {
@@ -23,10 +25,12 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                 setFilterName(editFilter.filterName || '');
                 setSelectedStaff(editFilter.allowedUsers || []);
                 setShowInAnalytics(editFilter.showInAnalytics || false);
+                setShowInDepartment(editFilter.showInDepartment || false);
             } else {
                 setFilterName('');
                 setSelectedStaff([]);
                 setShowInAnalytics(false);
+                setShowInDepartment(false);
             }
         }
     }, [isOpen]);
@@ -73,10 +77,11 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
 
         try {
             setError(''); // Clear error before saving
-            await onSave(filterName, editFilter ? editFilter.filterData : filters, selectedStaff, editFilter?._id, showInAnalytics);
+            await onSave(filterName, editFilter ? editFilter.filterData : filters, selectedStaff, editFilter?._id, showInAnalytics, showInDepartment);
             setFilterName('');
             setSelectedStaff([]);
             setShowInAnalytics(false);
+            setShowInDepartment(false);
             setError('');
         } catch (err) {
             const errorMsg = err.message || 'Failed to save filter';
@@ -89,6 +94,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
         setFilterName('');
         setSelectedStaff([]);
         setShowInAnalytics(false);
+        setShowInDepartment(false);
         setError('');
         onClose();
     };
@@ -173,7 +179,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                             <LiaFilterSolid /> Analytics Settings
                         </label>
                         <div className="">
-                            <div className="form-check">
+                            <div className="form-check mb-2">
                                 <input
                                     className="form-check-input"
                                     type="checkbox"
@@ -185,9 +191,18 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                                     Show in Analytics
                                 </label>
                             </div>
-                            {/* <p className="text-muted smallest mt-1 mb-0" style={{ fontSize: '0.75rem' }}>
-                                If checked, this filter will appear in the Analytics popup for quick access.
-                            </p> */}
+                            <div className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="showInDepartment"
+                                    checked={showInDepartment}
+                                    onChange={(e) => setShowInDepartment(e.target.checked)}
+                                />
+                                <label className="form-check-label small" htmlFor="showInDepartment">
+                                    Show on Department Page
+                                </label>
+                            </div>
                         </div>
                     </div>
 

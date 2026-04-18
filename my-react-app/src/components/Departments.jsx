@@ -17,7 +17,6 @@ const ACTIVE_STATUSES = [
     "follow up",
     "on track",
     "active",
-    "in progress",
 ];
 
 function Departments({ setIsLoggedIn }) {
@@ -315,14 +314,15 @@ function Departments({ setIsLoggedIn }) {
                         followUp: 0,
                         completed: 0
                     };
-                    let adminActiveCount = 0;
                     let activeCount = 0;
 
+                    const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
                     const isActiveStatus = value => {
                         const normalized = (value || "").trim().toLowerCase();
-                        return ACTIVE_STATUSES.some(
-                            s => normalized.includes(s.trim().toLowerCase())
-                        );
+                        return ACTIVE_STATUSES.some(s => {
+                            const escaped = escapeRegExp(s.trim().toLowerCase());
+                            return new RegExp(`\\b${escaped}\\b`).test(normalized);
+                        });
                     };
 
                     const resolveStatusField = project => {
@@ -340,21 +340,23 @@ function Departments({ setIsLoggedIn }) {
                         if (!statusValue) return;
                         const normalizedStatus = String(statusValue).trim().toUpperCase();
 
-                        if (normalizedStatus.includes("ON TRACK")) {
+                        const wordMatch = (text) => new RegExp(`\\b${text}\\b`).test(normalizedStatus);
+
+                        if (wordMatch("ON TRACK")) {
                             counts.onTrack++;
-                        } else if (normalizedStatus.includes("OFF TRACK")) {
+                        } else if (wordMatch("OFF TRACK")) {
                             counts.offTrack++;
-                        } else if (normalizedStatus.includes("AT RISK")) {
+                        } else if (wordMatch("AT RISK")) {
                             counts.atRisk++;
-                        } else if (normalizedStatus.includes("NOT STARTED")) {
+                        } else if (wordMatch("NOT STARTED")) {
                             counts.notStarted++;
                         } else if (normalizedStatus.includes("FORWARDED") || normalizedStatus.includes("FORWORDED")) {
                             counts.forwardedToClient++;
-                        } else if (normalizedStatus.includes("FOLLOW UP")) {
+                        } else if (wordMatch("FOLLOW UP") || normalizedStatus.includes("FOLLOWUP") || normalizedStatus.includes("FOLLOW-UP")) {
                             counts.followUp++;
-                        } else if (normalizedStatus.includes("COMPLETED")) {
+                        } else if (normalizedStatus === "COMPLETED") {
                             counts.completed++;
-                        } else if (normalizedStatus.includes("ACTIVE")) {
+                        } else if (wordMatch("ACTIVE")) {
                             counts.activeCT++;
                         }
                     };
@@ -366,13 +368,11 @@ function Departments({ setIsLoggedIn }) {
 
                             const statusValue = project[fieldToUse];
                             countStatus(statusValue, adminStatusCounts);
-                            if (isActiveStatus(statusValue)) {
-                                adminActiveCount++;
-                            }
                         });
 
+                        const totalAdminActiveStatuses = adminStatusCounts.onTrack + adminStatusCounts.offTrack + adminStatusCounts.activeCT + adminStatusCounts.forwardedToClient + adminStatusCounts.atRisk + adminStatusCounts.notStarted + adminStatusCounts.followUp;
                         setProjectsByStatus(adminStatusCounts);
-                        setAdminActiveProjectsCount(adminActiveCount);
+                        setAdminActiveProjectsCount(totalAdminActiveStatuses);
                     } else {
                         userProjects.forEach(project => {
                             const fieldToUse = resolveStatusField(project);
@@ -380,12 +380,11 @@ function Departments({ setIsLoggedIn }) {
 
                             const statusValue = project[fieldToUse];
                             countStatus(statusValue, staffStatusCounts);
-                            if (isActiveStatus(statusValue)) {
-                                activeCount++;
-                            }
                         });
 
+                        const totalStaffActiveStatuses = staffStatusCounts.onTrack + staffStatusCounts.offTrack + staffStatusCounts.activeCT + staffStatusCounts.forwardedToClient + staffStatusCounts.atRisk + staffStatusCounts.notStarted + staffStatusCounts.followUp;
                         setProjectsByStatus(staffStatusCounts);
+                        activeCount = totalStaffActiveStatuses;
                     }
 
                     setActiveProjectsCount(activeCount);
@@ -394,7 +393,6 @@ function Departments({ setIsLoggedIn }) {
                     const mainProjectColumnName = Array.isArray(columns)
                         ? columns.find(col => col.showInMainProject === true)?.name
                         : null;
-                        console.log("Main project column:", mainProjectColumnName);
                     const adminTotalTasksValue = data.filter(item => {
                         const projectKey = mainProjectColumnName
                             ? mainProjectColumnName
@@ -406,12 +404,6 @@ function Departments({ setIsLoggedIn }) {
                             String(item[projectKey] || "").trim() !== ""
                         );
                     }).length;
-                    const confirmationPendingCount = data.reduce((count, project) => {
-                        const fieldToUse = resolveStatusField(project);
-                        const statusValue = fieldToUse ? (project[fieldToUse] || "") : "";
-                        const normalized = String(statusValue).trim().toLowerCase();
-                        return count + (normalized.includes("confirmation pending") || normalized.includes("pending") ? 1 : 0);
-                    }, 0);
 
                     const teamLeadField = Array.isArray(columns) && columns.find(col => {
                         const h = (col.column_heading || "").toLowerCase();
@@ -425,6 +417,28 @@ function Departments({ setIsLoggedIn }) {
                                 (k.includes("team") && (k.includes("lead") || k.includes("leader")))
                             );
                         });
+
+                    const developmentStaff = userData
+                        .filter(user => user.status === 'staff' && Array.isArray(user.department) && user.department.some(dept => dept.toLowerCase() === 'development'))
+                        .map(user => user.user_name.trim().toLowerCase());
+
+                    const USER_ACTIVE_STATUSES = [
+                        "not started",
+                        "off track",
+                        "offtrack",
+                        "forwarded to client",
+                        "follow up",
+                        "on track",
+                    ];
+
+                    const isUserActiveStatus = value => {
+                        const normalized = (value || "").trim().toLowerCase();
+                        return USER_ACTIVE_STATUSES.some(s => {
+                            const escaped = escapeRegExp(s.trim().toLowerCase());
+                            return new RegExp(`\\b${escaped}\\b`).test(normalized);
+                        });
+                    };
+
                     const activeCountsByUser = {
                         Aditya: 0,
                         Nikhil: 0,
@@ -433,12 +447,32 @@ function Departments({ setIsLoggedIn }) {
                         data.forEach(project => {
                             const fieldValue = String(project[teamLeadField] || "").trim().toLowerCase();
                             if (!fieldValue) return;
-                            const isActive = isActiveStatus(project[resolveStatusField(project)]);
+                            const isActive = isUserActiveStatus(project[resolveStatusField(project)]);
                             if (!isActive) return;
                             if (fieldValue.includes("aditya")) activeCountsByUser.Aditya += 1;
                             if (fieldValue.includes("nikhil")) activeCountsByUser.Nikhil += 1;
                         });
                     }
+
+                    const confirmationPendingCount = data.reduce((count, project) => {
+                        const fieldToUse = resolveStatusField(project);
+                        const statusValue = fieldToUse ? (project[fieldToUse] || "") : "";
+                        const normalized = String(statusValue).trim().toLowerCase();
+                        if (!(normalized.includes("confirmation pending") || normalized.includes("pending"))) {
+                            return count;
+                        }
+
+                        if (!teamLeadField || developmentStaff.length === 0) {
+                            return count;
+                        }
+
+                        const leadValue = String(project[teamLeadField] || "").trim().toLowerCase();
+                        if (!leadValue) return count;
+
+                        const matchesDevStaff = developmentStaff.some(name => leadValue === name || leadValue.startsWith(name + " ") || leadValue.includes(name));
+                        return matchesDevStaff ? count + 1 : count;
+                    }, 0);
+
                     setAdminTotalTasks(adminTotalTasksValue);
                     setAdminActiveTasksByUser(activeCountsByUser);
                     setAdminConfirmationPendingCount(confirmationPendingCount);
@@ -451,7 +485,7 @@ function Departments({ setIsLoggedIn }) {
         if (status?.user_name) {
             fetchProjectsAndCount();
         }
-    }, [status, matchedDepartmentData, matchedDepartmentColumn]);
+    }, [status, matchedDepartmentData, matchedDepartmentColumn, userData]);
     const handleCheckboxChange = async (event, user, deptName) => {
         const { checked } = event.target;
         let updatedDepartments = user.department || [];
@@ -510,6 +544,7 @@ function Departments({ setIsLoggedIn }) {
                     />
                 ) : (
                     <DepartmentFilters
+                    projects={projects}
                         isEditUserModalOpen={isEditUserModalOpen}
                         setIsEditUserModalOpen={setIsEditUserModalOpen}
                         isModalOpen={isModalOpen}
