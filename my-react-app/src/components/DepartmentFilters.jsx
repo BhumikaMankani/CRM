@@ -364,7 +364,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <div className="card-body d-flex justify-content-between align-items-center">
                                         <div className='d-flex align-items-center gap-3'>
                                             <GrProjects />
-                                            <h6 className="card-title fw-bold mb-0">Total Projects</h6>
+                                            <h6 className="card-title fw-bold mb-0">Total Tasks</h6>
                                         </div>
                                         <h2 className="mb-0 text-primary">{totalProjects || 0}</h2>
                                     </div>
@@ -377,7 +377,7 @@ function DepartmentFilters({ selectedDepartment, setSelectedArchivedDepartments,
                                     <div className="card-body d-flex justify-content-between align-items-center">
                                         <div className='d-flex align-items-center gap-3'>
                                             <FaTasks />
-                                            <h6 className="card-title mb-0 fw-bold">Total Tasks</h6>
+                                            <h6 className="card-title mb-0 fw-bold">Total Projects</h6>
                                         </div>
                                         <h2 className="mb-0 text-primary">{totalTasks || 0}</h2>
                                     </div>
