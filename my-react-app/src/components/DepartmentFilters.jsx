@@ -26,10 +26,50 @@ import {
 
 import { useState } from 'react';
 
-function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, isEditUserModalOpen, setIsEditUserModalOpen, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, projects, addUser, departments, status, totalProjects, totalTasks, activeProjectsCount, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
+function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, isEditUserModalOpen, setIsEditUserModalOpen, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, projects, addUser, departments, status, totalProjects, totalTasks, activeProjectsCount, countsLoading = false, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
     const [savedFilters, setSavedFilters] = useState([]);
-    const departmentKey = selectedDepartment.toLowerCase();
+    const departmentKey = (selectedDepartment || '').toLowerCase();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const savedFiltersCacheKey = status?._id ? `savedFilters_${status._id}_${departmentKey || 'all'}` : null;
+
+    const getCachedValue = (key, fallback = null) => {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch (err) {
+            console.warn("Failed to read cache:", key, err);
+            return fallback;
+        }
+    };
+
+    const setCachedValue = (key, value) => {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (err) {
+            console.warn("Failed to save cache:", key, err);
+        }
+    };
+
+    const renderCountValue = (value, fallback = 0, showLoader = true) => {
+        if (showLoader && countsLoading) {
+            return (
+                <span className="d-flex align-items-center gap-2">
+                    <span className="count-loader" />
+                </span>
+            );
+        }
+
+        return <span>{value != null ? value : fallback}</span>;
+    };
+
+    useEffect(() => {
+        if (!savedFiltersCacheKey) return;
+        const cachedFilters = getCachedValue(savedFiltersCacheKey, null);
+        if (cachedFilters) {
+            setSavedFilters(cachedFilters);
+        }
+    }, [savedFiltersCacheKey]);
 
     const iconMap = {
         "completed": FaCheckCircle,
@@ -56,10 +96,13 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
             if (!response.ok) throw new Error('Failed to fetch filters');
             const data = await response.json();
             setSavedFilters(data);
+            if (savedFiltersCacheKey) {
+                setCachedValue(savedFiltersCacheKey, data);
+            }
         } catch (err) {
             console.error('Failed to load saved filters:', err);
         }
-    }, [status?._id, departmentKey]);
+    }, [status?._id, departmentKey, savedFiltersCacheKey]);
     useEffect(() => {
         fetchSavedFilters();
     }, [fetchSavedFilters, selectedDepartment]);
@@ -237,7 +280,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                 <div className="card-body">
                                     <FaTasks />
                                     <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Tasks</h6>
-                                    <h2 className="mb-0 text-primary">{totalProjects}</h2>
+                                    <h2 className="mb-0 text-primary">{renderCountValue(totalProjects)}</h2>
                                 </div>
                             </Link>
                         </div>
@@ -258,7 +301,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                         ACTIVE Projects
                                     </h6>
                                     <h2 className="mb-0 text-danger">
-                                        {activeProjectsCount}
+                                        {renderCountValue(activeProjectsCount)}
                                     </h2>
                                 </div>
                             </Link>
@@ -275,7 +318,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                         <FaRegCheckCircle />
 
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">ON TRACK</h6>
-                                        <h2 className="mb-0 text-success">{projectsByStatus.onTrack}</h2>
+                                        <h2 className="mb-0 text-success">{renderCountValue(projectsByStatus.onTrack)}</h2>
                                     </div>
                                 </Link>
                             </div>
@@ -289,7 +332,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                         <RxCrossCircled />
 
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">OFF TRACK</h6>
-                                        <h2 className="mb-0 text-warning">{projectsByStatus.offTrack}</h2>
+                                        <h2 className="mb-0 text-warning">{renderCountValue(projectsByStatus.offTrack)}</h2>
                                     </div>
                                 </Link>
                             </div>
@@ -303,7 +346,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                         <CgDanger />
 
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">NOT STARTED</h6>
-                                        <h2 className="mb-0 text-danger">{projectsByStatus.notStarted}</h2>
+                                        <h2 className="mb-0 text-danger">{renderCountValue(projectsByStatus.notStarted)}</h2>
                                     </div>
                                 </Link>
                             </div>
@@ -317,7 +360,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                         <RiChatFollowUpFill />
 
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">Follow up</h6>
-                                        <h2 className="mb-0 text-danger">{projectsByStatus.followUp}</h2>
+                                        <h2 className="mb-0 text-danger">{renderCountValue(projectsByStatus.followUp)}</h2>
                                     </div>
                                 </Link>
                             </div>
@@ -331,7 +374,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                         <MdOutlinePhoneForwarded />
 
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">Forwarded to client</h6>
-                                        <h2 className="mb-0 text-danger">{projectsByStatus.forwardedToClient}</h2>
+                                        <h2 className="mb-0 text-danger">{renderCountValue(projectsByStatus.forwardedToClient)}</h2>
                                     </div>
                                 </Link>
                             </div>
@@ -345,7 +388,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                         <MdOutlineIncompleteCircle />
 
                                         <h6 className="card-title text-transform-uppercase text-muted mb-2">Completed</h6>
-                                        <h2 className="mb-0 text-danger">{projectsByStatus.completed}</h2>
+                                        <h2 className="mb-0 text-danger">{renderCountValue(projectsByStatus.completed)}</h2>
                                     </div>
                                 </Link>
                             </div>
@@ -362,7 +405,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                             <GrProjects style={{ color: "#e87c00", marginBottom: "0" }} size={28} />
                                             <h6 className="card-title fw-bold mb-0">Total Tasks</h6>
                                         </div>
-                                        <h2 className="mb-0 text-primary">{totalProjects || 0}</h2>
+                                        <h2 className="mb-0 text-primary">{renderCountValue(totalProjects, 0, false)}</h2>
                                     </div>
                                 </Link>
                             </div>
@@ -375,7 +418,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                             <FaTasks style={{ color: "#e87c00", marginBottom: "0" }} size={28} />
                                             <h6 className="card-title mb-0 fw-bold">Total Projects</h6>
                                         </div>
-                                        <h2 className="mb-0 text-primary">{result || 0}</h2>
+                                        <h2 className="mb-0 text-primary">{renderCountValue(result, 0, false)}</h2>
                                     </div>
                                 </Link>
                             </div>

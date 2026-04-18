@@ -30,18 +30,38 @@ function Departments({ setIsLoggedIn }) {
     const [selectedArchivedDepartments, setSelectedArchivedDepartments] = useState([]);
     const [newDepartmentName, setNewDepartmentName] = useState("");
     const [editingDepartment, setEditingDepartment] = useState({});
-    const [userData, setUserData] = useState([]);
-    const [departments, setDepartments] = useState([]);
+
+    const getCachedValue = (key, fallback = null) => {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch (err) {
+            console.warn("Failed to read local cache:", key, err);
+            return fallback;
+        }
+    };
+
+    const setCachedValue = (key, value) => {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (err) {
+            console.warn("Failed to save local cache:", key, err);
+        }
+    };
+
+    const [userData, setUserData] = useState(() => getCachedValue('userData', []));
+    const [departments, setDepartments] = useState(() => getCachedValue('departments', []));
     const [projects, setProjects] = useState([]);
-    const [mainProjects, setMainProjects] = useState([]);
-    const [result, setResult] = useState([]);
+    const [mainProjects, setMainProjects] = useState(() => getCachedValue('mainProjects', []));
+    const [result, setResult] = useState(() => getCachedValue('adminTotalProjectCount', 0));
     const [totalProjects, setTotalProjects] = useState(0);
-    const [adminTotalProjects, setAdminTotalProjects] = useState(0);
+    const [adminTotalProjects, setAdminTotalProjects] = useState(() => getCachedValue('adminTotalTasks', 0));
     const [activeProjectsCount, setActiveProjectsCount] = useState(0);
     const [adminActiveProjectsCount, setAdminActiveProjectsCount] = useState(0);
     const [adminTotalTasks, setAdminTotalTasks] = useState(0);
     const [adminActiveTasksByUser, setAdminActiveTasksByUser] = useState({ Aditya: 0, Nikhil: 0 });
     const [adminConfirmationPendingCount, setAdminConfirmationPendingCount] = useState(0);
+    const [countsLoading, setCountsLoading] = useState(true);
 
     const [projectsByStatus, setProjectsByStatus] = useState({
         onTrack: 0,
@@ -70,15 +90,25 @@ function Departments({ setIsLoggedIn }) {
             const response = await fetch(`${API_URL}/api/department`);
             const data = await response.json();
             setDepartments(data);
+            setCachedValue('departments', data);
         } catch (err) {
             console.error("Failed to fetch departments:", err);
         }
     };
 
     useEffect(() => {
+        const cachedMainProjects = getCachedValue('mainProjects', []);
+        if (cachedMainProjects.length > 0) {
+            setMainProjects(cachedMainProjects);
+        }
+
         fetch(`${API_URL}/api/mainProject`)
             .then(res => res.json())
-            .then(data => setMainProjects(data));
+            .then(data => {
+                setMainProjects(data);
+                setCachedValue('mainProjects', data);
+            })
+            .catch(err => console.error("Failed to fetch main projects:", err));
     }, []);
 
     useEffect(() => {
@@ -93,13 +123,15 @@ function Departments({ setIsLoggedIn }) {
             )
         ];
 
-        const result = uniqueIds.map(id => ({
+        const projectList = uniqueIds.map(id => ({
             mainProjectId: id,
             projectCount: 1
         }));
 
-        console.log("Final unique result:", result);
-        setResult(result.length);
+        const uniqueCount = projectList.length;
+        console.log("Final unique result:", projectList);
+        setResult(uniqueCount);
+        setCachedValue('adminTotalProjectCount', uniqueCount);
     }, [projects, result]);
 
     useEffect(() => {
@@ -114,6 +146,7 @@ function Departments({ setIsLoggedIn }) {
     const matchedDepartmentColumn = matchedDepartment?.columnCollection;
     const [isUserFormOpen, setIsUserFormOpen] = useState(false);
     const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+
     const addUser = async (e) => {
         setIsUserFormOpen(true);
     }
@@ -130,7 +163,11 @@ function Departments({ setIsLoggedIn }) {
 
             if (response.ok) {
                 const updatedUser = await response.json();
-                setUserData(prevData => prevData.map(u => u._id === user._id ? updatedUser : u));
+                setUserData(prevData => {
+                    const updatedUsers = prevData.map(u => u._id === user._id ? updatedUser : u);
+                    setCachedValue('userData', updatedUsers);
+                    return updatedUsers;
+                });
             } else {
                 console.error("Failed to update user status");
             }
@@ -223,6 +260,7 @@ function Departments({ setIsLoggedIn }) {
             const response = await fetch(`${API_URL}/api/user`);
             const data = await response.json();
             setUserData(data);
+            setCachedValue('userData', data);
         } catch (err) {
             console.error("Failed to fetch users:", err);
         }
@@ -252,8 +290,21 @@ function Departments({ setIsLoggedIn }) {
         }
     }, [status, selectedDepartment]);
     useEffect(() => {
-        if (!matchedDepartmentData || !matchedDepartmentColumn) return;
+        if (!matchedDepartmentData || !matchedDepartmentColumn || !status?.user_name) {
+            setCountsLoading(false);
+            return;
+        }
+
+        const projectsCacheKey = `projects_${matchedDepartmentData}`;
+        const columnsCacheKey = `columns_${matchedDepartmentColumn}`;
+        const cachedProjects = getCachedValue(projectsCacheKey, null);
+
+        if (cachedProjects) {
+            setProjects(cachedProjects);
+        }
+
         const fetchProjectsAndCount = async () => {
+            setCountsLoading(true);
             try {
                 // Fetch projects and columns together (same as Development page)
                 const projectsRes = await fetch(`${API_URL}/api/data?collectionName=${matchedDepartmentData}s`);
@@ -261,6 +312,8 @@ function Departments({ setIsLoggedIn }) {
                 const data = await projectsRes.json();
                 const columns = await columnsRes.json();
                 setProjects(data);
+                setCachedValue(projectsCacheKey, data);
+                setCachedValue(columnsCacheKey, columns);
                 // Find Status column for active filter (used when clicking ACTIVE card)
                 const statusCol = Array.isArray(columns) && columns.find(col => {
                     const h = (col.column_heading || "").toLowerCase();
@@ -321,7 +374,9 @@ function Departments({ setIsLoggedIn }) {
                             project
                         );
                     });
-                    setAdminTotalProjects(adminProjects.length);
+                    const adminProjectCount = adminProjects.length;
+                    setAdminTotalProjects(adminProjectCount);
+                    setCachedValue('adminTotalTasks', adminProjectCount);
                     setTotalProjects(userProjects.length);
                     const adminStatusCounts = {
                         onTrack: 0,
@@ -486,12 +541,14 @@ function Departments({ setIsLoggedIn }) {
                         return matchesDevStaff ? count + 1 : count;
                     }, 0);
 
-                    setAdminTotalTasks(adminTotalTasksValue);
+                    setAdminTotalTasks(adminProjects.length);
                     setAdminActiveTasksByUser(activeCountsByUser);
                     setAdminConfirmationPendingCount(confirmationPendingCount);
                 }
             } catch (err) {
                 console.error("Failed to fetch projects:", err);
+            } finally {
+                setCountsLoading(false);
             }
         };
 
@@ -522,8 +579,11 @@ function Departments({ setIsLoggedIn }) {
 
             if (response.ok) {
                 const updatedUser = await response.json();
-                setUserData(prevData => prevData.map(u => u._id === user._id ? updatedUser : u));
-                // localStorage.setItem('user', JSON.stringify(updatedUser));
+                setUserData(prevData => {
+                    const updatedUsers = prevData.map(u => u._id === user._id ? updatedUser : u);
+                    setCachedValue('userData', updatedUsers);
+                    return updatedUsers;
+                });
             } else {
                 console.error("Failed to update department");
             }
@@ -554,6 +614,7 @@ function Departments({ setIsLoggedIn }) {
                         projectsByStatus={projectsByStatus}
                         setSelectedDepartment={setSelectedDepartment}
                         activeProjectsCount={activeProjectsCount}
+                        countsLoading={countsLoading}
                     />
                 ) : (
                     <DepartmentFilters
@@ -581,6 +642,7 @@ function Departments({ setIsLoggedIn }) {
                         totalProjects={adminTotalProjects}
                         totalTasks={adminTotalTasks}
                         activeProjectsCount={adminActiveProjectsCount}
+                        countsLoading={countsLoading}
                         activeTasksByUser={adminActiveTasksByUser}
                         confirmationPendingCount={adminConfirmationPendingCount}
                         setSelectedDepartment={setSelectedDepartment}
