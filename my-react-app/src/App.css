@@ -3,11 +3,7 @@
   margin: 0;
   padding: 0;
   width: 100%;
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: 'DM Sans', sans-serif;
 }
 
 body .text-primary {
@@ -43,6 +39,17 @@ h6.card-title.text-transform-uppercase {
 
 .main-parent .custom_alert_first_row {
   --bs-border-radius: 10px !important;
+}
+
+.text-primary-light {
+  color: #fdba74;
+}
+
+.custom_alert_first_row {
+  background: linear-gradient(135deg, #2D2D2D 0%, #3D3D3D 100%);
+  border: 1px solid rgba(255, 255, 255, .06);
+  position: relative;
+  overflow: hidden;
 }
 
 .custom_alert.row {
@@ -93,7 +100,7 @@ td.has-option-color select option {
 /* CSS Variables from index.css */
 body {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #f4f5f8;
   margin: 0;
   padding: 0;
 }
@@ -478,6 +485,10 @@ button.filter_button svg {
 button.btn svg.delete-icon {
   width: 16px;
   height: 16px;
+}
+
+.drawer-overlay {
+  display: none !important;
 }
 
 .logo img {

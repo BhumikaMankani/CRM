@@ -598,7 +598,7 @@ function Departments({ setIsLoggedIn }) {
             accessor: 'department',
             render: (row) => (
                 <Link to={`/department/${row.name.replace(/\d+/g, "")}`}
-                    className="text-dark text-decoration-none fw-bold">{row.department}</Link>
+                    className="text-white text-decoration-none fw-bold">{row.department}</Link>
             )
         },
     ];
@@ -651,7 +651,7 @@ function Departments({ setIsLoggedIn }) {
                 )}
                 {status?.status === 'admin' &&
                     <div className="custom_alert_first_row py-3 px-4 bg-white rounded mt-4">
-                        <h4 className="mb-4 fw-bold">Manage departments</h4>
+                        <h4 className="mb-4 fw-bold text-white">Manage departments</h4>
                         <div className="row">
                             {departments.map((row, rowIndex) => row.status !== 'archived' && (
                                 (status?.status === 'admin' || status?.department?.includes(row.department)) && (
@@ -664,7 +664,7 @@ function Departments({ setIsLoggedIn }) {
                                                         : row[column.accessor]}
                                                     {status?.status === 'admin' && column.accessor === 'department' && (
                                                         <button
-                                                            className="action-btn-mini action-btn-mini_ct"
+                                                            className="action-btn-mini text-white action-btn-mini_ct"
                                                             title="Edit"
                                                             onClick={() => {
                                                                 setEditingDepartment(row);

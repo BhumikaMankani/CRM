@@ -3,9 +3,10 @@ import { API_URL } from "../../proxy";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
 import { LiaLockSolid } from "react-icons/lia";
+import { FiMenu } from "react-icons/fi";
 
 import logo from "../assets/ea72b0a312922dca13f69c2e529e6abebde9ecc2.svg";
-const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => {
+const Header = ({ isDrawerOpen, status, handleLogout, setIsDepartmentModalOpen, heading, toggleDrawer }) => {
     const navigate = useNavigate();
     const [audits, setAudits] = useState([]);
     const location = useLocation();
@@ -58,8 +59,8 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
     }, []);
 
     return (
-        <header className='pt-2 pb-2'>
-            <div className="d-flex justify-content-between gap-2 mb-2">
+        <header className={`pt-2 pb-2 ${isDrawerOpen ? 'left__300' : ''}`}>
+            <div className="d-flex justify-content-between gap-2">
                 <div className="d-flex align-items-center gap-3">
                     {location.pathname !== '/' && (
                         <button
@@ -71,7 +72,44 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                             <FaArrowLeft size={12} />
                         </button>
                     )}
-                    <h1 className='text-left logo fw-bold m-0' style={{ fontSize: '1.5rem' }}><img width="100%" height="auto" alt="Mandasa crm" loading="lazy" src={logo}></img></h1>
+
+                    {/* <button
+                        className="btn btn-link p-0 text-dark border-0 shadow-none d-flex align-items-center"
+                        onClick={toggleDrawer}
+                        title="Open menu"
+                    >
+                        <FiMenu size={24} />
+                    </button> */}
+                    {location.pathname === '/' && (
+                        <div className="staff__analytic p-1 d-flex align-items-center gap-2">
+                            {status?.department?.length > 1 ? (
+                                <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
+                                    {status.department.map(dept => (
+                                        <li className="nav-item" key={dept}>
+                                            <button
+                                                className={`text-dark fw-bold rounded pl-4 pr-4 fs-7 btn-sm bg-transparent
+                                                    `}
+                                                // onClick={(e) => {
+                                                //     e.preventDefault();
+                                                //     setSelectedDepartment(dept);
+                                                // }}
+                                                style={{ cursor: 'pointer', border: '1px solid transparent' }}
+                                            >
+                                                {dept.charAt(0).toUpperCase() + dept.slice(1)}
+                                            </button>
+                                        </li>
+
+                                    ))}
+                                </ul>
+                            ) : (
+                                null
+                                // <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</Link>
+                            )}
+                        </div>
+                    )}
+                    {location.pathname !== '/' && (
+                        <h1 className='text-left logo fw-bold m-0' style={{ fontSize: '1.5rem' }}><img width="100%" height="auto" alt="Mandasa crm" loading="lazy" src={logo}></img></h1>
+                    )}
                 </div>
                 <div className='d-flex justify-content-center align-items-center gap-2'>
                     {lastActiveTime && (
@@ -81,7 +119,7 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                             </span>
                         </p>
                     )}
-                    <div className="custom-dropdown" ref={dropdownRef}>
+                    {/* <div className="custom-dropdown" ref={dropdownRef}>
                         <div
                             className="dropdown-toggle d-flex align-items-center gap-2 cursor-pointer"
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -101,9 +139,7 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                                 </button>
                             </div>
                         )}
-                    </div>
-
-
+                    </div> */}
                 </div>
             </div>
         </header >

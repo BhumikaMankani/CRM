@@ -196,14 +196,14 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
     };
     return (
         <div className="">
-            <div className='custom_alert_first_row py-3 px-4 bg-white rounded mb-4'>
+            <div className='custom_alert_first_row py-4 px-4 rounded mb-4'>
                 <div className="col-md-12">
                     <div className="d-flex justify-content-between align-items-start">
                         <div>
-                            <h2 className="mb-3 text-dark"> <strong> Welcome back, {status.user_name}!</strong></h2>
-                            <p>Here's your comprehensive projects & performance overview.</p>
+                            <h2 className="fw-bold mb-1 fs-4 text-white"> <strong> Welcome back, {status.user_name}!</strong></h2>
+                            <p className='text-primary-light mb-0 mt-1'>Here's your comprehensive projects & performance overview.</p>
                         </div>
-                        <div className="staff__analytics border-bottom pb-2 d-flex align-items-center gap-2">
+                        {/* <div className="staff__analytics border-bottom pb-2 d-flex align-items-center gap-2">
                             {status?.department?.length > 1 ? (
                                 <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
                                     {status.department.map(dept => (
@@ -266,7 +266,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
                                     )}
                                 </div>
                             )}
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

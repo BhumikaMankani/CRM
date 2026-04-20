@@ -1816,7 +1816,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                 {canEdit(col.name, col) && (
                   <button
                     className="btn btn-link p-0 text-muted lmebtn__ct"
-                    disabled={status.status === "admin" ? false : true}
+                    // disabled={status.status === "admin" ? false : true}
                     onClick={(e) => {
                       e.stopPropagation();
                       setLinkModal({

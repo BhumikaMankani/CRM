@@ -9,9 +9,11 @@ import TasksPage from "./pages/TasksPage";
 import Footer from "./components/Footer"
 import './components/color.css';
 import Header from "./components/header";
+import Drawer from "./components/Drawer";
 
 function App() {
   const [status, setStatus] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const getSessionData = (key) => {
     const itemString = localStorage.getItem(key);
     if (!itemString) return null;
@@ -85,18 +87,19 @@ function App() {
 
 
   return (
-    <div className="app-container container pt-5">
+    <div className={`app-container container ${isDrawerOpen ? 'pt-3' : 'pt-5'}`}>
       {isLoggedIn ? (
         <>
-          <Header status={status} handleLogout={handleLogout} />
-          <main>
+          <Drawer status={status} handleLogout={handleLogout} isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
+          <Header isDrawerOpen={isDrawerOpen} status={status} toggleDrawer={() => setIsDrawerOpen(true)} />
+          <main className={isDrawerOpen ? 'left__300' : ''}>
             <Routes>
               <Route path="/" element={<Departments setIsLoggedIn={setIsLoggedIn} />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/department/:name" element={<DepartmentPages />} />
             </Routes>
           </main>
-          <Footer />
+          <Footer isDrawerOpen={isDrawerOpen} />
         </>
       ) : (
         <Registration onLoginSuccess={handleLoginSuccess} />
