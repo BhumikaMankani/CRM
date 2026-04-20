@@ -11,7 +11,7 @@
 }
 
 body .text-primary {
-    color: #e87c00 !important;
+  color: #e87c00 !important;
 }
 
 h6.card-title.text-transform-uppercase {
@@ -484,15 +484,16 @@ button.btn svg.delete-icon {
   object-fit: cover;
 }
 
-.app-container h1 {
-    max-width: 200px;
-    margin: 0;
+.app-container h1.logo {
+  max-width: 200px;
+  margin: 0;
 }
 
 button.btn[title="Edit Option Colors"] svg.color-icon {
   width: 14px;
   height: 14px;
 }
+
 .main-parent .card {
   border: 1px solid #e87c00;
   /* border-color: var(--bs-border-color-translucent) !important;
