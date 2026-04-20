@@ -129,7 +129,6 @@ function Departments({ setIsLoggedIn }) {
         }));
 
         const uniqueCount = projectList.length;
-        console.log("Final unique result:", projectList);
         setResult(uniqueCount);
         setCachedValue('adminTotalProjectCount', uniqueCount);
     }, [projects, result]);
