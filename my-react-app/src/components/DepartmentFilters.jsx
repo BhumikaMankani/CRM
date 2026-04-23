@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { MdDashboard, MdOutlineIncompleteCircle, MdOutlinePhoneForwarded } from 'react-icons/md';
+import { MdOutlineIncompleteCircle, MdOutlinePhoneForwarded } from 'react-icons/md';
 import { IoPlayCircleOutline } from 'react-icons/io5';
 import { FaRegCheckCircle } from 'react-icons/fa';
 import { RxCrossCircled } from 'react-icons/rx';
@@ -8,30 +8,25 @@ import { RiChatFollowUpFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { FaTasks } from "react-icons/fa";
 import { API_URL } from "../../proxy";
-import { CiUser } from "react-icons/ci";
 import { FaRegUser } from "react-icons/fa";
-
 import { GiRadioactive } from "react-icons/gi";
 import { GrProjects } from "react-icons/gr";
-import { GiHamburgerMenu } from "react-icons/gi";
 
 import {
     FaCheckCircle,
     FaClock,
     FaExclamationTriangle,
-    FaUser,
     FaProjectDiagram
 } from "react-icons/fa";
 
 
 import { useState } from 'react';
 
-function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, isEditUserModalOpen, setIsEditUserModalOpen, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, projects, addUser, departments, status, totalProjects, totalTasks, activeProjectsCount, countsLoading = false, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
-    const [savedFilters, setSavedFilters] = useState([]);
-    const departmentKey = (selectedDepartment || '').toLowerCase();
+function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, projects, departments, status, totalProjects, totalTasks, activeProjectsCount, countsLoading = false, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [savedFilters, setSavedFilters] = useState([]);
 
-    const savedFiltersCacheKey = status?._id ? `savedFilters_${status._id}_${departmentKey || 'all'}` : null;
+    const savedFiltersCacheKey = status?._id ? `savedFilters_${status._id}_${selectedDepartment?.toLowerCase() || 'all'}` : null;
 
     const getCachedValue = (key, fallback = null) => {
         try {
@@ -50,7 +45,31 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
             console.warn("Failed to save cache:", key, err);
         }
     };
-
+    useEffect(() => {
+        if (!savedFiltersCacheKey) return;
+        const cachedFilters = getCachedValue(savedFiltersCacheKey, null);
+        if (cachedFilters) {
+            setSavedFilters(cachedFilters);
+        }
+    }, [savedFiltersCacheKey]);
+        const fetchSavedFilters = useCallback(async () => {
+        if (!status?._id) return;
+        try {
+            const url = `${API_URL}/api/filters?userId=${status._id}${selectedDepartment ? `&department=${selectedDepartment?.toLowerCase() || 'all'}` : ""}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch filters');
+            const data = await response.json();
+            setSavedFilters(data);
+            if (savedFiltersCacheKey) {
+                setCachedValue(savedFiltersCacheKey, data);
+            }
+        } catch (err) {
+            console.error('Failed to load saved filters:', err);
+        }
+    }, [status?._id, selectedDepartment, savedFiltersCacheKey]);
+    useEffect(() => {
+        fetchSavedFilters();
+    }, [fetchSavedFilters, selectedDepartment]);
     const renderCountValue = (value, fallback = 0, showLoader = true) => {
         if (showLoader && countsLoading) {
             return (
@@ -62,15 +81,6 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
 
         return <span>{value != null ? value : fallback}</span>;
     };
-
-    useEffect(() => {
-        if (!savedFiltersCacheKey) return;
-        const cachedFilters = getCachedValue(savedFiltersCacheKey, null);
-        if (cachedFilters) {
-            setSavedFilters(cachedFilters);
-        }
-    }, [savedFiltersCacheKey]);
-
     const iconMap = {
         "completed": FaCheckCircle,
         "pending": FaClock,
@@ -88,24 +98,7 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
 
         return matchKey ? iconMap[matchKey] : FaTasks; // fallback icon
     };
-    const fetchSavedFilters = useCallback(async () => {
-        if (!status?._id) return;
-        try {
-            const url = `${API_URL}/api/filters?userId=${status._id}${departmentKey ? `&department=${departmentKey}` : ""}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Failed to fetch filters');
-            const data = await response.json();
-            setSavedFilters(data);
-            if (savedFiltersCacheKey) {
-                setCachedValue(savedFiltersCacheKey, data);
-            }
-        } catch (err) {
-            console.error('Failed to load saved filters:', err);
-        }
-    }, [status?._id, departmentKey, savedFiltersCacheKey]);
-    useEffect(() => {
-        fetchSavedFilters();
-    }, [fetchSavedFilters, selectedDepartment]);
+
     const countMatchingRows = (filterData) => {
         if (!filterData || !projects) return 0;
 
@@ -194,265 +187,252 @@ function DepartmentFilters({ result, selectedDepartment, setSelectedArchivedDepa
             .replace(/[^\w\s-]/g, "") // remove special chars
             .replace(/\s+/g, "-");
     };
+
+    const projectOverviewFilters = savedFilters.filter(f =>
+        f.showInDepartment &&
+        f.department === selectedDepartment?.toLowerCase() &&
+        (f.filterName.toLowerCase().includes("tasks") || f.filterName.toLowerCase().includes("projects"))
+    );
+
+    const teamPerformanceFilters = savedFilters.filter(f =>
+        f.showInDepartment &&
+        f.department === selectedDepartment?.toLowerCase() &&
+        !projectOverviewFilters.find(p => p._id === f._id)
+    );
+
+    const StatCard = ({ icon: Icon, title, value, colorClass, link, accentClass, trend }) => (
+        <div className="col-md-3 mb-4">
+            <Link to={link} className="text-decoration-none">
+                <div className={`custom-card ${colorClass}`}>
+                    <div className={`icon-box ${colorClass}`}>
+                        <Icon size={20} />
+                    </div>
+                    <h6 className="card-title-mini">{title}</h6>
+                    <h2 className={`card-value-large text-${colorClass} ff-outfit`}>
+                        {renderCountValue(value, 0, false)}
+                    </h2>
+                    <div className={`card-accent-border ${accentClass}`}></div>
+                </div>
+            </Link>
+        </div>
+    );
+
+    const cards = [
+        {
+            title: "Active Projects",
+            key: "active",
+            count: activeProjectsCount,
+            icon: <IoPlayCircleOutline />,
+            colorClass: "purple",
+            accentClass: "accent-purple",
+            filter: "active-projects",
+        },
+        {
+            title: "On Track",
+            key: "onTrack",
+            count: projectsByStatus.onTrack,
+            icon: <FaRegCheckCircle />,
+            colorClass: "green",
+            accentClass: "accent-green",
+            filter: "on-track-projects",
+        },
+        {
+            title: "Off Track",
+            key: "offTrack",
+            count: projectsByStatus.offTrack,
+            icon: <RxCrossCircled />,
+            colorClass: "red",
+            accentClass: "accent-red",
+            filter: "off-track-projects",
+        },
+        {
+            title: "Not Started",
+            key: "notStarted",
+            count: projectsByStatus.notStarted,
+            icon: <CgDanger />,
+            colorClass: "blue",
+            accentClass: "accent-blue",
+            filter: "not-started-projects",
+        },
+        {
+            title: "Follow Up",
+            key: "followUp",
+            count: projectsByStatus.followUp,
+            icon: <RiChatFollowUpFill />,
+            colorClass: "yellow",
+            accentClass: "accent-yellow",
+            filter: "follow-up",
+        },
+        {
+            title: "Forwarded",
+            key: "forwarded",
+            count: projectsByStatus.forwardedToClient,
+            icon: <MdOutlinePhoneForwarded />,
+            colorClass: "cyan",
+            accentClass: "accent-cyan",
+            filter: "forwarded-projects",
+        },
+        {
+            title: "Completed",
+            key: "completed",
+            count: projectsByStatus.completed,
+            icon: <MdOutlineIncompleteCircle />,
+            colorClass: "cv-green",
+            accentClass: "accent-cv-green",
+            filter: "completed-projects",
+        },
+    ];
+
     return (
         <div className="">
             <div className='custom_alert_first_row py-4 px-4 rounded mb-4'>
                 <div className="col-md-12">
                     <div className="d-flex justify-content-between align-items-start">
                         <div>
-                            <h2 className="fw-bold mb-1 fs-4 text-white"> <strong> Welcome back, {status.user_name}!</strong></h2>
-                            <p className='text-primary-light mb-0 mt-1'>Here's your comprehensive projects & performance overview.</p>
+                            <h2 className="fw-bold mb-1 fs-4 text-white ff-outfit"> <strong> Welcome back, {status.user_name}!</strong>👋</h2>
+                            <p className='text-primary-light mb-0 mt-1' style={{ fontSize: "14px", fontWeight: "400" }}>
+                                "Here's your comprehensive projects & performance overview."
+                            </p>
                         </div>
-                        {/* <div className="staff__analytics border-bottom pb-2 d-flex align-items-center gap-2">
-                            {status?.department?.length > 1 ? (
-                                <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
-                                    {status.department.map(dept => (
-                                        <li className="nav-item" key={dept}>
-                                            <button
-                                                className={`btn fw-bold fs-6 btn-sm btn-outline-primary ${selectedDepartment === dept ? 'active' : ''} `}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setSelectedDepartment(dept);
-                                                }}
-                                                style={{ cursor: 'pointer', border: '1px solid transparent' }}
-                                            >
-                                                {dept.charAt(0).toUpperCase() + dept.slice(1)}
-                                            </button>
-                                        </li>
-
-                                    ))}
-                                </ul>
-                            ) : (
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</Link>
-                            )}
-                            {status?.status === 'admin' && (
-                                <div className="dropdown">
-                                    <button
-                                        className="btn btn-secondary text-dark d-inline-flex align-items-center p-2"
-                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    >
-                                        <GiHamburgerMenu size={20} />
-                                    </button>
-                                    {isDropdownOpen && (
-                                        <div className="dropdown-menu show dropdown-menu-end position-absolute" style={{ top: "100%", right: 0, zIndex: 10 }}>
-                                            <button
-                                                className="dropdown-item"
-                                                onClick={() => {
-                                                    setIsDropdownOpen(false);
-                                                    setIsDepartmentModalOpen(true);
-                                                }}
-                                            >
-                                                Create
-                                            </button>
-                                            {departments.filter(d => d.status === 'archived').length > 0 && (
-                                                <button
-                                                    className="dropdown-item"
-                                                    onClick={() => {
-                                                        setIsDropdownOpen(false);
-                                                        setSelectedArchivedDepartments([]);
-                                                        setIsArchiveModalOpen(true);
-                                                    }}
-                                                >
-                                                    Archived
-                                                </button>
-                                            )}
-                                            {status?.status === 'admin' && (
-                                                <>
-                                                    <button className="dropdown-item" onClick={addUser}>Add User</button>
-                                                    <button className="dropdown-item" onClick={() => setIsEditUserModalOpen(true)}>Edit User</button>
-                                                </>
-                                            )}
+                        <div className="d-flex align-items-center gap-2">
+                            {confirmationPendingCount > 0 && (
+                                <Link
+                                    to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=confirmation-pending---projects`}
+                                    className="text-decoration-none"
+                                >
+                                    <div className="pending-badge">
+                                        <div className="badge-text">
+                                            <span className='alert-pill'></span>
+                                            <span className='count'>{confirmationPendingCount} Pending Confirmations</span>
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                </Link>
                             )}
-                        </div> */}
+                        </div>
                     </div>
                 </div>
             </div>
-            <div className="custom_alert row">
-                {/* Total Projects Card */}
-                {status?.status === 'staff' && (
-
-                    <div className="col-md-3">
-                        <div className="card border-primary">
-                            <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-projects`} className="text-dark text-decoration-none">
-                                <div className="card-body">
-                                    <FaTasks />
-                                    <h6 className="card-title text-transform-uppercase text-muted mb-2">Total Tasks</h6>
-                                    <h2 className="mb-0 text-primary">{renderCountValue(totalProjects)}</h2>
-                                </div>
-                            </Link>
-                        </div>
-                    </div>
-                )}
-                {/* ACTIVE Card - click to go to Development with active filter applied */}
-                {status?.status === 'staff' && (
-                    <div className="col-md-3">
-                        <div className="card border-danger">
-                            <Link
-                                to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-active-projects`}
-                                className="text-dark text-decoration-none"
-                            >
-                                <div className="card-body ">
-                                    <IoPlayCircleOutline />
-
-                                    <h6 className="card-title text-transform-uppercase text-muted mb-2">
-                                        ACTIVE Projects
-                                    </h6>
-                                    <h2 className="mb-0 text-danger">
-                                        {renderCountValue(activeProjectsCount)}
-                                    </h2>
-                                </div>
-                            </Link>
-                        </div>
-                    </div>
-                )}
+                <div className="custom_alert row">
                 {status?.status === 'staff' && (
                     <>
                         <div className="col-md-3">
-                            <div className="card border-success">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-on-track-projects`} className="text-dark text-decoration-none">
+                            <Link
+                                to={`/department/${selectedDepartment?.toLowerCase()}`}
+                                className="text-decoration-none"
+                            >
+                                <div className="custom-card orange">
+                                    <div className="icon-box orange">
+                                        <FaTasks size={20} />
+                                    </div>
 
-                                    <div className="card-body ">
-                                        <FaRegCheckCircle />
+                                    <h6 className="card-title-mini">Total Tasks</h6>
 
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">ON TRACK</h6>
-                                        <h2 className="mb-0 text-success">{renderCountValue(projectsByStatus.onTrack)}</h2>
+                                    <h2 className="card-value-large text-orange ff-outfit">
+                                        {renderCountValue(totalProjects)}
+                                    </h2>
+
+                                    <div className="card-accent-border accent-orange"></div>
+                                </div>
+                            </Link>
+                        </div>
+                        {cards.map((card, index) => (
+                            <div className="col-md-3" key={index}>
+                                <Link
+                                    to={`/department/${(selectedDepartment || status?.department?.[0] || "").toLowerCase()
+                                        }?filter_name=${status.user_name.toLowerCase()}-${card.filter}`}
+                                    className="text-decoration-none"
+                                >
+                                    <div className={`custom-card ${card.colorClass}`}>
+                                        <div className={`icon-box ${card.colorClass}`}>{card.icon}</div>
+
+                                        <h6 className="card-title-mini">{card.title}</h6>
+
+                                        <h2 className={`card-value-large ff-outfit ${"text-" + card.colorClass}`}>
+                                            {renderCountValue(card.count)}
+                                        </h2>
+
+                                        <div className={`card-accent-border ${card.accentClass}`}></div>
                                     </div>
                                 </Link>
                             </div>
-                        </div>
-
-                        {/* OFF TRACK Card */}
-                        <div className="col-md-3">
-                            <div className="card border-warning">
-                                <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-off-track-projects`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <RxCrossCircled />
-
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">OFF TRACK</h6>
-                                        <h2 className="mb-0 text-warning">{renderCountValue(projectsByStatus.offTrack)}</h2>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* AT RISK Card */}
-                        <div className="col-md-3">
-                            <div className="card border-info">
-                                <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-not-started-projects`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <CgDanger />
-
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">NOT STARTED</h6>
-                                        <h2 className="mb-0 text-danger">{renderCountValue(projectsByStatus.notStarted)}</h2>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Follow up */}
-                        <div className="col-md-3">
-                            <div className="card border-dark">
-                                <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-follow-up`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <RiChatFollowUpFill />
-
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Follow up</h6>
-                                        <h2 className="mb-0 text-danger">{renderCountValue(projectsByStatus.followUp)}</h2>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Forwarded to client projects */}
-                        <div className="col-md-3">
-                            <div className="card border-warning">
-                                <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-forwarded-projects`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <MdOutlinePhoneForwarded />
-
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Forwarded to client</h6>
-                                        <h2 className="mb-0 text-danger">{renderCountValue(projectsByStatus.forwardedToClient)}</h2>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Completed projects */}
-                        <div className="col-md-3">
-                            <div className="card border-success">
-                                <Link to={`/department/${(selectedDepartment || status?.department?.[0] || '').toLowerCase()}?filter_name=${status.user_name.toLowerCase()}-completed-projects`} className="text-dark text-decoration-none">
-                                    <div className="card-body">
-                                        <MdOutlineIncompleteCircle />
-
-                                        <h6 className="card-title text-transform-uppercase text-muted mb-2">Completed</h6>
-                                        <h2 className="mb-0 text-danger">{renderCountValue(projectsByStatus.completed)}</h2>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
+                        ))}
                     </>
                 )}
                 {status?.status === 'admin' && (
                     <>
-                        <div className="col-md-3">
-                            <div className="card">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
-                                    <div className="card-body d-flex justify-content-between align-items-center">
-                                        <div className='d-flex align-items-center gap-3'>
-                                            <GrProjects style={{ color: "#e87c00", marginBottom: "0" }} size={28} />
-                                            <h6 className="card-title fw-bold mb-0">Total Tasks</h6>
-                                        </div>
-                                        <h2 className="mb-0 text-primary">{renderCountValue(totalProjects, 0, false)}</h2>
-                                    </div>
-                                </Link>
-                            </div>
+                        <h3 className="section-heading">Project Overview</h3>
+                        <div className="row">
+                            <StatCard
+                                icon={GrProjects}
+                                title="Total Tasks"
+                                value={totalProjects}
+                                colorClass="orange"
+                                accentClass="accent-orange"
+                                link={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`}
+                            />
+                            <StatCard
+                                icon={FaTasks}
+                                title="Total Projects"
+                                value={result}
+                                colorClass="purple"
+                                accentClass="accent-purple"
+                                link={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`}
+                            />
+
+                            {projectOverviewFilters.map((filter) => {
+                                const IconComponent = filter.filterName.toLowerCase().includes("completed") ? FaCheckCircle : (filter.filterName.toLowerCase().includes("active") ? GiRadioactive : getIconFromFilterName(filter.filterName));
+                                const colorClass = filter.filterName.toLowerCase().includes("completed") ? "green" : (filter.filterName.toLowerCase().includes("active") ? "red" : "orange");
+                                const accentClass = `accent-${colorClass}`;
+
+                                return (
+                                    <StatCard
+                                        key={filter._id}
+                                        icon={IconComponent}
+                                        title={filter.filterName}
+                                        value={countMatchingRows(filter.filterData)}
+                                        colorClass={colorClass}
+                                        accentClass={accentClass}
+                                        link={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${formatFilterName(filter.filterName)}`}
+                                    />
+                                );
+                            })}
                         </div>
-                        <div className="col-md-3">
-                            <div className="card">
-                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="text-dark text-decoration-none">
-                                    <div className="card-body d-flex justify-content-between align-items-center">
-                                        <div className='d-flex align-items-center gap-3'>
-                                            <FaTasks style={{ color: "#e87c00", marginBottom: "0" }} size={28} />
-                                            <h6 className="card-title mb-0 fw-bold">Total Projects</h6>
-                                        </div>
-                                        <h2 className="mb-0 text-primary">{renderCountValue(result, 0, false)}</h2>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
 
-                        {savedFilters.length > 0 &&
-                            savedFilters
-                                .filter(f => f.showInDepartment && f.department === selectedDepartment?.toLowerCase())
-                                .map((filter) => {
-                                    const IconComponent = filter.filterName.toLowerCase().includes("confirmation pending") ? FaExclamationTriangle : getIconFromFilterName(filter.filterName);
-                                    return (
-                                        <div key={filter._id} className="col-md-3">
-                                            <div className="card">
-                                                <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${formatFilterName(filter.filterName)}`} className="text-dark text-decoration-none">
+                        {teamPerformanceFilters.length > 0 && (
+                            <>
+                                <h3 className="section-heading">Team Performance</h3>
+                                <div className="row">
+                                    {teamPerformanceFilters.map((filter) => {
+                                        const isConfirmation = filter.filterName.toLowerCase().includes("confirmation");
+                                        const IconComponent = isConfirmation ? FaExclamationTriangle : getIconFromFilterName(filter.filterName);
 
-                                                    <div className="card-body d-flex justify-content-between align-items-center">
-                                                        <div className='d-flex align-items-center gap-3'>
-                                                            <div className="icon-wrapper">
-                                                                <IconComponent style={{ color: "#e87c00", marginBottom: "0" }} size={28} />
-                                                            </div>
-                                                            <h6 className="card-title mb-0 fw-bold">{filter.filterName}</h6>
+                                        // Pick a color based on some logic or mapping
+                                        let colorClass = "blue";
+                                        if (isConfirmation) colorClass = "red";
+                                        else if (filter.filterName.toLowerCase().includes("nikhil")) colorClass = "yellow";
+                                        else if (filter.filterName.toLowerCase().includes("aditya")) colorClass = "cyan";
+                                        console.log("filter.filterName.toLowerCase", filter.filterName.toLowerCase);
+                                        const accentClass = `accent-${colorClass}`;
 
-                                                        </div>
-                                                        <h2 className="mb-0 text-primary">{countMatchingRows(filter.filterData)}</h2>
-                                                    </div>
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        return (
+                                            <StatCard
+                                                key={filter._id}
+                                                icon={IconComponent}
+                                                title={filter.filterName}
+                                                value={countMatchingRows(filter.filterData)}
+                                                colorClass={colorClass}
+                                                accentClass={accentClass}
+                                                link={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=${formatFilterName(filter.filterName)}`}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
                     </>
                 )}
             </div>
         </div>
     )
 }
-export default DepartmentFilters
+export default DepartmentFilters;

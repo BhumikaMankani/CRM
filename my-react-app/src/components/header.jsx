@@ -2,15 +2,12 @@ import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_URL } from "../../proxy";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
-import { LiaLockSolid } from "react-icons/lia";
-import { FiMenu } from "react-icons/fi";
 
 import logo from "../assets/ea72b0a312922dca13f69c2e529e6abebde9ecc2.svg";
-const Header = ({ isDrawerOpen, status, handleLogout, setIsDepartmentModalOpen, heading, toggleDrawer }) => {
+const Header = ({ currentUser, fetchDepartments, allDepartments, handleDepartmentChange, selectedDepartment, setSelectedDepartment, isDrawerOpen, status, handleLogout, setIsDepartmentModalOpen, heading, toggleDrawer }) => {
     const navigate = useNavigate();
     const [audits, setAudits] = useState([]);
     const location = useLocation();
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const fetchAudits = useCallback(async () => {
         try {
@@ -59,7 +56,7 @@ const Header = ({ isDrawerOpen, status, handleLogout, setIsDepartmentModalOpen, 
     }, []);
 
     return (
-        <header className={`pt-2 pb-2 ${isDrawerOpen ? 'left__300' : ''}`}>
+    <header className={`pt-2 pb-2 ${location.pathname === '/' ? (isDrawerOpen ? 'left__300' : '') : ''}`}>
             <div className="d-flex justify-content-between gap-2">
                 <div className="d-flex align-items-center gap-3">
                     {location.pathname !== '/' && (
@@ -73,27 +70,35 @@ const Header = ({ isDrawerOpen, status, handleLogout, setIsDepartmentModalOpen, 
                         </button>
                     )}
 
-                    {/* <button
-                        className="btn btn-link p-0 text-dark border-0 shadow-none d-flex align-items-center"
-                        onClick={toggleDrawer}
-                        title="Open menu"
-                    >
-                        <FiMenu size={24} />
-                    </button> */}
                     {location.pathname === '/' && (
                         <div className="staff__analytic p-1 d-flex align-items-center gap-2">
-                            {status?.department?.length > 1 ? (
+                            {currentUser?.status === 'admin' && allDepartments.length > 1 ? (
                                 <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
-                                    {status.department.map(dept => (
+                                    {allDepartments?.map(dept => dept?.status !== 'archived' && (
+                                        <li className="nav-item" key={dept?.department}>
+                                            <button
+                                                className={`${selectedDepartment?.toLowerCase() === dept?.department?.toLowerCase() ? 'active' : ''} rounded pl-4 pr-4 btn-sm bg-transparent
+                                                    `}
+                                                onClick={() => handleDepartmentChange(dept?.department)}
+
+                                                style={{ cursor: 'pointer', border: '1px solid transparent', color: "#6b7280", fontSize: "12.5px" }}
+                                            >
+                                                {dept?.department ? dept?.department?.charAt(0).toUpperCase() + dept?.department?.slice(1) : ''}
+                                            </button>
+                                        </li>
+
+                                    ))}
+                                </ul>
+                            ) : (
+                                <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
+                                    {currentUser?.department && currentUser.department.map((dept) => (
                                         <li className="nav-item" key={dept}>
                                             <button
-                                                className={`text-dark fw-bold rounded pl-4 pr-4 fs-7 btn-sm bg-transparent
+                                                className={`${selectedDepartment?.toLowerCase() === dept?.toLowerCase() ? 'active' : ''} rounded pl-4 pr-4 btn-sm bg-transparent
                                                     `}
-                                                // onClick={(e) => {
-                                                //     e.preventDefault();
-                                                //     setSelectedDepartment(dept);
-                                                // }}
-                                                style={{ cursor: 'pointer', border: '1px solid transparent' }}
+                                                onClick={() => handleDepartmentChange(dept)}
+
+                                                style={{ cursor: 'pointer', border: '1px solid transparent', color: "#6b7280", fontSize: "12.5px" }}
                                             >
                                                 {dept.charAt(0).toUpperCase() + dept.slice(1)}
                                             </button>
@@ -101,9 +106,6 @@ const Header = ({ isDrawerOpen, status, handleLogout, setIsDepartmentModalOpen, 
 
                                     ))}
                                 </ul>
-                            ) : (
-                                null
-                                // <Link to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`} className="btn btn-primary btn-sm mt-2">View All Analytics</Link>
                             )}
                         </div>
                     )}
@@ -113,33 +115,12 @@ const Header = ({ isDrawerOpen, status, handleLogout, setIsDepartmentModalOpen, 
                 </div>
                 <div className='d-flex justify-content-center align-items-center gap-2'>
                     {lastActiveTime && (
-                        <p className="text-dark fw-bold mb-0" style={{ fontSize: '16px' }}>
-                            Last update: <span class="text-primary">
+                        <p className="text-light-custom mb-0" style={{ fontSize: '11.5px' }}>
+                            Last update: <span className="text-light-custom">
                                 {new Date(lastActiveTime).toLocaleString()}
                             </span>
                         </p>
                     )}
-                    {/* <div className="custom-dropdown" ref={dropdownRef}>
-                        <div
-                            className="dropdown-toggle d-flex align-items-center gap-2 cursor-pointer"
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        >
-                            <span className="profile">{status?.user_name?.[0]?.toUpperCase()}</span>
-                        </div>
-                        {isDropdownOpen && (
-                            <div className="dropdown-menu-custom">
-                                <div className="dropdown-user-info">
-                                    <p className="mb-0 fw-bold">{status?.user_name}</p>
-                                    <p className="mb-0 text-muted small">{status?.email}</p>
-                                </div>
-                                <div className="dropdown-divider"></div>
-                                <button className="dropdown-item-custom" style={{ color: "#e87c00" }} onClick={handleLogout}>
-                                    <LiaLockSolid />
-                                    Logout
-                                </button>
-                            </div>
-                        )}
-                    </div> */}
                 </div>
             </div>
         </header >

@@ -6,7 +6,6 @@ import { API_URL } from "../../proxy";
 import DepartmentFilters from "./DepartmentFilters";
 import UserForm from "../components/User";
 import "./custom.css";
-import { IoCloseSharp } from "react-icons/io5";
 
 // Status values that should be treated as "ACTIVE" for the active-project count
 const ACTIVE_STATUSES = [
@@ -19,9 +18,9 @@ const ACTIVE_STATUSES = [
     "active",
 ];
 
-function Departments({ setIsLoggedIn }) {
-    const [savedFilters, setSavedFilters] = useState([]);
+function Departments({ isFiltersLoading, selectedDepartment, setIsLoggedIn }) {
     const [audits, setAudits] = useState([]);
+    const [savedFilters, setSavedFilters] = useState([]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDepartment, setIsDepartment] = useState(false);
@@ -29,7 +28,6 @@ function Departments({ setIsLoggedIn }) {
     const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
     const [selectedArchivedDepartments, setSelectedArchivedDepartments] = useState([]);
     const [newDepartmentName, setNewDepartmentName] = useState("");
-    const [editingDepartment, setEditingDepartment] = useState({});
 
     const getCachedValue = (key, fallback = null) => {
         try {
@@ -52,6 +50,7 @@ function Departments({ setIsLoggedIn }) {
     const [userData, setUserData] = useState(() => getCachedValue('userData', []));
     const [departments, setDepartments] = useState(() => getCachedValue('departments', []));
     const [projects, setProjects] = useState([]);
+    const [projectColumns, setProjectColumns] = useState([]);
     const [mainProjects, setMainProjects] = useState(() => getCachedValue('mainProjects', []));
     const [result, setResult] = useState(() => getCachedValue('adminTotalProjectCount', 0));
     const [totalProjects, setTotalProjects] = useState(0);
@@ -78,11 +77,6 @@ function Departments({ setIsLoggedIn }) {
     const [status, setStatus] = useState(() => {
         const savedData = localStorage.getItem('user');
         return savedData ? JSON.parse(savedData) : null;
-    });
-    const [selectedDepartment, setSelectedDepartment] = useState(() => {
-        const savedData = localStorage.getItem('user');
-        const parsed = savedData ? JSON.parse(savedData) : null;
-        return parsed?.department?.[0] || "";
     });
 
     const fetchDepartments = async () => {
@@ -129,7 +123,6 @@ function Departments({ setIsLoggedIn }) {
         }));
 
         const uniqueCount = projectList.length;
-        console.log("Final unique result:", projectList);
         setResult(uniqueCount);
         setCachedValue('adminTotalProjectCount', uniqueCount);
     }, [projects, result]);
@@ -144,106 +137,31 @@ function Departments({ setIsLoggedIn }) {
     );
     const matchedDepartmentData = matchedDepartment?.dataCollection;
     const matchedDepartmentColumn = matchedDepartment?.columnCollection;
-    const [isUserFormOpen, setIsUserFormOpen] = useState(false);
-    const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
 
-    const addUser = async (e) => {
-        setIsUserFormOpen(true);
-    }
+    // const handleStatusChange = async (user, newStatus) => {
+    //     try {
+    //         const response = await fetch(`${API_URL}/api/user/${user._id}`, {
+    //             method: "PATCH",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify({ status: newStatus }),
+    //         });
 
-    const handleStatusChange = async (user, newStatus) => {
-        try {
-            const response = await fetch(`${API_URL}/api/user/${user._id}`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ status: newStatus }),
-            });
-
-            if (response.ok) {
-                const updatedUser = await response.json();
-                setUserData(prevData => {
-                    const updatedUsers = prevData.map(u => u._id === user._id ? updatedUser : u);
-                    setCachedValue('userData', updatedUsers);
-                    return updatedUsers;
-                });
-            } else {
-                console.error("Failed to update user status");
-            }
-        } catch (err) {
-            console.error("Error updating user status:", err);
-        }
-    };
-
-    const handleSaveDepartment = async (e) => {
-        e.preventDefault();
-        const deptName = newDepartmentName.trim(); // ✅ store first
-        if (!deptName) return;
-
-        try {
-            const response = await fetch(`${API_URL}/api/department`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    department: deptName,
-                    // Internal name will be handled by backend
-                }),
-            });
-
-            if (response.ok) {
-                try {
-                    const response2 = await fetch(`${API_URL}/api/create-collection`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ collectionName: deptName }) // ✅ correct
-                    });
-
-                    if (!response2.ok) {
-                        throw new Error('Failed to create collection');
-                    }
-
-                    const data2 = await response2.json();
-                    console.log(data2.message);
-                    alert(data2.message);
-
-                } catch (error) {
-                    console.error('Error creating collection:', error);
-                    alert('Error creating collection');
-                }
-                setNewDepartmentName("");
-                setIsDepartmentModalOpen(false);
-                fetchDepartments();
-            } else {
-                console.error("Failed to add department");
-            }
-        } catch (err) {
-            console.error("Error adding department:", err);
-        }
-    };
-
-    const handleUnarchiveDepartments = async () => {
-        try {
-            await Promise.all(
-                selectedArchivedDepartments.map(id =>
-                    fetch(`${API_URL}/api/department/${id}`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: "Active" }),
-                    })
-                )
-            );
-            setIsArchiveModalOpen(false);
-            setSelectedArchivedDepartments([]);
-            fetchDepartments();
-        } catch (err) {
-            console.error("Failed to unarchive departments:", err);
-        }
-    };
+    //         if (response.ok) {
+    //             const updatedUser = await response.json();
+    //             setUserData(prevData => {
+    //                 const updatedUsers = prevData.map(u => u._id === user._id ? updatedUser : u);
+    //                 setCachedValue('userData', updatedUsers);
+    //                 return updatedUsers;
+    //             });
+    //         } else {
+    //             console.error("Failed to update user status");
+    //         }
+    //     } catch (err) {
+    //         console.error("Error updating user status:", err);
+    //     }
+    // };
 
     const fetchAudits = async () => {
         try {
@@ -272,13 +190,6 @@ function Departments({ setIsLoggedIn }) {
         fetchAudits();
     }, []);
 
-    const lastActiveTime = useMemo(() => {
-        if (!status?.user_name || !audits.length) return null;
-        // Audits are fetched sorted by changedAt desc
-        const latest = audits.find(a => a.changedByUserName === status.user_name);
-        return latest ? latest.changedAt : null;
-    }, [audits, status]);
-
     useEffect(() => {
         if (!status?.department) return;
 
@@ -286,7 +197,7 @@ function Departments({ setIsLoggedIn }) {
         setIsDepartment(isAnyDepartmentTrue);
 
         if (status.department.length > 0 && !selectedDepartment) {
-            setSelectedDepartment(status.department[0]);
+            // setSelectedDepartment(status.department[0]);
         }
     }, [status, selectedDepartment]);
     useEffect(() => {
@@ -298,9 +209,14 @@ function Departments({ setIsLoggedIn }) {
         const projectsCacheKey = `projects_${matchedDepartmentData}`;
         const columnsCacheKey = `columns_${matchedDepartmentColumn}`;
         const cachedProjects = getCachedValue(projectsCacheKey, null);
+        const cachedColumns = getCachedValue(columnsCacheKey, null);
 
         if (cachedProjects) {
             setProjects(cachedProjects);
+        }
+
+        if (cachedColumns) {
+            setProjectColumns(cachedColumns);
         }
 
         const fetchProjectsAndCount = async () => {
@@ -312,6 +228,7 @@ function Departments({ setIsLoggedIn }) {
                 const data = await projectsRes.json();
                 const columns = await columnsRes.json();
                 setProjects(data);
+                setProjectColumns(columns);
                 setCachedValue(projectsCacheKey, data);
                 setCachedValue(columnsCacheKey, columns);
                 // Find Status column for active filter (used when clicking ACTIVE card)
@@ -556,52 +473,6 @@ function Departments({ setIsLoggedIn }) {
             fetchProjectsAndCount();
         }
     }, [status, matchedDepartmentData, matchedDepartmentColumn, userData]);
-    const handleCheckboxChange = async (event, user, deptName) => {
-        const { checked } = event.target;
-        let updatedDepartments = user.department || [];
-
-        if (checked) {
-            if (!updatedDepartments.includes(deptName)) {
-                updatedDepartments = [...updatedDepartments, deptName];
-            }
-        } else {
-            updatedDepartments = updatedDepartments.filter(d => d !== deptName);
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/api/user/${user._id}`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ department: updatedDepartments }),
-            });
-
-            if (response.ok) {
-                const updatedUser = await response.json();
-                setUserData(prevData => {
-                    const updatedUsers = prevData.map(u => u._id === user._id ? updatedUser : u);
-                    setCachedValue('userData', updatedUsers);
-                    return updatedUsers;
-                });
-            } else {
-                console.error("Failed to update department");
-            }
-        } catch (err) {
-            console.error("Error updating department:", err);
-        }
-    };
-
-    const columns = [
-        {
-            header: 'Department',
-            accessor: 'department',
-            render: (row) => (
-                <Link to={`/department/${row.name.replace(/\d+/g, "")}`}
-                    className="text-white text-decoration-none fw-bold">{row.department}</Link>
-            )
-        },
-    ];
 
     return (
         < div className="main-parent" >
@@ -612,16 +483,15 @@ function Departments({ setIsLoggedIn }) {
                         status={status}
                         totalProjects={totalProjects}
                         projectsByStatus={projectsByStatus}
-                        setSelectedDepartment={setSelectedDepartment}
                         activeProjectsCount={activeProjectsCount}
                         countsLoading={countsLoading}
                     />
                 ) : (
                     <DepartmentFilters
                         result={result}
+                        isFiltersLoading={isFiltersLoading}
                         projects={projects}
-                        isEditUserModalOpen={isEditUserModalOpen}
-                        setIsEditUserModalOpen={setIsEditUserModalOpen}
+                        columns={projectColumns}
                         isModalOpen={isModalOpen}
                         setSelectedArchivedDepartments={setSelectedArchivedDepartments}
                         selectedDepartment={selectedDepartment}
@@ -635,9 +505,7 @@ function Departments({ setIsLoggedIn }) {
                         isDepartment={isDepartment}
                         setIsDepartment={setIsDepartment}
                         status={status}
-                        handleUnarchiveDepartments={handleUnarchiveDepartments}
                         selectedArchivedDepartments={selectedArchivedDepartments}
-                        addUser={addUser}
                         departments={departments}
                         totalProjects={adminTotalProjects}
                         totalTasks={adminTotalTasks}
@@ -645,201 +513,11 @@ function Departments({ setIsLoggedIn }) {
                         countsLoading={countsLoading}
                         activeTasksByUser={adminActiveTasksByUser}
                         confirmationPendingCount={adminConfirmationPendingCount}
-                        setSelectedDepartment={setSelectedDepartment}
+                        // setSelectedDepartment={setSelectedDepartment}
                         projectsByStatus={projectsByStatus}
                     />
                 )}
-                {status?.status === 'admin' &&
-                    <div className="custom_alert_first_row py-3 px-4 bg-white rounded mt-4">
-                        <h4 className="mb-4 fw-bold text-white">Manage departments</h4>
-                        <div className="row">
-                            {departments.map((row, rowIndex) => row.status !== 'archived' && (
-                                (status?.status === 'admin' || status?.department?.includes(row.department)) && (
-                                    <div className="col-12 col-md-12 col-lg-4 mb-3" key={rowIndex}>
-                                        {columns.map((column, colIndex) => (
-                                            <div className={`cell-input-wrapper rounded p-3 ${rowIndex}`} key={colIndex}>
-                                                <div className="d-flex gap-2 align-items-center justify-content-between">
-                                                    {column.render
-                                                        ? column.render(row, rowIndex)
-                                                        : row[column.accessor]}
-                                                    {status?.status === 'admin' && column.accessor === 'department' && (
-                                                        <button
-                                                            className="action-btn-mini text-white action-btn-mini_ct"
-                                                            title="Edit"
-                                                            onClick={() => {
-                                                                setEditingDepartment(row);
-                                                                setIsModalOpen(true);
-                                                            }}
-                                                        >
-                                                            <LiaEditSolid />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )
-                            ))}
-                        </div>
-                    </div>}
-
-                {/* Edit User Status Modal */}
-                {
-                    isEditUserModalOpen && (
-                        <div className="modal-overlay" style={{
-                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-                            justifyContent: 'center', alignItems: 'center', zIndex: 1000
-                        }}>
-                            <div className="modal-content" style={{
-                                backgroundColor: 'white', padding: '20px', borderRadius: '8px',
-                                width: '500px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-                            }}>
-                                <div className="d-flex justify-content-between align-items-center mb-3">
-                                    <h4 className="m-0"><strong>Edit User Status</strong></h4>
-                                    <button type="button" className="close-btn" onClick={() => setIsEditUserModalOpen(false)} aria-label="Close"><IoCloseSharp /></button>
-                                </div>
-                                <div>
-                                    {userData
-                                        .filter(user => user.user_name !== 'Mandasa Technologies')
-                                        .map((user) => (
-                                            <div key={user._id} className="d-flex justify-content-between align-items-center border-bottom py-2">
-                                                <span className="fw-semibold">{user.user_name}</span>
-                                                <div className="d-flex gap-3">
-                                                    <div className="form-check">
-                                                        <input
-                                                            className="form-check-input"
-                                                            type="radio"
-                                                            name={`status - ${user._id} `}
-                                                            id={`staff - ${user._id} `}
-                                                            value="staff"
-                                                            checked={user.status === 'staff'}
-                                                            onChange={() => handleStatusChange(user, 'staff')}
-                                                        />
-                                                        <label className="form-check-label" htmlFor={`staff - ${user._id} `}>Staff</label>
-                                                    </div>
-                                                    <div className="form-check">
-                                                        <input
-                                                            className="form-check-input"
-                                                            type="radio"
-                                                            name={`status - ${user._id} `}
-                                                            id={`admin - ${user._id} `}
-                                                            value="admin"
-                                                            checked={user.status === 'admin'}
-                                                            onChange={() => handleStatusChange(user, 'admin')}
-                                                        />
-                                                        <label className="form-check-label" htmlFor={`admin - ${user._id} `}>Admin</label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
-
-                {
-                    isDepartmentModalOpen && (
-                        <div className="modal-overlay" style={{
-                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-                            justifyContent: 'center', alignItems: 'center', zIndex: 1000
-                        }}>
-                            <div className="modal-content" style={{
-                                backgroundColor: 'white', padding: '20px', borderRadius: '8px',
-                                width: '400px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-                            }}>
-                                <div className="d-flex justify-content-between align-items-center mb-3">
-                                    <h4 className="m-0">Add New Department</h4>
-                                    <button type="button" className="close-btn" onClick={() => setIsDepartmentModalOpen(false)} aria-label="Close"><IoCloseSharp /></button>
-                                </div>
-                                <form onSubmit={handleSaveDepartment}>
-                                    <div className="mb-3">
-                                        <label htmlFor="deptName" className="form-label">Department Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            id="deptName"
-                                            value={newDepartmentName}
-                                            onChange={(e) => setNewDepartmentName(e.target.value)}
-                                            placeholder="e.g. Design"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="d-flex justify-content-end gap-2">
-                                        <button type="button" className="btn btn-secondary" onClick={() => setIsDepartmentModalOpen(false)}>Cancel</button>
-                                        <button type="submit" className="btn btn-primary">Save Department</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )
-                }
-
-                {
-                    isArchiveModalOpen && (
-                        <div className="modal-overlay" style={{
-                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-                            justifyContent: 'center', alignItems: 'center', zIndex: 1000
-                        }}>
-                            <div className="modal-content" style={{
-                                backgroundColor: 'white', padding: '20px', borderRadius: '8px',
-                                width: '400px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', maxHeight: '80vh', overflowY: 'auto'
-                            }}>
-                                <div className="d-flex justify-content-between align-items-center mb-3">
-                                    <h4 className="m-0">Archived Departments</h4>
-                                    <button type="button" className="close-btn" onClick={() => setIsArchiveModalOpen(false)} aria-label="Close"><IoCloseSharp /></button>
-                                </div>
-                                <div className="mb-3">
-                                    {departments.filter(d => d.status === 'archived').length === 0 ? (
-                                        <p className="text-muted">No archived departments.</p>
-                                    ) : (
-                                        <div className="list-group">
-                                            {departments.filter(d => d.status === 'archived').map(dept => (
-                                                <label key={dept._id} className="list-group-item d-flex gap-2 align-items-center" style={{ cursor: "pointer" }}>
-                                                    <input
-                                                        className="form-check-input flex-shrink-0 m-0"
-                                                        type="checkbox"
-                                                        value={dept._id}
-                                                        checked={selectedArchivedDepartments.includes(dept._id)}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setSelectedArchivedDepartments(prev => [...prev, dept._id]);
-                                                            } else {
-                                                                setSelectedArchivedDepartments(prev => prev.filter(id => id !== dept._id));
-                                                            }
-                                                        }}
-                                                    />
-                                                    <span>
-                                                        {dept.department}
-                                                    </span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="d-flex justify-content-end gap-2">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setIsArchiveModalOpen(false)}>Close</button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-primary"
-                                        onClick={handleUnarchiveDepartments}
-                                        disabled={selectedArchivedDepartments.length === 0}
-                                    >
-                                        Unarchive Selected
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
             </section>
-
-            <EditDepartment handleCheckboxChange={handleCheckboxChange} userData={userData} isModalOpen={isModalOpen} onClose={() => setIsModalOpen(false)} department={editingDepartment} fetchDepartments={fetchDepartments} />
-
-            <UserForm isUserFormOpen={isUserFormOpen} onClose={() => setIsUserFormOpen(false)} onUserCreated={fetchUsers} />
         </div >
     );
 }
