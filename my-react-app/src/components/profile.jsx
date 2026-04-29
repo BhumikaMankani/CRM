@@ -8,7 +8,10 @@ function Profile({ handleLogout, status }) {
                 <div className="popup-user-details d-flex justify-content-between align-items-center w-100">
                     <div className="popup-name fw-bold text-white">{status?.user_name}</div>
                     <span className={`status-badge ${status?.status}`}>
-                        {status?.status?.charAt(0).toUpperCase() + status?.status?.slice(1)}
+                        {status?.status === 'staff' ?
+                        ("Team leader")
+                        : (status?.status?.charAt(0).toUpperCase() + status?.status?.slice(1)
+                        )}
                     </span>
                 </div>
             </div>
