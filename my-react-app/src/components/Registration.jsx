@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { API_URL } from "../../proxy";
 import Departments from "../pages/dapartment";
 
-function Registration({ onLoginSuccess }) {
+function Registration({ onLoginSuccess, setSelectedDepartment, selectedDepartment }) {
+    console.log("Registration component rendered with selectedDepartment:", selectedDepartment);
     const navigate = useNavigate();
     const [credentials, setCredentials] = useState({
         email: '',
@@ -54,6 +55,7 @@ function Registration({ onLoginSuccess }) {
                 localStorage.setItem('Password', JSON.stringify(hashedPassword));
                 localStorage.setItem('user', JSON.stringify(data.user));
                 sessionStorage.setItem('user', JSON.stringify(data.user));
+                setSelectedDepartment(data.user.department[0]); // Set to user's first department
                 onLoginSuccess();
                 navigate('/');
             } else {

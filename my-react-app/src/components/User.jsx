@@ -5,7 +5,7 @@ import md5 from "md5";
 import './custom.css'
 import { API_URL } from "../../proxy";
 
-const STATUS_OPTIONS = ["staff", "admin"];
+const STATUS_OPTIONS = ["Team leader", "admin"];
 
 const initialForm = {
     user_name: "",

@@ -557,32 +557,32 @@ function showImportToast({ added, skippedDuplicate, skippedBlank, skippedError, 
 
     if (added > 0) {
         reasonRows += `
-          <div class="_toast-row">
-            <span class="_toast-badge _badge-green">+${added} added</span>
+          <div className="_toast-row">
+            <span className="_toast-badge _badge-green">+${added} added</span>
             <span>Rows successfully imported</span>
           </div>`;
     }
 
     if (skippedDuplicate > 0) {
         reasonRows += `
-          <div class="_toast-row">
-            <span class="_toast-badge _badge-yellow">${skippedDuplicate} skipped</span>
+          <div className="_toast-row">
+            <span className="_toast-badge _badge-yellow">${skippedDuplicate} skipped</span>
             <span>Already exist in the table</span>
           </div>`;
     }
 
     if (skippedBlank > 0) {
         reasonRows += `
-          <div class="_toast-row">
-            <span class="_toast-badge _badge-red">${skippedBlank} skipped</span>
+          <div className="_toast-row">
+            <span className="_toast-badge _badge-red">${skippedBlank} skipped</span>
             <span>Match column (ID) was blank</span>
           </div>`;
     }
 
     if (skippedError > 0) {
         reasonRows += `
-          <div class="_toast-row">
-            <span class="_toast-badge _badge-gray">${skippedError} skipped</span>
+          <div className="_toast-row">
+            <span className="_toast-badge _badge-gray">${skippedError} skipped</span>
             <span>Could not be processed</span>
           </div>`;
     }
@@ -598,15 +598,15 @@ function showImportToast({ added, skippedDuplicate, skippedBlank, skippedError, 
     }
 
     toast.innerHTML = `
-      <div class="_toast-header">
-        <span class="_toast-title">${icon} ${title}</span>
-        <button class="_toast-close" onclick="this.closest('._toast').remove()">✕</button>
+      <div className="_toast-header">
+        <span className="_toast-title">${icon} ${title}</span>
+        <button className="_toast-close" onclick="this.closest('._toast').remove()">✕</button>
       </div>
-      <div class="_toast-body">
+      <div className="_toast-body">
         <div style="margin-bottom:6px; font-size:13px; color:#555;">${summaryText}</div>
-        <hr class="_toast-divider"/>
+        <hr className="_toast-divider"/>
         ${reasonRows}
-        <div class="_toast-footer" style="margin-top:8px;">
+        <div className="_toast-footer" style="margin-top:8px;">
           ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>`;

@@ -95,6 +95,19 @@ router.put("/columnAccess", async (req, res) => {
     }
 });
 
+// Delete user
+router.delete("/:id", async (req, res) => {
+    try {
+        const deletedUser = await User.findByIdAndDelete(req.params.id);
+        if (!deletedUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.json(deletedUser);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Update user (department and/or status)
 router.patch("/:id", async (req, res) => {
     console.log(`Patching user ${req.params.id} with:`, req.body);

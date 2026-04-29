@@ -2,14 +2,11 @@ import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_URL } from "../../proxy";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
-import { LiaLockSolid } from "react-icons/lia";
-
 import logo from "../assets/ea72b0a312922dca13f69c2e529e6abebde9ecc2.svg";
-const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => {
+const Header = ({ allDepartments, handleDepartmentChange, selectedDepartment, isHome, status }) => {
     const navigate = useNavigate();
     const [audits, setAudits] = useState([]);
     const location = useLocation();
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const fetchAudits = useCallback(async () => {
         try {
@@ -42,6 +39,22 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
 
     }, [audits, status]);
 
+    const getDepartmentOrderIndex = (deptName) => {
+        const order = ['development', 'seo', 'marketing', 'sales'];
+        const index = order.indexOf(deptName?.toLowerCase?.() || '');
+        return index === -1 ? order.length : index;
+    };
+
+    const orderedUserDepartments = useMemo(() => {
+        if (!status?.department) return [];
+        return [...status.department].sort((a, b) => getDepartmentOrderIndex(a) - getDepartmentOrderIndex(b));
+    }, [status?.department]);
+
+    const orderedAllDepartments = useMemo(() => {
+        if (!allDepartments?.length) return [];
+        return [...allDepartments].sort((a, b) => getDepartmentOrderIndex(a?.department) - getDepartmentOrderIndex(b?.department));
+    }, [allDepartments]);
+
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -58,8 +71,8 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
     }, []);
 
     return (
-        <header className='pt-2 pb-2'>
-            <div className="d-flex justify-content-between gap-2 mb-2">
+    <header className={`pt-2 pb-2 ${isHome ? 'left__300' : ''}`}>
+            <div className="d-flex justify-content-between gap-2">
                 <div className="d-flex align-items-center gap-3">
                     {location.pathname !== '/' && (
                         <button
@@ -71,39 +84,61 @@ const Header = ({ status, handleLogout, setIsDepartmentModalOpen, heading }) => 
                             <FaArrowLeft size={12} />
                         </button>
                     )}
-                    <h1 className='text-left logo fw-bold m-0' style={{ fontSize: '1.5rem' }}><img width="100%" height="auto" alt="Mandasa crm" loading="lazy" src={logo}></img></h1>
+
+                    {location.pathname === '/' && (
+                        <div className="staff__analytic p-1 d-flex align-items-center gap-2">
+                            {status?.status === 'admin' && allDepartments.length > 1 ? (
+                                <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
+                                    {orderedAllDepartments?.map(dept => dept?.status !== 'archived' && (
+                                        <li className="nav-item" key={dept?.department}>
+                                            <button
+                                                className={`${selectedDepartment?.toLowerCase() === dept?.department?.toLowerCase() ? 'active' : ''} rounded pl-4 pr-4 btn-sm bg-transparent
+                                                    `}
+                                                onClick={() => handleDepartmentChange(dept?.department)}
+
+                                                style={{ cursor: 'pointer', border: '1px solid transparent', color: "#6b7280", fontSize: "12.5px" }}
+                                            >
+                                                {dept?.department ? dept?.department?.charAt(0).toUpperCase() + dept?.department?.slice(1) : ''}
+                                            </button>
+                                        </li>
+
+                                    ))}
+                                </ul>
+                            ) : (
+                                <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
+                                    {orderedUserDepartments && orderedUserDepartments.length > 1 && orderedUserDepartments.map((dept) => (
+                                        <li className="nav-item" aria-length={dept.length} key={dept}>
+                                            <button
+                                                className={`${selectedDepartment?.toLowerCase() === dept?.toLowerCase() ? 'active' : ''} rounded pl-4 pr-4 btn-sm bg-transparent
+                                                    `}
+                                                onClick={() => handleDepartmentChange(dept)}
+
+                                                style={{ cursor: 'pointer', border: '1px solid transparent', color: "#6b7280", fontSize: "12.5px" }}
+                                            >
+                                                {dept.charAt(0).toUpperCase() + dept.slice(1)}
+                                            </button>
+                                        </li>
+
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+                    {location.pathname !== '/' && (
+                        <h1 className='text-left logo fw-bold m-0' style={{ fontSize: '1.5rem' }}><img width="100%" height="auto" alt="Mandasa crm" loading="lazy" src={logo}></img></h1>
+                    )}
                 </div>
                 <div className='d-flex justify-content-center align-items-center gap-2'>
                     {lastActiveTime && (
-                        <p className="text-dark fw-bold mb-0" style={{ fontSize: '16px' }}>
-                            Last update: <span class="text-primary">
+                        <p className="text-light-custom mb-0" style={{ fontSize: '11.5px' }}>
+                            Last update: <span className="text-light-custom">
                                 {new Date(lastActiveTime).toLocaleString()}
                             </span>
                         </p>
                     )}
-                    <div className="custom-dropdown" ref={dropdownRef}>
-                        <div
-                            className="dropdown-toggle d-flex align-items-center gap-2 cursor-pointer"
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        >
-                            <span className="profile">{status?.user_name?.[0]?.toUpperCase()}</span>
-                        </div>
-                        {isDropdownOpen && (
-                            <div className="dropdown-menu-custom">
-                                <div className="dropdown-user-info">
-                                    <p className="mb-0 fw-bold">{status?.user_name}</p>
-                                    <p className="mb-0 text-muted small">{status?.email}</p>
-                                </div>
-                                <div className="dropdown-divider"></div>
-                                <button className="dropdown-item-custom" style={{ color: "#e87c00" }} onClick={handleLogout}>
-                                    <LiaLockSolid />
-                                    Logout
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-
+                    {status && (
+                        <div className="dup_avatar">{status?.user_name?.[0]?.toUpperCase()}</div>
+                    )}
                 </div>
             </div>
         </header >
