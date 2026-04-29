@@ -136,28 +136,33 @@ const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
 
 export default Table;
 
-// import React, { useState } from 'react';
+// import React, { useState, useEffect } from 'react';
 // import './table.css';
 // // import Updator from './updator';
 // import 'bootstrap/dist/css/bootstrap.min.css';
 // import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
-// const PAGE_SIZE = 100;
+// const PAGE_SIZE = 50;
 
-// const Table = ({ columns, data, onAddClick, onAddColumnClick, onDragEnd }) => {
+// const Table = ({ columns, data, onDragEnd }) => {
 //     const [currentPage, setCurrentPage] = useState(1);
 
 //     const totalPages = Math.ceil(data.length / PAGE_SIZE);
+//     const safeCurrentPage = Math.min(Math.max(currentPage, 1), Math.max(totalPages, 1));
 //     const paginatedData = data.slice(
-//         (currentPage - 1) * PAGE_SIZE,
-//         currentPage * PAGE_SIZE
+//         (safeCurrentPage - 1) * PAGE_SIZE,
+//         safeCurrentPage * PAGE_SIZE
 //     );
 
-//     const add = () => {
-//         return (
-//             <svg viewBox="0 0 16 16" fill="none" xmlnsXlink="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M10 1H6V6L1 6V10H6V15H10V10H15V6L10 6V1Z" fill="#000000"></path> </g></svg>
-//         )
-//     }
+//     const startRow = data.length === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1;
+//     const endRow = Math.min(safeCurrentPage * PAGE_SIZE, data.length);
+
+//     useEffect(() => {
+//         const resetPage = async () => {
+//             setCurrentPage(1);
+//         };
+//         resetPage();
+//     }, [data]);
 
 //     return (
 //         <div className='row'>
@@ -229,9 +234,10 @@ export default Table;
 //                                 ) : null}
 //                             </thead>
 //                             <tbody>
-//                                 {paginatedData.map((row, rowIndex) => (
-//                                     columns.length > 1 ? (
-//                                         <tr key={row._id || rowIndex}>
+//                                 {paginatedData.map((row, rowIndex) => {
+//                                     const absoluteRowIndex = (safeCurrentPage - 1) * PAGE_SIZE + rowIndex;
+//                                     return columns.length > 1 ? (
+//                                         <tr key={row._id || absoluteRowIndex}>
 //                                             {columns.map((column, colIndex) => {
 //                                                 const cellProps = column.getCellProps ? column.getCellProps(row) : {};
 //                                                 const isSticky = column.sticky || colIndex === 0;
@@ -266,13 +272,13 @@ export default Table;
 //                                                         className={`${cellProps.className || ''} ${isSticky ? 'sticky-col' : ''}`}
 //                                                         style={style}
 //                                                     >
-//                                                         {column.render ? column.render(row, rowIndex) : row[column.accessor]}
+//                                                         {column.render ? column.render(row, absoluteRowIndex) : row[column.accessor]}
 //                                                     </td>
 //                                                 );
 //                                             })}
 //                                         </tr>
-//                                     ) : null
-//                                 ))}
+//                                     ) : null;
+//                                 })}
 //                             </tbody>
 //                         </table>
 //                     </DragDropContext>
@@ -280,7 +286,7 @@ export default Table;
 
 //                 {/* ── Pagination controls ── */}
 //                 {totalPages > 1 && (
-//                     <div style={{ "justifyContent": "center", display: 'flex', alignItems: 'center', gap: 8, padding: '12px 4px', flexWrap: 'wrap' }}>
+//                     <div className='pagination_table' style={{ "justifyContent": "center", display: 'flex', alignItems: 'center', gap: 8, padding: '12px 4px', flexWrap: 'wrap' }}>
 //                         <button
 //                             className="btn btn-sm btn-outline-secondary"
 //                             disabled={currentPage === 1}
@@ -288,13 +294,13 @@ export default Table;
 //                         >
 //                             «
 //                         </button>
-//                         <button
+//                         {/* <button
 //                             className="btn btn-sm btn-outline-secondary"
 //                             disabled={currentPage === 1}
 //                             onClick={() => setCurrentPage(p => p - 1)}
 //                         >
 //                             ‹ Prev
-//                         </button>
+//                         </button> */}
 
 //                         {/* Page number pills */}
 //                         {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -316,7 +322,7 @@ export default Table;
 //                                 ) : (
 //                                     <button
 //                                         key={item}
-//                                         className={`btn btn-sm ${item === currentPage ? 'btn-secondary' : 'btn-outline-secondary'}`}
+//                                         className={`btn btn-sm ${item === currentPage ? 'btn-primary' : 'btn-outline-secondary'}`}
 //                                         onClick={() => setCurrentPage(item)}
 //                                     >
 //                                         {item}
@@ -325,13 +331,13 @@ export default Table;
 //                             )
 //                         }
 
-//                         <button
+//                         {/* <button
 //                             className="btn btn-sm btn-outline-secondary"
 //                             disabled={currentPage === totalPages}
 //                             onClick={() => setCurrentPage(p => p + 1)}
 //                         >
 //                             Next ›
-//                         </button>
+//                         </button> */}
 //                         <button
 //                             className="btn btn-sm btn-outline-secondary"
 //                             disabled={currentPage === totalPages}
@@ -340,8 +346,8 @@ export default Table;
 //                             »
 //                         </button>
 
-//                         <span style={{ fontSize: 13, color: '#888', marginLeft: 8 }}>
-//                             {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, data.length)} of {data.length} rows
+//                         <span style={{ fontSize: 13, color: '#000', marginLeft: 8 }}>
+//                             {startRow}–{endRow} of {data.length} rows
 //                         </span>
 //                     </div>
 //                 )}

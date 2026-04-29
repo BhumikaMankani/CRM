@@ -2,9 +2,8 @@ import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_URL } from "../../proxy";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
-
 import logo from "../assets/ea72b0a312922dca13f69c2e529e6abebde9ecc2.svg";
-const Header = ({ currentUser, fetchDepartments, allDepartments, handleDepartmentChange, selectedDepartment, setSelectedDepartment, isDrawerOpen, status, handleLogout, setIsDepartmentModalOpen, heading, toggleDrawer }) => {
+const Header = ({ allDepartments, handleDepartmentChange, selectedDepartment, isHome, status }) => {
     const navigate = useNavigate();
     const [audits, setAudits] = useState([]);
     const location = useLocation();
@@ -40,6 +39,22 @@ const Header = ({ currentUser, fetchDepartments, allDepartments, handleDepartmen
 
     }, [audits, status]);
 
+    const getDepartmentOrderIndex = (deptName) => {
+        const order = ['development', 'seo', 'marketing', 'sales'];
+        const index = order.indexOf(deptName?.toLowerCase?.() || '');
+        return index === -1 ? order.length : index;
+    };
+
+    const orderedUserDepartments = useMemo(() => {
+        if (!status?.department) return [];
+        return [...status.department].sort((a, b) => getDepartmentOrderIndex(a) - getDepartmentOrderIndex(b));
+    }, [status?.department]);
+
+    const orderedAllDepartments = useMemo(() => {
+        if (!allDepartments?.length) return [];
+        return [...allDepartments].sort((a, b) => getDepartmentOrderIndex(a?.department) - getDepartmentOrderIndex(b?.department));
+    }, [allDepartments]);
+
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -56,7 +71,7 @@ const Header = ({ currentUser, fetchDepartments, allDepartments, handleDepartmen
     }, []);
 
     return (
-    <header className={`pt-2 pb-2 ${location.pathname === '/' ? (isDrawerOpen ? 'left__300' : '') : ''}`}>
+    <header className={`pt-2 pb-2 ${isHome ? 'left__300' : ''}`}>
             <div className="d-flex justify-content-between gap-2">
                 <div className="d-flex align-items-center gap-3">
                     {location.pathname !== '/' && (
@@ -72,9 +87,9 @@ const Header = ({ currentUser, fetchDepartments, allDepartments, handleDepartmen
 
                     {location.pathname === '/' && (
                         <div className="staff__analytic p-1 d-flex align-items-center gap-2">
-                            {currentUser?.status === 'admin' && allDepartments.length > 1 ? (
+                            {status?.status === 'admin' && allDepartments.length > 1 ? (
                                 <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
-                                    {allDepartments?.map(dept => dept?.status !== 'archived' && (
+                                    {orderedAllDepartments?.map(dept => dept?.status !== 'archived' && (
                                         <li className="nav-item" key={dept?.department}>
                                             <button
                                                 className={`${selectedDepartment?.toLowerCase() === dept?.department?.toLowerCase() ? 'active' : ''} rounded pl-4 pr-4 btn-sm bg-transparent
@@ -91,8 +106,8 @@ const Header = ({ currentUser, fetchDepartments, allDepartments, handleDepartmen
                                 </ul>
                             ) : (
                                 <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
-                                    {currentUser?.department && currentUser.department.map((dept) => (
-                                        <li className="nav-item" key={dept}>
+                                    {orderedUserDepartments && orderedUserDepartments.length > 1 && orderedUserDepartments.map((dept) => (
+                                        <li className="nav-item" aria-length={dept.length} key={dept}>
                                             <button
                                                 className={`${selectedDepartment?.toLowerCase() === dept?.toLowerCase() ? 'active' : ''} rounded pl-4 pr-4 btn-sm bg-transparent
                                                     `}
@@ -120,6 +135,9 @@ const Header = ({ currentUser, fetchDepartments, allDepartments, handleDepartmen
                                 {new Date(lastActiveTime).toLocaleString()}
                             </span>
                         </p>
+                    )}
+                    {status && (
+                        <div className="dup_avatar">{status?.user_name?.[0]?.toUpperCase()}</div>
                     )}
                 </div>
             </div>

@@ -22,8 +22,7 @@ import {
 
 import { useState } from 'react';
 
-function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArchivedDepartments, isArchiveModalOpen, setIsArchiveModalOpen, isModalOpen, setIsModalOpen, isDepartment, selectedDepartmentDown, isDepartmentModalOpen, setIsDepartmentModalOpen, projects, departments, status, totalProjects, totalTasks, activeProjectsCount, countsLoading = false, activeTasksByUser = {}, confirmationPendingCount, projectsByStatus, setSelectedDepartment }) {
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+function DepartmentFilters({ result, selectedDepartment, projects, status, totalProjects, activeProjectsCount, countsLoading = false, projectsByStatus }) {
     const [savedFilters, setSavedFilters] = useState([]);
 
     const savedFiltersCacheKey = status?._id ? `savedFilters_${status._id}_${selectedDepartment?.toLowerCase() || 'all'}` : null;
@@ -52,7 +51,7 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
             setSavedFilters(cachedFilters);
         }
     }, [savedFiltersCacheKey]);
-        const fetchSavedFilters = useCallback(async () => {
+    const fetchSavedFilters = useCallback(async () => {
         if (!status?._id) return;
         try {
             const url = `${API_URL}/api/filters?userId=${status._id}${selectedDepartment ? `&department=${selectedDepartment?.toLowerCase() || 'all'}` : ""}`;
@@ -191,7 +190,7 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
     const projectOverviewFilters = savedFilters.filter(f =>
         f.showInDepartment &&
         f.department === selectedDepartment?.toLowerCase() &&
-        (f.filterName.toLowerCase().includes("tasks") || f.filterName.toLowerCase().includes("projects"))
+        (f.filterName.toLowerCase().includes("all active projects") || f.filterName.toLowerCase().includes("completed"))
     );
 
     const teamPerformanceFilters = savedFilters.filter(f =>
@@ -201,7 +200,7 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
     );
 
     const StatCard = ({ icon: Icon, title, value, colorClass, link, accentClass, trend }) => (
-        <div className="col-md-3 mb-4">
+        <div className="col-md-3">
             <Link to={link} className="text-decoration-none">
                 <div className={`custom-card ${colorClass}`}>
                     <div className={`icon-box ${colorClass}`}>
@@ -211,7 +210,7 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
                     <h2 className={`card-value-large text-${colorClass} ff-outfit`}>
                         {renderCountValue(value, 0, false)}
                     </h2>
-                    <div className={`card-accent-border ${accentClass}`}></div>
+                    {/* <div className={`card-accent-border ${accentClass}`}></div> */}
                 </div>
             </Link>
         </div>
@@ -285,16 +284,16 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
 
     return (
         <div className="">
-            <div className='custom_alert_first_row py-4 px-4 rounded mb-4'>
+            <div className='custom_alert_first_row bg-white py-4 px-4 rounded mb-4'>
                 <div className="col-md-12">
                     <div className="d-flex justify-content-between align-items-start">
                         <div>
-                            <h2 className="fw-bold mb-1 fs-4 text-white ff-outfit"> <strong> Welcome back, {status.user_name}!</strong>👋</h2>
-                            <p className='text-primary-light mb-0 mt-1' style={{ fontSize: "14px", fontWeight: "400" }}>
+                            <h2 className="fw-bold mb-1 fs-4 text-dark ff-outfit"> <strong> Welcome back, {status.user_name}!</strong>👋</h2>
+                            <p className='text-dark mb-0 mt-1' style={{ fontSize: "14px", fontWeight: "400" }}>
                                 "Here's your comprehensive projects & performance overview."
                             </p>
                         </div>
-                        <div className="d-flex align-items-center gap-2">
+                        {/* <div className="d-flex align-items-center gap-2">
                             {confirmationPendingCount > 0 && (
                                 <Link
                                     to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=confirmation-pending---projects`}
@@ -308,16 +307,16 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
                                     </div>
                                 </Link>
                             )}
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>
-                <div className="custom_alert row">
+            <div className={`custom_alert ${status?.status === 'staff' ? 'row' : ''}`}>
                 {status?.status === 'staff' && (
                     <>
                         <div className="col-md-3">
                             <Link
-                                to={`/department/${selectedDepartment?.toLowerCase()}`}
+                                to={`/department/${selectedDepartment?.toLowerCase()}${selectedDepartment == 'development' ? "?filter_name=" + status?.user_name?.toLowerCase() + "-projects" : ""}`}
                                 className="text-decoration-none"
                             >
                                 <div className="custom-card orange">
@@ -331,7 +330,7 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
                                         {renderCountValue(totalProjects)}
                                     </h2>
 
-                                    <div className="card-accent-border accent-orange"></div>
+                                    {/* <div className="card-accent-border accent-orange"></div> */}
                                 </div>
                             </Link>
                         </div>
@@ -351,7 +350,7 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
                                             {renderCountValue(card.count)}
                                         </h2>
 
-                                        <div className={`card-accent-border ${card.accentClass}`}></div>
+                                        {/* <div className={`card-accent-border ${card.accentClass}`}></div> */}
                                     </div>
                                 </Link>
                             </div>
@@ -374,15 +373,25 @@ function DepartmentFilters({ columns, result, selectedDepartment, setSelectedArc
                                 icon={FaTasks}
                                 title="Total Projects"
                                 value={result}
-                                colorClass="purple"
-                                accentClass="accent-purple"
+                                colorClass="sv-blue"
+                                accentClass="accent-sv-blue"
                                 link={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`}
                             />
 
                             {projectOverviewFilters.map((filter) => {
                                 const IconComponent = filter.filterName.toLowerCase().includes("completed") ? FaCheckCircle : (filter.filterName.toLowerCase().includes("active") ? GiRadioactive : getIconFromFilterName(filter.filterName));
-                                const colorClass = filter.filterName.toLowerCase().includes("completed") ? "green" : (filter.filterName.toLowerCase().includes("active") ? "red" : "orange");
-                                const accentClass = `accent-${colorClass}`;
+                                console.log("filter.filterName.toLowerCase()", filter.filterName.toLowerCase());
+                                const name = filter.filterName.toLowerCase();
+                                const colorClass =
+                                    name.includes("aditya")
+                                        ? "sc-teal"
+                                        : name.includes("nikhil")
+                                            ? "purple"
+                                            : name.includes("completed")
+                                                ? "cv-green"
+                                                : (name.includes("active") || name.includes("confirmation"))
+                                                    ? "red"
+                                                    : "orange"; const accentClass = `accent-${colorClass}`;
 
                                 return (
                                     <StatCard

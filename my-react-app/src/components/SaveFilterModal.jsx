@@ -141,11 +141,11 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                     {isAdmin && (
                         <div className="sharing-section mb-3">
                             <label className="form-label fw-bold d-flex align-items-center gap-2">
-                                <FaUsers /> Share with Staff
+                                <FaUsers /> Share with Team leader
                             </label>
                             <div className="staff-selection-box">
                                 {loadingStaff ? (
-                                    <p className="text-muted small mb-0">Loading staff members...</p>
+                                    <p className="text-muted small mb-0">Loading team leaders...</p>
                                 ) : staffList.length > 0 ? (
                                     <div className="">
                                         {staffList.map(staff => (
@@ -166,7 +166,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-muted small mb-0">No other staff members found.</p>
+                                    <p className="text-muted small mb-0">No other team leaders found.</p>
                                 )}
                             </div>
                             {/* <p className="text-muted smallest mt-2" style={{ fontSize: '0.75rem' }}>

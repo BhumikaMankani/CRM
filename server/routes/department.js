@@ -11,6 +11,9 @@ const makeSlug = (text) => {
         .replace(/[^a-z0-9_]/g, ""); // remove special chars
 };
 
+const escapeRegex = (text) => {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
 
 // Get all rows
 router.get("/", async (req, res) => {
@@ -51,11 +54,28 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
     try {
+        const existingDepartment = await Department.findById(req.params.id);
+        if (!existingDepartment) {
+            return res.status(404).json({ error: "Department not found" });
+        }
+
         const updated = await Department.findByIdAndUpdate(
             req.params.id,
             req.body,
             { new: true }
         );
+
+        if (req.body.status && req.body.status.toLowerCase() === "archived") {
+            const departmentToRemove = existingDepartment.department?.trim();
+            if (departmentToRemove) {
+                const regex = new RegExp(`^${escapeRegex(departmentToRemove)}$`, "i");
+                await User.updateMany(
+                    { department: { $in: [regex] } },
+                    { $pull: { department: regex } }
+                );
+            }
+        }
+
         res.json(updated);
     } catch (err) {
         res.status(500).json({ error: err.message });

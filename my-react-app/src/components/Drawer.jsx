@@ -5,15 +5,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './Drawer.css';
 import { API_URL } from '../../proxy';
 import EditDepartment from "./EditDepartment";
-import { LiaLockSolid, LiaEditSolid } from 'react-icons/lia';
+import { LiaEditSolid } from 'react-icons/lia';
 import { IoCloseSharp } from "react-icons/io5";
 import { MdArchive } from "react-icons/md";
 import { IoCreate } from "react-icons/io5";
 import { RiUserAddLine, RiDeleteBin6Line } from "react-icons/ri";
 import { LiaUserEditSolid } from "react-icons/lia";
 import UserForm from './User'
+import Profile from './profile';
 
-const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartments, isOpen, status, onClose, handleLogout }) => {
+const Drawer = ({ selectedDepartment, fetchDepartments, allDepartments, isOpen, status, onClose, handleLogout }) => {
     const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDepartment, setIsDepartment] = useState(false);
@@ -189,16 +190,6 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
             console.error("Failed to unarchive departments:", err);
         }
     };
-    // const fetchDepartments = async () => {
-    //     try {
-    //         const response = await fetch(`${API_URL}/api/department`);
-    //         const data = await response.json();
-    //         setDepartments(data);
-    //         setCachedValue('departments', data);
-    //     } catch (err) {
-    //         console.error("Failed to fetch departments:", err);
-    //     }
-    // };
 
     const handleDeleteUser = async () => {
         try {
@@ -240,9 +231,9 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
                                 Dashboard
                             </NavLink>
                         </div>
-                        <div className="drawer-nav-item">
+                        {/* <div className="drawer-nav-item">
                             <NavLink
-                                to="/departments/development"
+                                to="/department/development"
                                 className={({ isActive }) => `drawer-nav-link ${isActive ? 'active' : ''}`}
                                 onClick={onClose}
                             >
@@ -252,15 +243,15 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
                         </div>
                         <div className="drawer-nav-item">
                             <NavLink
-                                to="/departments/development"
+                                to="/department/development"
                                 className={({ isActive }) => `drawer-nav-link ${isActive ? 'active' : ''}`}
                                 onClick={onClose}
                             >
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
                                 Projects
                             </NavLink>
-                        </div>
-                        <div className="drawer-nav-item coming_soon_link">
+                        </div> */}
+                        {/* <div className="drawer-nav-item coming_soon_link">
                             <NavLink
                                 to="/team"
                                 className={({ isActive }) => `drawer-nav-link ${isActive ? 'active' : ''}`}
@@ -270,23 +261,23 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"></path></svg>
                                 Team
                             </NavLink>
-                        </div>
-                        <div className="drawer-nav-item coming_soon_link">
+                        </div> */}
+                        {/* <div className="drawer-nav-item coming_soon_link">
                             <NavLink
                                 to="/reports"
                                 className={({ isActive }) => `drawer-nav-link ${isActive ? 'active' : ''}`}
                                 onClick={onClose}
                             >
-                                <span className='coming_soon_badge'>COMING SOON</span>
+                                <span className='coming_soon_badge text-danger fw-bold'>COMING SOON</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>
                                 Reports
                             </NavLink>
-                        </div>
+                        </div> */}
                         <div className="nav-section">Departments</div>
-                        {currentUser?.status === 'admin' ? (
+                        {status?.status === 'admin' ? (
                             allDepartments.map((row, rowIndex) => row.status !== 'archived' && (
                                 <div className="drawer-nav-item" key={row.name}>
-                                    <div className={`drawer-nav-link ${selectedDepartment?.toLowerCase() === row?.department?.toLowerCase() ? 'active' : ''} d-flex justify-content-between`}>
+                                    <div className={`drawer-nav-link d-flex justify-content-between`}>
                                         <div className="d-flex align-items-center gap-2">
                                             <span className="dept-dot"></span>
                                             <NavLink className="text-decoration-none text-white" to={`/department/${row?.department?.toLowerCase()}`}>
@@ -306,11 +297,11 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
                                 </div>
                             ))
                         ) : (
-                            currentUser?.department?.map((dept) => (
+                            status?.department?.map((dept) => (
                                 <div className="drawer-nav-item" key={dept}>
                                     <NavLink
                                         to={`/department/${dept.toLowerCase()}`}
-                                        className={({ isActive }) => `drawer-nav-link ${selectedDepartment?.toLowerCase() === dept?.toLowerCase() ? 'active' : ''}`}
+                                        className={`drawer-nav-link`}
                                         onClick={onClose}
                                     >
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"></path></svg>
@@ -336,7 +327,7 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
                                         </div>
                                         <div>
                                             {userData
-                                                .filter(user => user.user_name !== currentUser.user_name)
+                                                .filter(user => user.user_name !== status.user_name)
                                                 .map((user) => (
                                                     <div key={user._id} className="d-flex justify-content-between align-items-center border-bottom py-2">
                                                         <div className="d-flex align-items-center gap-2">
@@ -353,7 +344,7 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
                                                                     checked={user.status === 'staff'}
                                                                     onChange={() => handleStatusChange(user, 'staff')}
                                                                 />
-                                                                <label className="form-check-label" htmlFor={`staff-${user._id}`}>Staff</label>
+                                                                <label className="form-check-label" htmlFor={`staff-${user._id}`}>Team leader</label>
                                                             </div>
                                                             <div className="form-check">
                                                                 <input
@@ -510,7 +501,7 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
                                 </div>
                             )
                         }
-                        {currentUser?.status === 'admin' && (
+                        {status?.status === 'admin' && (
                             <>
                                 <div className="nav-section">Create or Manage Departments</div>
 
@@ -552,23 +543,7 @@ const Drawer = ({ selectedDepartment, currentUser, fetchDepartments, allDepartme
                 </div >
 
                 <div className="drawer-footer">
-                    <div className="user-row rounded d-flex w-100 gap-2 flex-column position-relative">
-                        <div className="d-flex align-items-center gap-2 w-100">
-                            <div className="dup_avatar">{status?.user_name?.[0]?.toUpperCase()}</div>
-                            <div className="popup-user-details d-flex justify-content-between align-items-center w-100">
-                                <div className="popup-name fw-bold text-white">{status?.user_name}</div>
-                                <span className={`status-badge ${status?.status}`}>
-                                    {status?.status?.charAt(0).toUpperCase() + status?.status?.slice(1)}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="user-popup-footer w-100">
-                            <button className="cursor-pointer button button-primary d-flex align-items-center justify-content-center gap-2 rounded popup-logout-btn w-100" onClick={handleLogout}>
-                                <LiaLockSolid />
-                                Logout
-                            </button>
-                        </div>
-                    </div>
+                    <Profile handleLogout={handleLogout} status={status} />
                 </div>
             </div >
             <UserForm isUserFormOpen={isUserFormOpen} onClose={() => setIsUserFormOpen(false)} onUserCreated={fetchUsers} />
