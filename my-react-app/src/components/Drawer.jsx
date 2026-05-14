@@ -281,7 +281,7 @@ const Drawer = ({ selectedDepartment, fetchDepartments, allDepartments, isOpen, 
                                         <div className="d-flex align-items-center gap-2">
                                             <span className="dept-dot"></span>
                                             <NavLink className="text-decoration-none text-white" to={`/department/${row?.department?.toLowerCase()}`}>
-                                            {row?.department ? row?.department?.charAt(0).toUpperCase() + row?.department?.slice(1) : ''}</NavLink>
+                                                {row?.department ? row?.department?.charAt(0).toUpperCase() + row?.department?.slice(1) : ''}</NavLink>
                                         </div>
                                         <button
                                             className="action-btn-mini text-white action-btn-mini_ct"

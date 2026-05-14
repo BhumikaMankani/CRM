@@ -225,8 +225,26 @@ function Departments({ isFiltersLoading, selectedDepartment, setIsLoggedIn }) {
                 // Fetch projects and columns together (same as Development page)
                 const projectsRes = await fetch(`${API_URL}/api/data?collectionName=${matchedDepartmentData}s`);
                 const columnsRes = await fetch(`${API_URL}/api/columns?collectionName=${matchedDepartmentColumn}`);
-                const data = await projectsRes.json();
+                const allData = await projectsRes.json();
                 const columns = await columnsRes.json();
+
+                // Find Status column to filter out Archived rows
+                const statusColTemp = Array.isArray(columns) && columns.find(col => {
+                    const h = (col.column_heading || "").toLowerCase();
+                    return h.includes("status") && !h.includes("showstatus");
+                });
+                const statusFieldNameTemp = statusColTemp?.name ||
+                    Object.keys(allData[0] || {}).find(key => {
+                        const k = key.toLowerCase();
+                        return k.includes("status") && !k.includes("showstatus");
+                    }) || null;
+
+                // Filter out Archived tasks
+                const data = allData.filter(project => {
+                    const statusValue = statusFieldNameTemp ? project[statusFieldNameTemp] : null;
+                    return String(statusValue || "").trim().toLowerCase() !== "archived";
+                });
+
                 setProjects(data);
                 setProjectColumns(columns);
                 setCachedValue(projectsCacheKey, data);
@@ -237,7 +255,7 @@ function Departments({ isFiltersLoading, selectedDepartment, setIsLoggedIn }) {
                     return h.includes("status") && !h.includes("showstatus");
                 });
                 const statusFieldName = statusCol?.name ||
-                    Object.keys(data[0] || {}).find(key => {
+                    Object.keys(allData[0] || {}).find(key => {
                         const k = key.toLowerCase();
                         return k.includes("status") && !k.includes("showstatus");
                     }) || null;

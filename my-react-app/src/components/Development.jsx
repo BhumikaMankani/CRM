@@ -42,9 +42,6 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
   const [isRowModel, setIsRowModel] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // cron status
-  const [cronStatus, setCronStatus] = useState(null);
-
   // Locked fields
   const [lockedFields, setLockedFields] = useState([]);
 
@@ -470,7 +467,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
           }),
         });
 
-        console.log("Filter save response status:", response.status);
+        // console.log("Filter save response status:", response.status);
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -795,8 +792,8 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
 
   const handleBlur = async (rowId, field, value) => {
     if (field !== mainProjectId) return;
-    console.log("field", field);
-    console.log("mainProjectId", mainProjectId);
+    // console.log("field", field);
+    // console.log("mainProjectId", mainProjectId);
 
     if (!value || value.trim() === "") return;
 
@@ -933,7 +930,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
       }
 
       const result = await res.json();
-      console.log("Column order saved successfully:", result);
+      // console.log("Column order saved successfully:", result);
     } catch (err) {
       console.error("Error saving column order:", err);
       // Revert to original state on failure
@@ -1031,7 +1028,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
           body: JSON.stringify(body),
         }
       );
-      console.log("url for testing", `${API_URL}/api/columns/${columnName}/access?collectionName=${columnCollection}`);
+      // console.log("url for testing", `${API_URL}/api/columns/${columnName}/access?collectionName=${columnCollection}`);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to update column");
@@ -1932,7 +1929,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                           );
                           if (!res.ok) throw new Error("Failed to fetch history");
                           const history = await res.json();
-                          console.log("history", history);
+                          // console.log("history", history);
 
                           setAuditModal({
                             isOpen: true,
@@ -2052,7 +2049,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                         const res = await fetch(
                           `${API_URL}/api/data/${row._id}/audit/${col.name}?collectionName=${dataCollection}`,
                         );
-                        console.log("res", res);
+                        // console.log("res", res);
                         if (!res.ok) throw new Error("Failed to fetch history");
                         const history = await res.json();
                         setAuditModal({
@@ -2362,8 +2359,8 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
 
             const saved = await res.json();
             setColumnsDef((prev) => [...prev, saved]);
-            console.log("saved", saved);
-            console.log("columnsDef", columnsDef);
+            // console.log("saved", saved);
+            // console.log("columnsDef", columnsDef);
           } catch (err) {
             console.error("Error saving column:", err);
             alert("Error saving column: " + err.message);
@@ -2747,10 +2744,10 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
             }
             const saved = await res.json();
 
-            console.log("New row data", newRow);
+            // console.log("New row data", newRow);
             const projectName = newRow[mainProjectId];
             const taskName = newRow[taskNameId];
-            console.log("projectName", projectName);
+            // console.log("projectName", projectName);
             if (projectName) {
               const mpRes = await fetch(`${API_URL}/api/mainProject`, {
                 method: "POST",

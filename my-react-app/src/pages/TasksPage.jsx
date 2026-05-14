@@ -60,10 +60,21 @@ export default function TasksPage() {
 
     // ✅ Get only required rows
     const filteredRows = useMemo(() => {
+        // Find Status column to filter out Archived rows
+        const statusFieldName = columnsDef.find(col => {
+            const h = (col.column_heading || "").toLowerCase();
+            return h.includes("status") && !h.includes("showstatus");
+        })?.name || null;
+
         return tasks
             .map((t) => dataMap.get(String(t.rowId)))
-            .filter(Boolean);
-    }, [tasks, dataMap]);
+            .filter(Boolean)
+            .filter(row => {
+                if (!statusFieldName) return true;
+                const statusValue = row[statusFieldName];
+                return String(statusValue || "").trim().toLowerCase() !== "archived";
+            });
+    }, [tasks, dataMap, columnsDef]);
 
     const groupedData = useMemo(() => {
         return filteredRows.reduce((acc, row) => {
