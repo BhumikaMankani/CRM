@@ -142,39 +142,39 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
   const [resetDisabled, setResetDisabled] = useState(false);
 
   const [isResetLocked, setIsResetLocked] = useState(false);
-  const updateColumnDefaultValue = async () => {
-    try {
-      setLoadingUpdater(true);
+  // const updateColumnDefaultValue = async () => {
+  //   try {
+  //     setLoadingUpdater(true);
 
-      const response = await fetch(
-        `${API_URL}/api/run-default-updater`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            collectionName: dataCollection,
-          }),
-        }
-      );
+  //     const response = await fetch(
+  //       `${API_URL}/api/run-default-updater`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           collectionName: dataCollection,
+  //         }),
+  //       }
+  //     );
 
-      const data = await response.json();
-      if (data.success) {
-        // alert("✅ Default values updated successfully");
-        setIsResetLocked(true); // Lock immediately in UI
-        // Refresh the table data
-        await fetchAll({ showSpinner: false });
-      } else {
-        alert("❌ Update failed");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("❌ Server error");
-    } finally {
-      setLoadingUpdater(false);
-    }
-  };
+  //     const data = await response.json();
+  //     if (data.success) {
+  //       // alert("✅ Default values updated successfully");
+  //       setIsResetLocked(true); // Lock immediately in UI
+  //       // Refresh the table data
+  //       await fetchAll({ showSpinner: false });
+  //     } else {
+  //       alert("❌ Update failed");
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("❌ Server error");
+  //   } finally {
+  //     setLoadingUpdater(false);
+  //   }
+  // };
 
 
   // hover delete row icon
@@ -2159,7 +2159,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
             Create Column
           </button>
         ) : null}
-        {status?.user_name === 'Mandasa Technologies' && !isResetLocked && (
+        {/* {status?.user_name === 'Mandasa Technologies' && !isResetLocked && (
           <button
             type="button"
             className="btn btn-outline-dark"
@@ -2168,7 +2168,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
           >
             {loadingUpdater ? "Updating..." : "Reset"}
           </button>
-        )}
+        )} */}
         {/* <div>
           {status?.status === 'admin' && (
             <button
@@ -2812,7 +2812,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
         userStatus={status}
       />
 
-      {
+      {/* {
         resetConfirmation.isOpen && (
           <div
             style={{
@@ -2863,7 +2863,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
             </div>
           </div>
         )
-      }
+      } */}
       {/* Main task edit popup */}
       {
         mainProjectModal.isOpen && (
