@@ -10,7 +10,7 @@ const Department = require('./routes/department');
 const User = require('./routes/user');
 const Filters = require('./routes/filters');
 const MainProject = require('./routes/mainProject');
-const { updateDefaultValues } = require('./services/defaultValueUpdater');
+const { updateDefaultValues, resetAllDepartments } = require('./services/defaultValueUpdater');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -33,7 +33,7 @@ const connectDB = () => {
 connectDB();
 
 app.use("/api", (req, res, next) => {
-    console.log(`[API Request] ${req.method} ${req.originalUrl}`);
+    // console.log(`[API Request] ${req.method} ${req.originalUrl}`);
     next();
 });
 app.use("/api/create-collection", CreateCollection);
@@ -45,16 +45,28 @@ app.use("/api/data", dataRoutes);
 
 // ✅ Column route
 const columnRoutes = require("./routes/columns");
+const CronStatus = require('./routes/CronStatus');
 app.use("/api/columns", columnRoutes);
-
+app.use("/api/cronStatus", CronStatus);
 app.use("/api/audit", Audit);
+
 app.post("/api/run-default-updater", async (req, res) => {
     try {
         await updateDefaultValues(true, req.body.collectionName);
-        console.log("Data collection", req.body.collectionName);
+        // console.log("Data collection", req.body.collectionName);
         res.json({ success: true, message: "Default values updated successfully" });
     } catch (err) {
         console.error("Manual updater error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post("/api/reset-all-departments", async (req, res) => {
+    try {
+        const result = await resetAllDepartments(true);
+        res.json(result);
+    } catch (err) {
+        console.error("Reset all error:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });

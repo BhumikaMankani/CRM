@@ -2,6 +2,7 @@ const getColumnModel = require("../models/Column");
 const getDataModel = require("../models/Data");
 const Audit = require("../models/Audit");
 const CronStatus = require("../models/CronStatus");
+const Department = require("../models/Department");
 const { logError, logInfo } = require("../utils/logError");
 
 const updateDefaultValues = async (force = false, collectionName) => {
@@ -11,10 +12,12 @@ const updateDefaultValues = async (force = false, collectionName) => {
 
     const cron = await CronStatus.findOne({ taskName: "dailyUpdate" });
 
+    console.log("cron", cron);
     if (!force && cron && cron.lastRunDate === today) {
       console.log("Already updated today");
       return;
     }
+    console.log("updataDefault: collectionName is ", collectionName);
     if (!collectionName) {
       console.log("❌ collectionName is missing");
       return;
@@ -164,4 +167,38 @@ const updateDefaultValues = async (force = false, collectionName) => {
   }
 }
 
-module.exports = { updateDefaultValues };
+const resetAllDepartments = async (force = false) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const cron = await CronStatus.findOne({ taskName: "dailyUpdate" });
+
+    console.log("force", force);
+    console.log("cron", cron);
+    console.log("today", today);
+    if (!force && cron && cron.lastRunDate === today) {
+      console.log("Already updated all departments today");
+      return { success: true, message: "Already updated today" };
+    }
+
+    const departments = await Department.find();
+    for (const dept of departments) {
+      // We assume dept.name is used to generate collection name
+      const collectionName = dept.name.toLowerCase().replace(/\s+/g, "_") + "s";
+      console.log("collectionName in function is", collectionName)
+      await updateDefaultValues(true, collectionName);
+    }
+
+    await CronStatus.findOneAndUpdate(
+      { taskName: "dailyUpdate" },
+      { lastRunDate: today },
+      { upsert: true, new: true }
+    );
+
+    return { success: true, message: "Reset completed successfully" };
+  } catch (error) {
+    await logError("ResetAllDepartments failed", error);
+    throw error;
+  }
+};
+
+module.exports = { updateDefaultValues, resetAllDepartments };

@@ -12,9 +12,12 @@ import './components/color.css';
 import Header from "./components/header";
 import Drawer from "./components/Drawer";
 import { Link, useLocation } from 'react-router-dom';
+import ResetPopup from './components/ResetPopup';
 
 function App() {
   const [allDepartments, setAllDepartments] = useState([]);
+  const [cronStatus, setCronStatus] = useState(null);
+
   const [status, setStatus] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [locationPathName, setLocationPathName] = useState("/");
@@ -29,6 +32,18 @@ function App() {
     return normalizeDepartmentValue(localStorage.getItem("selectedDepartment") || "development");
   });
 
+  useEffect(() => {
+    fetch(`${API_URL}/api/cronStatus`)
+      .then((res) => res.json())
+      .then((data) => setCronStatus(data.lastRunDate));
+  }, []);
+
+
+
+  const today = new Date().toISOString().split("T")[0];
+
+  console.log("cronStatus", cronStatus);
+  console.log("today", today);
   useEffect(() => {
     const normalized = normalizeDepartmentValue(selectedDepartment);
     localStorage.setItem("selectedDepartment", normalized);
@@ -116,7 +131,7 @@ function App() {
     if (!isHome) setIsDrawerOpen(false);
   }, [isHome]);
 
-  console.log("isHome", isHome);
+  // console.log("isHome", isHome);
 
   const setSessionData = (key, value, ttlHours = 24) => {
     const item = {
@@ -128,6 +143,9 @@ function App() {
 
   return (
     <div className={`app-container container ${isHome ? 'pt-0 pl-0 container_1600' : 'pt-5'}`}>
+      {cronStatus !== today && (
+        <ResetPopup status={status} allDepartments={allDepartments} />
+      )}
       {isLoggedIn ? (
         <>
           {isHome && (
