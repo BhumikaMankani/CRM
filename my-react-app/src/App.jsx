@@ -38,6 +38,8 @@ function App() {
       .then((data) => setCronStatus(data.lastRunDate));
   }, []);
 
+
+
   const today = new Date().toISOString().split("T")[0];
 
   console.log("cronStatus", cronStatus);

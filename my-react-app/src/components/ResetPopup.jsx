@@ -94,12 +94,12 @@ const ResetPopup = ({ status, allDepartments }) => {
                                 Are you sure you want to reset columns to their default values?
                             </p>
                             <div className="d-flex justify-content-center gap-2">
-                                <button
+                                {/* <button
                                     className="btn btn-outline-secondary" style={{ background: "transparent", color: "black" }}
                                     onClick={() => setResetConfirmation({ isOpen: false })}
                                 >
                                     No
-                                </button>
+                                </button> */}
                                 <button
                                     className="btn btn-secondary" style={{ background: "red", color: "white" }}
                                     disabled={loadingUpdater}
@@ -158,7 +158,7 @@ const ResetPopup = ({ status, allDepartments }) => {
                     margin-bottom: 30px;
                 }
                 .reset-button {
-                    background: linear-gradient(135deg, #6e8efb, #a777e3);
+                    background: black;
                     color: white;
                     border: none;
                     padding: 12px 40px;

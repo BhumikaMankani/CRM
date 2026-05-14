@@ -380,7 +380,7 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
 
                             {projectOverviewFilters.map((filter) => {
                                 const IconComponent = filter.filterName.toLowerCase().includes("completed") ? FaCheckCircle : (filter.filterName.toLowerCase().includes("active") ? GiRadioactive : getIconFromFilterName(filter.filterName));
-                                console.log("filter.filterName.toLowerCase()", filter.filterName.toLowerCase());
+                                // console.log("filter.filterName.toLowerCase()", filter.filterName.toLowerCase());
                                 const name = filter.filterName.toLowerCase();
                                 const colorClass =
                                     name.includes("aditya")
@@ -420,7 +420,7 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
                                         if (isConfirmation) colorClass = "red";
                                         else if (filter.filterName.toLowerCase().includes("nikhil")) colorClass = "yellow";
                                         else if (filter.filterName.toLowerCase().includes("aditya")) colorClass = "cyan";
-                                        console.log("filter.filterName.toLowerCase", filter.filterName.toLowerCase);
+                                        // console.log("filter.filterName.toLowerCase", filter.filterName.toLowerCase);
                                         const accentClass = `accent-${colorClass}`;
 
                                         return (
