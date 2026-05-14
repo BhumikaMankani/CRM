@@ -143,7 +143,7 @@ function App() {
 
   return (
     <div className={`app-container container ${isHome ? 'pt-0 pl-0 container_1600' : 'pt-5'}`}>
-      {cronStatus !== today && (
+      {cronStatus && cronStatus !== today && (
         <ResetPopup status={status} allDepartments={allDepartments} />
       )}
       {isLoggedIn ? (
