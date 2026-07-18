@@ -36,6 +36,25 @@
     gap: 12px;
 }
 
+
+
+.link_button {
+    background: transparent;
+    color: black;
+    text-decoration: underline;
+    padding: 0;
+    font-size: 13px;
+    text-decoration: underline 0.15em rgba(0, 0, 0, 0);
+    transition: text-decoration-color 300ms;
+    border: 0;
+}
+
+.link_button:hover {
+    text-decoration-color: rgba(0, 0, 0, 1);
+    background-color: transparent;
+    color: black;
+}
+
 .filter-item {
     display: flex;
     align-items: center;
