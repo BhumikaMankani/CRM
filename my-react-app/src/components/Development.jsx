@@ -25,6 +25,8 @@ import { IoMailUnreadSharp } from "react-icons/io5";
 function TableColumns({ columnCollection, dataCollection, departmentKey, dataEndpoint, dataColumns }) {
   const filterSidebarRef = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
+  const filtersRef = useRef(null);
+
   const [popupContent, setPopupContent] = useState('');
 
   const navigate = useNavigate();
@@ -37,6 +39,37 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
       isMounted.current = false;
     };
   }, []);
+
+  // SHow more filters
+  const handleShowMore = () => {
+    if (filtersRef.current) {
+      filtersRef.current.scrollBy({
+        left: 300, // Adjust scroll distance
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const handleShowLess = () => {
+    if (filtersRef.current) {
+      filtersRef.current.scrollBy({
+        left: -300,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const [isAtEnd, setIsAtEnd] = useState(false);
+
+  const handleScroll = () => {
+    const el = filtersRef.current;
+    if (!el) return;
+
+    setIsAtEnd(
+      el.scrollLeft + el.clientWidth >= el.scrollWidth - 5
+    );
+  };
+  // end
 
   // Add Row
   const [isRowModel, setIsRowModel] = useState(false);
@@ -2221,7 +2254,8 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
         <div className="">
           <div className="saved-filters-row w-100 mb-3">
             <div className="row flex-nowrap w-100 align-items-center">
-              <div className={`filters-list-horizontal align-items-center col-9`}>
+              <div ref={filtersRef}
+                onScroll={handleScroll} className={`filters-list-horizontal align-items-center col-9`}>
                 {status?.status === 'staff' ? (
                   <button
                     onClick={handleFilterClick}
@@ -2290,7 +2324,14 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                     ))
                   )}
               </div>
-              <div className="filters-actions col-3 d-flex gap-2 justify-content-end align-items-center">
+              <div className="col-1">
+                {!isAtEnd ? (
+                  <button className="link_button" onClick={handleShowMore}>Show More +</button>
+                ) : (
+                  <button className="link_button" onClick={handleShowLess}>Show Less</button>
+                )}
+              </div>
+              <div className="filters-actions col-2 d-flex gap-2 justify-content-end align-items-center">
                 {status?.status === 'admin' && isFilterOpen && (
                   <button
                     onClick={() => setIsSaveFilterModalOpen(true)}
