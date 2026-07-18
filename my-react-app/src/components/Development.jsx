@@ -51,12 +51,10 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
   };
 
   const handleShowLess = () => {
-    if (filtersRef.current) {
-      filtersRef.current.scrollBy({
-        left: -300,
-        behavior: "smooth",
-      });
-    }
+    filtersRef.current?.scrollTo({
+      left: 0,
+      behavior: "smooth",
+    });
   };
 
   const [isAtEnd, setIsAtEnd] = useState(false);
@@ -2156,6 +2154,9 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
     valuesToMatch,
   ]);
 
+  const visibleFilters = savedFilters.filter(f => !f.showInAnalytics);
+
+
   return (
     <section className="">
       <div className="icons__new d-flex align-items-center gap-2 justify-content-end mb-4">
@@ -2324,14 +2325,16 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                     ))
                   )}
               </div>
-              <div className="col-1">
-                {!isAtEnd ? (
-                  <button className="link_button" onClick={handleShowMore}>Show More +</button>
-                ) : (
-                  <button className="link_button" onClick={handleShowLess}>Show Less</button>
-                )}
-              </div>
-              <div className="filters-actions col-2 d-flex gap-2 justify-content-end align-items-center">
+              {visibleFilters.length > 4 && (
+                <div className="col-1">
+                  {!isAtEnd ? (
+                    <button className="link_button" onClick={handleShowMore}>Show More +</button>
+                  ) : (
+                    <button className="link_button" onClick={handleShowLess}>Show Less</button>
+                  )}
+                </div>
+              )}
+              <div className={`filters-actions ${visibleFilters.length > 4 ? "col-2" : "col-3"} d-flex gap-2 justify-content-end align-items-center`}>
                 {status?.status === 'admin' && isFilterOpen && (
                   <button
                     onClick={() => setIsSaveFilterModalOpen(true)}

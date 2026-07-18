@@ -28,6 +28,7 @@
 }
 
 .filters-list-horizontal {
+    scroll-behavior: smooth;
     display: flex;
     scrollbar-width: none;
     flex-wrap: nowrap;
