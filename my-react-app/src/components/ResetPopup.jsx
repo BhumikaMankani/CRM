@@ -36,7 +36,7 @@ const ResetPopup = ({ status, allDepartments }) => {
             setLoadingUpdater(false);
         }
     };
-    console.log("isResetLocked", isResetLocked);
+    // console.log("isResetLocked", isResetLocked);
     if (isResetLocked || !status) return null;
 
     return (

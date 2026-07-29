@@ -42,8 +42,8 @@ function App() {
 
   const today = new Date().toISOString().split("T")[0];
 
-  console.log("cronStatus", cronStatus);
-  console.log("today", today);
+  // console.log("cronStatus", cronStatus);
+  // console.log("today", today);
   useEffect(() => {
     const normalized = normalizeDepartmentValue(selectedDepartment);
     localStorage.setItem("selectedDepartment", normalized);

@@ -148,7 +148,7 @@ const updateDefaultValues = async (force = false, collectionName) => {
         "Default Value Job",
         "Default value update cycle completed."
       );
-      console.log("Default value update cycle completed.");
+      // console.log("Default value update cycle completed.");
 
     } catch (err) {
       await logError("Cycle error", err);
@@ -158,7 +158,7 @@ const updateDefaultValues = async (force = false, collectionName) => {
       { lastRunDate: today }
     );
 
-    console.log("Default value update cycle completed.");
+    // console.log("Default value update cycle completed.");
 
   } catch (err) {
 
@@ -184,7 +184,7 @@ const resetAllDepartments = async (force = false) => {
     for (const dept of departments) {
       // We assume dept.name is used to generate collection name
       const collectionName = dept.name.toLowerCase().replace(/\s+/g, "_") + "s";
-      console.log("collectionName in function is", collectionName)
+      // console.log("collectionName in function is", collectionName)
       await updateDefaultValues(true, collectionName);
     }
 

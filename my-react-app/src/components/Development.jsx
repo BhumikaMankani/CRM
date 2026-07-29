@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { LiaEditSolid, LiaFilterSolid, LiaSortUpSolid, LiaSortDownSolid, LiaUniversalAccessSolid, LiaSortSolid, LiaTrashRestoreAltSolid } from "react-icons/lia";
 import Table from "./Table";
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import AddEntryModal from "./AddEntryModal";
 import Form from "./Form";
 import AnalyticsModal from "./AnalyticsModal";
@@ -66,6 +67,33 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
     setIsAtEnd(
       el.scrollLeft + el.clientWidth >= el.scrollWidth - 5
     );
+  };
+
+  // Drag‑and‑drop state for filter ordering (admin only)
+  const [filterOrder, setFilterOrder] = useState([]);
+
+  useEffect(() => {
+    if (status?.status === 'admin') {
+      const stored = localStorage.getItem('filterOrder');
+      if (stored) setFilterOrder(JSON.parse(stored));
+    }
+  }, []);
+
+  // Keep order in sync when savedFilters change (e.g., new filter added)
+
+
+  const reorder = (list, startIndex, endIndex) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    return result;
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const newOrder = reorder(filterOrder, result.source.index, result.destination.index);
+    setFilterOrder(newOrder);
+    localStorage.setItem('filterOrder', JSON.stringify(newOrder));
   };
   // end
 
@@ -137,6 +165,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
 
   const [savedFilters, setSavedFilters] = useState([]);
   const [activeFilterId, setActiveFilterId] = useState(null);
+  const [isFilterEditMode, setIsFilterEditMode] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [deleteFilterConfirmation, setDeleteFilterConfirmation] = useState({
     isOpen: false,
@@ -144,6 +173,17 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
     filterName: "",
   });
 
+  // Keep order in sync when savedFilters change (e.g., new filter added)
+  useEffect(() => {
+    if (savedFilters.length) {
+      const ids = savedFilters.map(f => f._id);
+      setFilterOrder(prev => {
+        const ordered = prev.filter(id => ids.includes(id));
+        const missing = ids.filter(id => !ordered.includes(id));
+        return [...ordered, ...missing];
+      });
+    }
+  }, [savedFilters]);
   // Audit modal state
   const [auditModal, setAuditModal] = useState({
     isOpen: false,
@@ -2180,6 +2220,17 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
             <LiaEditSolid />
           </button>
         ) : null}
+        {status?.status === "admin" && savedFilters.length > 0 && (
+          <button
+            className={`btn d-inline-flex align-items-center ${isFilterEditMode ? "btn-dark" : "btn-outline-dark"}`}
+            onClick={() => setIsFilterEditMode(prev => !prev)}
+            title={isFilterEditMode ? "Exit edit mode" : "Edit filter order"}
+            style={{ height: "40px" }}
+          >
+            <svg viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fillRule="evenodd" clipRule="evenodd" d="M9.5 8C10.3284 8 11 7.32843 11 6.5C11 5.67157 10.3284 5 9.5 5C8.67157 5 8 5.67157 8 6.5C8 7.32843 8.67157 8 9.5 8ZM9.5 14C10.3284 14 11 13.3284 11 12.5C11 11.6716 10.3284 11 9.5 11C8.67157 11 8 11.6716 8 12.5C8 13.3284 8.67157 14 9.5 14ZM11 18.5C11 19.3284 10.3284 20 9.5 20C8.67157 20 8 19.3284 8 18.5C8 17.6716 8.67157 17 9.5 17C10.3284 17 11 17.6716 11 18.5ZM15.5 8C16.3284 8 17 7.32843 17 6.5C17 5.67157 16.3284 5 15.5 5C14.6716 5 14 5.67157 14 6.5C14 7.32843 14.6716 8 15.5 8ZM17 12.5C17 13.3284 16.3284 14 15.5 14C14.6716 14 14 13.3284 14 12.5C14 11.6716 14.6716 11 15.5 11C16.3284 11 17 11.6716 17 12.5ZM15.5 20C16.3284 20 17 19.3284 17 18.5C17 17.6716 16.3284 17 15.5 17C14.6716 17 14 17.6716 14 18.5C14 19.3284 14.6716 20 15.5 20Z" fill="#121923"></path> </g></svg>
+          </button>
+        )}
+
         {status?.status === "admin" ? (
           <button className="btn btn-outline-dark" onClick={() => addRow()}>
             Create Row
@@ -2256,7 +2307,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
           <div className="saved-filters-row w-100 mb-3">
             <div className="row flex-nowrap w-100 align-items-center">
               <div ref={filtersRef}
-                onScroll={handleScroll} className={`filters-list-horizontal align-items-center col-9`}>
+                onScroll={handleScroll} className={`${status?.status === 'staff' ? "col-9" : "col-8" } filters-list-horizontal align-items-center`}>
                 {status?.status === 'staff' ? (
                   <button
                     onClick={handleFilterClick}
@@ -2286,44 +2337,100 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                     </svg>
                   </button>
                 ) : null}
-                {status.status === "admin" && savedFilters.length > 0 ? (
-                  savedFilters.filter(f => !f.showInAnalytics).map((filter) => (
-                    <div
-                      key={filter._id}
-                      className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
-                      onClick={() => handleFilterSelect(filter)}
-                      title="Click to toggle (apply/deactivate)"
-                    >
-                      <span className="filter-name">{filter.filterName}                       <span className="">({countMatchingRows(filter.filterData)})</span>
-                      </span>
-                      {status.status === 'admin' && (
-                        <div className="filter-actions-group">
-                          <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><LiaEditSolid /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn text-danger"><LiaTrashRestoreAltSolid /></button>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) :
-                  (
-                    savedFilters.map((filter) => (
-                      <div
-                        key={filter._id}
-                        className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
-                        onClick={() => handleFilterSelect(filter)}
-                        title="Click to toggle (apply/deactivate)"
-                      >
-                        <span className="filter-name">{filter.filterName}                       <span className="">({countMatchingRows(filter.filterData)})</span>
-                        </span>
-                        {status.status === 'admin' && (
-                          <div className="filter-actions-group">
-                            <button onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }} className="edit-filter-btn"><LiaEditSolid /></button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }} className="delete-filter-btn text-danger"><LiaTrashRestoreAltSolid /></button>
+                {savedFilters.length > 0 ? (
+                  isFilterEditMode && status.status === "admin" ?  (
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                      <Droppable droppableId="filters" direction="horizontal">
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            className="filters-drag-container filters-list-horizontal align-items-center"
+                          >
+                            {filterOrder.map((id, index) => {
+                              const filter = savedFilters.find(f => f._id === id);
+                              if (!filter) return null;
+                              return (
+                                <Draggable key={filter._id} draggableId={filter._id} index={index}>
+                                  {(provided) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
+                                      onClick={() => { if (!isFilterEditMode) handleFilterSelect(filter); }}
+                                      title="Click to toggle (apply/deactivate)"
+                                    >
+                                      <span className="filter-name">
+                                        {filter.filterName}{" "}
+                                        <span className="">({countMatchingRows(filter.filterData)})</span>
+                                      </span>
+                                      {status.status === "admin" && (
+                                        <div className="filter-actions-group">
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }}
+                                            className="edit-filter-btn"
+                                          >
+                                            <LiaEditSolid />
+                                          </button>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }}
+                                            className="delete-filter-btn text-danger"
+                                          >
+                                            <LiaTrashRestoreAltSolid />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </Draggable>
+                              );
+                            })}
+                            {provided.placeholder}
                           </div>
                         )}
-                      </div>
-                    ))
-                  )}
+                      </Droppable>
+                    </DragDropContext>
+                  ) : (
+                    <div
+                      className="filters-drag-container filters-list-horizontal align-items-center"
+                    >
+                      {filterOrder.map((id) => {
+                        const filter = savedFilters.find(f => f._id === id);
+                        if (!filter) return null;
+                        return (
+                          <div
+                            key={filter._id}
+                            className={`filter-item ${activeFilterId === filter._id ? 'active' : ''}`}
+                            onClick={() => handleFilterSelect(filter)}
+                            title="Click to toggle (apply/deactivate)"
+                          >
+                            <span className="filter-name">
+                              {filter.filterName}{" "}
+                              <span className="">({countMatchingRows(filter.filterData)})</span>
+                            </span>
+                            {status.status === "admin" && (
+                              <div className="filter-actions-group">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setFilterToEdit(filter); setIsSaveFilterModalOpen(true); }}
+                                  className="edit-filter-btn"
+                                >
+                                  <LiaEditSolid />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteFilter(filter._id, filter.filterName, e); }}
+                                  className="delete-filter-btn text-danger"
+                                >
+                                  <LiaTrashRestoreAltSolid />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                ) : null}
               </div>
               {visibleFilters.length > 4 && (
                 <div className="col-1">
@@ -2334,7 +2441,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
                   )}
                 </div>
               )}
-              <div className={`filters-actions ${visibleFilters.length > 4 ? "col-2" : "col-3"} d-flex gap-2 justify-content-end align-items-center`}>
+              <div className={`filters-actions col-3 d-flex gap-2 justify-content-end align-items-center`}>
                 {status?.status === 'admin' && isFilterOpen && (
                   <button
                     onClick={() => setIsSaveFilterModalOpen(true)}

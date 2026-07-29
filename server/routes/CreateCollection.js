@@ -31,10 +31,10 @@ router.post("/", async (req, res) => {
         const mainCollection = baseName + "s";
         const columnCollection = `${baseName}_columns`;
 
-        console.log("collectionName", collectionName);
-        console.log("baseName", baseName);
-        console.log("mainCollection", mainCollection);
-        console.log("columnCollection", columnCollection);
+        // console.log("collectionName", collectionName);
+        // console.log("baseName", baseName);
+        // console.log("mainCollection", mainCollection);
+        // console.log("columnCollection", columnCollection);
         // ✅ check existing collections
         const existing = await db.listCollections().toArray();
         const existingNames = existing.map(col => col.name);
