@@ -10,8 +10,8 @@ router.get("/", async (req, res) => {
         const { collectionName } = req.query;
 
         const Project = getDataModel(collectionName);
-        console.log("collectionName", collectionName);
-        console.log("Project", Project);
+        // console.log("collectionName", collectionName);
+        // console.log("Project", Project);
         const projects = await Project.find({ showstatus: { $ne: 'deactivate' } }).sort({ createdAt: -1 });
         res.json(projects);
     } catch (err) {

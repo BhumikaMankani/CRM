@@ -77,7 +77,7 @@ const SaveFilterModal = ({ isOpen, onClose, onSave, filters, userStatus, editFil
 
         try {
             setError(''); // Clear error before saving
-            await onSave(filterName, editFilter ? editFilter.filterData : filters, selectedStaff, editFilter?._id, showInAnalytics, showInDepartment);
+            await onSave(filterName, filters, selectedStaff, editFilter?._id, showInAnalytics, showInDepartment);
             setFilterName('');
             setSelectedStaff([]);
             setShowInAnalytics(false);
