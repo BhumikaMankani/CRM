@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_URL } from "../../proxy";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
+import { FaArrowLeft, FaChevronDown, FaBell, FaSearch } from "react-icons/fa";
 import logo from "../assets/ea72b0a312922dca13f69c2e529e6abebde9ecc2.svg";
-const Header = ({ allDepartments, handleDepartmentChange, selectedDepartment, isHome, status }) => {
+const Header = ({ allDepartments, handleDepartmentChange, selectedDepartment, isHome, status, handleLogout }) => {
     const navigate = useNavigate();
     const [audits, setAudits] = useState([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const location = useLocation();
 
     const fetchAudits = useCallback(async () => {
@@ -71,77 +72,67 @@ const Header = ({ allDepartments, handleDepartmentChange, selectedDepartment, is
     }, []);
 
     return (
-    <header className={`pt-2 pb-2 ${isHome ? 'left__300' : ''}`}>
-            <div className="d-flex justify-content-between gap-2">
-                <div className="d-flex align-items-center gap-3">
+        <header className={`app-header ${isHome ? 'left__300' : 'pl-0 pr-0'}`}>
+            <div className="d-flex justify-content-between container align-items-center">
+                <div className="header-leading">
                     {location.pathname !== '/' && (
-                        <button
-                            className="btn btn-outline-dark btn-sm d-flex align-items-center gap-1"
-                            onClick={() => navigate('/')}
-                            title="Go Back"
-                            style={{ padding: '8px' }}
-                        >
-                            <FaArrowLeft size={12} />
+                        <button className="header-icon-btn" onClick={() => navigate('/')} title="Go back" aria-label="Go back">
+                            <FaArrowLeft size={13} />
                         </button>
                     )}
+                    {location.pathname === '/' ? (
+                        <div className="department-switcher" aria-label="Department selector">
+                            <span className="department-switcher-label">Workspace</span>
+                            <div className="department-tabs">
+                                {(status?.status === 'admin' ? orderedAllDepartments : orderedUserDepartments).map(dept => dept?.status !== 'archived' && (
+                                    <button
+                                        key={dept?.department || dept}
+                                        className={selectedDepartment?.toLowerCase() === (dept?.department || dept)?.toLowerCase() ? 'active' : ''}
+                                        onClick={() => handleDepartmentChange(dept?.department || dept)}
+                                    >
+                                        {(dept?.department || dept)?.charAt(0).toUpperCase() + (dept?.department || dept)?.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <h1 className="header-brand"><img alt="Mandasa CRM" loading="lazy" src={logo} /></h1>
+                    )}
+                </div>
 
-                    {location.pathname === '/' && (
-                        <div className="staff__analytic p-1 d-flex align-items-center gap-2">
-                            {status?.status === 'admin' && allDepartments.length > 1 ? (
-                                <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
-                                    {orderedAllDepartments?.map(dept => dept?.status !== 'archived' && (
-                                        <li className="nav-item" key={dept?.department}>
-                                            <button
-                                                className={`${selectedDepartment?.toLowerCase() === dept?.department?.toLowerCase() ? 'active' : ''} rounded pl-4 pr-4 btn-sm bg-transparent
-                                                    `}
-                                                onClick={() => handleDepartmentChange(dept?.department)}
-
-                                                style={{ cursor: 'pointer', border: '1px solid transparent', color: "#6b7280", fontSize: "12.5px" }}
-                                            >
-                                                {dept?.department ? dept?.department?.charAt(0).toUpperCase() + dept?.department?.slice(1) : ''}
-                                            </button>
-                                        </li>
-
-                                    ))}
-                                </ul>
-                            ) : (
-                                <ul className="nav nav-pills g-1" style={{ fontSize: "0.875rem", columnGap: "8px" }}>
-                                    {orderedUserDepartments && orderedUserDepartments.length > 1 && orderedUserDepartments.map((dept) => (
-                                        <li className="nav-item" aria-length={dept.length} key={dept}>
-                                            <button
-                                                className={`${selectedDepartment?.toLowerCase() === dept?.toLowerCase() ? 'active' : ''} rounded pl-4 pr-4 btn-sm bg-transparent
-                                                    `}
-                                                onClick={() => handleDepartmentChange(dept)}
-
-                                                style={{ cursor: 'pointer', border: '1px solid transparent', color: "#6b7280", fontSize: "12.5px" }}
-                                            >
-                                                {dept.charAt(0).toUpperCase() + dept.slice(1)}
-                                            </button>
-                                        </li>
-
-                                    ))}
-                                </ul>
+                <div className="header-actions">
+                    {/* <label className="header-search">
+                        <FaSearch size={13} />
+                        <input type="search" placeholder="Search dashboard" aria-label="Search dashboard" />
+                        <kbd>Cmd K</kbd>
+                    </label> */}
+                    <div className="last-updated">
+                        <span>Last updated</span>
+                        <strong>{lastActiveTime ? new Date(lastActiveTime).toLocaleString() : 'Live dashboard'}</strong>
+                    </div>
+                    {/* <button className="header-icon-btn notification-btn" title="Notifications" aria-label="Notifications">
+                        <FaBell size={15} />
+                        <span className="notification-dot" />
+                    </button> */}
+                    <span className="header-divider" aria-hidden="true" />
+                    {status && (
+                        <div className="profile-menu-wrap" ref={dropdownRef}>
+                            <button className="profile-trigger" onClick={() => setIsDropdownOpen(value => !value)} aria-expanded={isDropdownOpen} aria-label="Open profile menu">
+                                <span className="profile-avatar">{status?.user_name?.[0]?.toUpperCase()}</span>
+                                <span className="profile-trigger-copy"><strong>{status.user_name}</strong><small>{status.status}</small></span>
+                                <FaChevronDown size={11} />
+                            </button>
+                            {isDropdownOpen && (
+                                <div className="profile-menu">
+                                    <div className="profile-menu-heading">Signed in as <strong>{status.user_name}</strong></div>
+                                    <button onClick={handleLogout}>Log out</button>
+                                </div>
                             )}
                         </div>
                     )}
-                    {location.pathname !== '/' && (
-                        <h1 className='text-left logo fw-bold m-0' style={{ fontSize: '1.5rem' }}><img width="100%" height="auto" alt="Mandasa crm" loading="lazy" src={logo}></img></h1>
-                    )}
-                </div>
-                <div className='d-flex justify-content-center align-items-center gap-2'>
-                    {lastActiveTime && (
-                        <p className="text-light-custom mb-0" style={{ fontSize: '11.5px' }}>
-                            Last update: <span className="text-light-custom">
-                                {new Date(lastActiveTime).toLocaleString()}
-                            </span>
-                        </p>
-                    )}
-                    {status && (
-                        <div className="dup_avatar">{status?.user_name?.[0]?.toUpperCase()}</div>
-                    )}
                 </div>
             </div>
-        </header >
+        </header>
     )
 }
 

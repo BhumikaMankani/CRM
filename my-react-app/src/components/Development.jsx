@@ -2198,7 +2198,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
 
 
   return (
-    <section className="">
+    <div className="container pt-5">
       <div className="icons__new d-flex align-items-center gap-2 justify-content-end mb-4">
         {status?.status !== 'staff' ? (
           <button
@@ -3212,7 +3212,7 @@ function TableColumns({ columnCollection, dataCollection, departmentKey, dataEnd
         )
       }
 
-    </section >
+    </div>
 
   );
 }

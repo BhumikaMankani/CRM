@@ -188,29 +188,25 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
     };
 
     const projectOverviewFilters = savedFilters.filter(f =>
-        f.showInDepartment &&
-        f.department === selectedDepartment?.toLowerCase() &&
-        (f.filterName.toLowerCase().includes("all active projects") || f.filterName.toLowerCase().includes("completed"))
-    );
+        f.showInDepartment);
 
-    const teamPerformanceFilters = savedFilters.filter(f =>
-        f.showInDepartment &&
-        f.department === selectedDepartment?.toLowerCase() &&
-        !projectOverviewFilters.find(p => p._id === f._id)
-    );
+    // const teamPerformanceFilters = savedFilters.filter(f =>
+    //     f.showInDepartment &&
+    //     f.department === selectedDepartment?.toLowerCase() &&
+    // );
 
     const StatCard = ({ icon: Icon, title, value, colorClass, link, accentClass, trend }) => (
-        <div className="col-md-3">
+        <div className="col-md-3 stat-card-col">
             <Link to={link} className="text-decoration-none">
-                <div className={`custom-card ${colorClass}`}>
-                    <div className={`icon-box ${colorClass}`}>
+                <div className={`custom-card dashboard-stat-card ${colorClass}`}>
+                    <div className={`icon-box stat-icon-box ${colorClass}`}>
                         <Icon size={20} />
                     </div>
                     <h6 className="card-title-mini">{title}</h6>
                     <h2 className={`card-value-large text-${colorClass} ff-outfit`}>
                         {renderCountValue(value, 0, false)}
                     </h2>
-                    {/* <div className={`card-accent-border ${accentClass}`}></div> */}
+                    <div className="stat-card-foot"><span>Current view</span><span>View</span></div>
                 </div>
             </Link>
         </div>
@@ -284,43 +280,25 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
 
     return (
         <div className="">
-            <div className='custom_alert_first_row bg-white py-4 px-4 rounded mb-4'>
-                <div className="col-md-12">
-                    <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h2 className="fw-bold mb-1 fs-4 text-dark ff-outfit"> <strong> Welcome back, {status.user_name}!</strong>👋</h2>
-                            <p className='text-dark mb-0 mt-1' style={{ fontSize: "14px", fontWeight: "400" }}>
-                                "Here's your comprehensive projects & performance overview."
-                            </p>
-                        </div>
-                        {/* <div className="d-flex align-items-center gap-2">
-                            {confirmationPendingCount > 0 && (
-                                <Link
-                                    to={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}?filter_name=confirmation-pending---projects`}
-                                    className="text-decoration-none"
-                                >
-                                    <div className="pending-badge">
-                                        <div className="badge-text">
-                                            <span className='alert-pill'></span>
-                                            <span className='count'>{confirmationPendingCount} Pending Confirmations</span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            )}
-                        </div> */}
-                    </div>
+            <section className="dashboard-welcome">
+                <div className="welcome-copy">
+                    <span className="welcome-eyebrow">Workspace overview</span>
+                    <h2 className="welcome-title">Welcome back, {status.user_name}!</h2>
+                    <p className="welcome-subtitle">Here&apos;s your comprehensive projects and performance overview.</p>
+                    <div className="welcome-meta"><span className="welcome-status-dot" />Live workspace <span className="welcome-meta-separator">•</span> {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}</div>
                 </div>
-            </div>
+                <div className="welcome-art" aria-hidden="true"><span /><span /><span /></div>
+            </section>
             <div className={`custom_alert ${status?.status === 'staff' ? 'row' : ''}`}>
                 {status?.status === 'staff' && (
                     <>
-                        <div className="col-md-3">
+                        <div className="col-md-3 stat-card-col">
                             <Link
                                 to={`/department/${selectedDepartment?.toLowerCase()}${selectedDepartment == 'development' ? "?filter_name=" + status?.user_name?.toLowerCase() + "-projects" : ""}`}
                                 className="text-decoration-none"
                             >
-                                <div className="custom-card orange">
-                                    <div className="icon-box orange">
+                                <div className="custom-card dashboard-stat-card orange">
+                                    <div className="icon-box stat-icon-box orange">
                                         <FaTasks size={20} />
                                     </div>
 
@@ -330,19 +308,19 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
                                         {renderCountValue(totalProjects)}
                                     </h2>
 
-                                    {/* <div className="card-accent-border accent-orange"></div> */}
+                                    <div className="stat-card-foot"><span>Current view</span><span aria-hidden="true">↗</span></div>
                                 </div>
                             </Link>
                         </div>
                         {cards.map((card, index) => (
-                            <div className="col-md-3" key={index}>
+                            <div className="col-md-3 stat-card-col" key={index}>
                                 <Link
                                     to={`/department/${(selectedDepartment || status?.department?.[0] || "").toLowerCase()
                                         }?filter_name=${status.user_name.toLowerCase()}-${card.filter}`}
                                     className="text-decoration-none"
                                 >
-                                    <div className={`custom-card ${card.colorClass}`}>
-                                        <div className={`icon-box ${card.colorClass}`}>{card.icon}</div>
+                                    <div className={`custom-card dashboard-stat-card ${card.colorClass}`}>
+                                        <div className={`icon-box stat-icon-box ${card.colorClass}`}>{card.icon}</div>
 
                                         <h6 className="card-title-mini">{card.title}</h6>
 
@@ -350,7 +328,7 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
                                             {renderCountValue(card.count)}
                                         </h2>
 
-                                        {/* <div className={`card-accent-border ${card.accentClass}`}></div> */}
+                                        <div className="stat-card-foot"><span>Current view</span><span aria-hidden="true">↗</span></div>
                                     </div>
                                 </Link>
                             </div>
@@ -369,20 +347,22 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
                                 accentClass="accent-orange"
                                 link={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`}
                             />
-                            <StatCard
+                            {/* <StatCard
                                 icon={FaTasks}
                                 title="Total Projects"
                                 value={result}
                                 colorClass="sv-blue"
                                 accentClass="accent-sv-blue"
                                 link={`/department/${(selectedDepartment?.toLowerCase() || status?.department?.[0] || '').toLowerCase()}`}
-                            />
+                            /> */}
 
                             {projectOverviewFilters.map((filter) => {
                                 const IconComponent = filter.filterName.toLowerCase().includes("completed") ? FaCheckCircle : (filter.filterName.toLowerCase().includes("active") ? GiRadioactive : getIconFromFilterName(filter.filterName));
                                 // console.log("filter.filterName.toLowerCase()", filter.filterName.toLowerCase());
                                 const name = filter.filterName.toLowerCase();
                                 const colorClass =
+                                    name.includes("review projects")
+                                    ? "purple" :
                                     name.includes("aditya")
                                         ? "sc-teal"
                                         : name.includes("nikhil")
@@ -407,7 +387,7 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
                             })}
                         </div>
 
-                        {teamPerformanceFilters.length > 0 && (
+                        {/* {teamPerformanceFilters.length > 0 && (
                             <>
                                 <h3 className="section-heading">Team Performance</h3>
                                 <div className="row">
@@ -437,7 +417,7 @@ function DepartmentFilters({ result, selectedDepartment, projects, status, total
                                     })}
                                 </div>
                             </>
-                        )}
+                        )} */}
                     </>
                 )}
             </div>
