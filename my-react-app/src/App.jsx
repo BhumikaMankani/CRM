@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import './App.css';
+import './dashboard.css';
 import Registration from './components/Registration';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Routes, Route, useNavigate } from "react-router-dom";
@@ -142,7 +143,7 @@ function App() {
   };
 
   return (
-    <div className={`app-container container ${isHome ? 'pt-0 pl-0 container_1600' : 'pt-5'}`}>
+    <div className={`app-container pt-0 pl-0 container_1600`}>
       {cronStatus && cronStatus !== today && (
         <ResetPopup status={status} allDepartments={allDepartments} />
       )}
@@ -151,7 +152,7 @@ function App() {
           {isHome && (
             <Drawer selectedDepartment={selectedDepartment} allDepartments={allDepartments} fetchDepartments={fetchDepartments} status={status} handleLogout={handleLogout} isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
           )}
-          <Header currentUser={status} isHome={isHome} handleLogout={handleLogout} isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} allDepartments={allDepartments} fetchDepartments={fetchDepartments} handleDepartmentChange={handleDepartmentChange} selectedDepartment={selectedDepartment} setSelectedDepartment={setSelectedDepartment} status={status} toggleDrawer={() => setIsDrawerOpen(true)} />
+          <Header handleLogout={handleLogout} currentUser={status} isHome={isHome} isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} allDepartments={allDepartments} fetchDepartments={fetchDepartments} handleDepartmentChange={handleDepartmentChange} selectedDepartment={selectedDepartment} setSelectedDepartment={setSelectedDepartment} status={status} toggleDrawer={() => setIsDrawerOpen(true)} />
           <main className={isHome ? 'left__300' : ''}>
             <Routes>
               <Route path="/" element={<Departments setLocationPathName={setLocationPathName} locationPathName={locationPathName} allDepartments={allDepartments} fetchDepartments={fetchDepartments} selectedDepartment={selectedDepartment} setIsLoggedIn={setIsLoggedIn} />} />
